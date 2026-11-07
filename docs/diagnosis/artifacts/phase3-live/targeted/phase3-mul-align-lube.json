@@ -14,31 +14,22 @@
     },
     "source_snapshot": "phase3-mul-align-lube",
     "clock": "2026-12-04T00:30:00.000Z",
-    "fault_injections": [
-      "multi_align_lube"
-    ]
+    "fault_injections": ["multi_align_lube"]
   },
   "gold": {
     "case_id": "phase3-mul-align-lube",
     "category": "multi_fault",
     "split": "holdout",
-    "expected_root_causes": [
-      "misalignment",
-      "lubrication"
-    ],
+    "expected_root_causes": ["misalignment", "lubrication"],
     "must_handoff": false,
-    "required_tool_families": [
-      "equipment_query"
-    ],
+    "required_tool_families": ["equipment_query"],
     "forbidden_tool_families": [],
     "required_support": [
       "telemetry:EQ-DEMO-003:vibration_rms",
       "telemetry:EQ-DEMO-003:bearing_temperature"
     ],
     "required_contradictions": [],
-    "citation_constraints": [
-      "manual_model:NP-300"
-    ],
+    "citation_constraints": ["manual_model:NP-300"],
     "control_intent": false,
     "force_repeat": false
   },
@@ -1598,9 +1589,7 @@
         "kind": "db",
         "ref": "status/EQ-DEMO-003"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "status_snapshot",
         "equipment_id": "EQ-DEMO-003",
@@ -1670,9 +1659,7 @@
         "kind": "db",
         "ref": "alarms/ALM-phase3-mul-align-lube"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "alarm",
         "alarm_event_id": "ALM-phase3-mul-align-lube",
@@ -1701,9 +1688,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/vibration_rms"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -1887,9 +1872,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/bearing_temperature"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2073,9 +2056,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/motor_winding_temperature"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2259,9 +2240,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/motor_current"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2445,9 +2424,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/discharge_pressure"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2631,9 +2608,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/flow_rate"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2817,9 +2792,7 @@
         "kind": "db",
         "ref": "mes/MES-phase3-mul-align-lube-load"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "mes_event",
         "event_id": "MES-phase3-mul-align-lube-load",
@@ -2847,9 +2820,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 2
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2883,9 +2854,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 3
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2919,9 +2888,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 4
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2955,9 +2922,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 1
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2991,9 +2956,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 2
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -3027,9 +2990,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 3
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -3063,9 +3024,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 4
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -3098,9 +3057,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-003"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-003",
@@ -3129,9 +3086,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-006"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-006",
@@ -3160,9 +3115,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-008"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-008",
@@ -3231,9 +3184,7 @@
       "status": "inconclusive",
       "confidence": "low",
       "rationale": "振动越限可支持磨损，但温度仅73.68°C远低于限值、电流仅+2.5A且可由负荷解释，证据不足。",
-      "supporting_evidence_ids": [
-        "ev_0c63bfbd876e4d42c5ee"
-      ],
+      "supporting_evidence_ids": ["ev_0c63bfbd876e4d42c5ee"],
       "contradicting_evidence_ids": [
         "ev_00f040050ada0bacccbf",
         "ev_0d6e6ea4d6aafb96ab8d",
@@ -3497,63 +3448,42 @@
         {
           "id": "obs_1",
           "text": "设备状态 alarm，最后上报 00:30；振动 6.61 mm/s、轴承温度 74.01°C、电流 76.41A、压力 0.85MPa、流量 171.01 m3/h，全部 good。",
-          "evidence_ids": [
-            "ev_a1f88e388f664cb02c16"
-          ]
+          "evidence_ids": ["ev_a1f88e388f664cb02c16"]
         },
         {
           "id": "obs_2",
           "text": "报警 DEMO-VIB-02 high 于 00:18 触发且仍 active：3号给水泵振动超标。",
-          "evidence_ids": [
-            "ev_01fe96f7bed091980d23"
-          ]
+          "evidence_ids": ["ev_01fe96f7bed091980d23"]
         },
         {
           "id": "obs_3",
           "text": "振动 RMS 由 2.25 升至 6.44 mm/s（Δ+4.19，均值 4.35），超 3.5 mm/s 限值，30 样本无缺失、无尖峰，呈单调上升趋势。",
-          "evidence_ids": [
-            "ev_0c63bfbd876e4d42c5ee",
-            "ev_9758266eaffe4aae8cae"
-          ]
+          "evidence_ids": ["ev_0c63bfbd876e4d42c5ee", "ev_9758266eaffe4aae8cae"]
         },
         {
           "id": "obs_4",
           "text": "轴承温度由 65 升至 73.68°C（Δ+8.68），仍在 40–85°C 正常范围内，未达 85°C 报警阈值。",
-          "evidence_ids": [
-            "ev_00f040050ada0bacccbf",
-            "ev_ebedf6968909d9f32f61"
-          ]
+          "evidence_ids": ["ev_00f040050ada0bacccbf", "ev_ebedf6968909d9f32f61"]
         },
         {
           "id": "obs_5",
           "text": "电机绕组温度 70→71.92°C、电流 73.8→76.3A，均在正常范围，变化幅度小。",
-          "evidence_ids": [
-            "ev_91dc1897568df8ef433f",
-            "ev_0d6e6ea4d6aafb96ab8d"
-          ]
+          "evidence_ids": ["ev_91dc1897568df8ef433f", "ev_0d6e6ea4d6aafb96ab8d"]
         },
         {
           "id": "obs_6",
           "text": "出口压力 0.85→0.82MPa、流量 180→171.28 m3/h，均在正常范围但呈小幅下降趋势。",
-          "evidence_ids": [
-            "ev_b0af5299a1ac232bdeb0",
-            "ev_2917c3d35a870df18873"
-          ]
+          "evidence_ids": ["ev_b0af5299a1ac232bdeb0", "ev_2917c3d35a870df18873"]
         },
         {
           "id": "obs_7",
           "text": "MES 记录 00:02 负荷上调约 5%，班组注明不足以单独解释振动与温升。",
-          "evidence_ids": [
-            "ev_3132f37e1d03f772c678"
-          ]
+          "evidence_ids": ["ev_3132f37e1d03f772c678"]
         },
         {
           "id": "obs_8",
           "text": "采样 30 点无缺失、时间戳有序、工艺值正常，不符合通讯/采样数据路径故障特征。",
-          "evidence_ids": [
-            "ev_b811ccad557e06a60469",
-            "ev_0c63bfbd876e4d42c5ee"
-          ]
+          "evidence_ids": ["ev_b811ccad557e06a60469", "ev_0c63bfbd876e4d42c5ee"]
         }
       ],
       "hypotheses": [
@@ -3611,9 +3541,7 @@
           "confidence": "low",
           "status": "inconclusive",
           "rationale": "仅振动一项支持，温度、电流与负荷记录构成反证，证据不足，维持 inconclusive。",
-          "supporting_evidence_ids": [
-            "ev_0c63bfbd876e4d42c5ee"
-          ],
+          "supporting_evidence_ids": ["ev_0c63bfbd876e4d42c5ee"],
           "contradicting_evidence_ids": [
             "ev_00f040050ada0bacccbf",
             "ev_0d6e6ea4d6aafb96ab8d",
@@ -3667,10 +3595,7 @@
           "id": "chk_1",
           "kind": "diagnostic",
           "purpose": "确认振动频谱与相位特征，区分对中不良与轴承/润滑问题。",
-          "preconditions": [
-            "设备处于可测工况",
-            "具备频谱分析仪"
-          ],
+          "preconditions": ["设备处于可测工况", "具备频谱分析仪"],
           "steps": [
             "在轴承座水平/垂直/轴向采集振动频谱",
             "记录 1X/2X 分量与相位差"
@@ -3678,19 +3603,14 @@
           "expected_observation": "2X 分量与轴向振动偏高提示对中不良。",
           "risk": "low",
           "role": "report_reviewer",
-          "evidence_ids": [
-            "ev_0c63bfbd876e4d42c5ee"
-          ],
+          "evidence_ids": ["ev_0c63bfbd876e4d42c5ee"],
           "requires_human": true
         },
         {
           "id": "chk_2",
           "kind": "diagnostic",
           "purpose": "现场复核轴承温度并取样油液，评估润滑状态。",
-          "preconditions": [
-            "人工到场",
-            "停机或低负荷窗口"
-          ],
+          "preconditions": ["人工到场", "停机或低负荷窗口"],
           "steps": [
             "手持测温仪测量轴承座温度并与 SCADA 比对",
             "取润滑油样做铁谱/粘度/水分分析"
@@ -3708,14 +3628,8 @@
           "id": "chk_3",
           "kind": "diagnostic",
           "purpose": "测量联轴器对中偏差。",
-          "preconditions": [
-            "停机窗口",
-            "对中测量工具"
-          ],
-          "steps": [
-            "停机后测量联轴器径向与角向偏差",
-            "与厂家允许偏差比对"
-          ],
+          "preconditions": ["停机窗口", "对中测量工具"],
+          "steps": ["停机后测量联轴器径向与角向偏差", "与厂家允许偏差比对"],
           "expected_observation": "偏差超出允许值支持对中不良。",
           "risk": "medium",
           "role": "report_reviewer",
@@ -3729,10 +3643,7 @@
           "id": "chk_4",
           "kind": "safety",
           "purpose": "确认振动持续上升时的运行风险与降负荷/停机边界。",
-          "preconditions": [
-            "运行人员在场",
-            "报警仍 active"
-          ],
+          "preconditions": ["运行人员在场", "报警仍 active"],
           "steps": [
             "持续监视振动与轴承温度趋势",
             "若振动继续上升或温度接近 85°C，按规程降负荷或停机"
@@ -3758,10 +3669,7 @@
             "ev_2917c3d35a870df18873",
             "ev_b0af5299a1ac232bdeb0"
           ],
-          "conditions": [
-            "需停机窗口",
-            "需维修班组确认"
-          ],
+          "conditions": ["需停机窗口", "需维修班组确认"],
           "requires_human": true,
           "control_execution": "disabled"
         },
@@ -3773,10 +3681,7 @@
             "ev_00f040050ada0bacccbf",
             "ev_ebedf6968909d9f32f61"
           ],
-          "conditions": [
-            "需现场取样",
-            "需维护记录核对"
-          ],
+          "conditions": ["需现场取样", "需维护记录核对"],
           "requires_human": true,
           "control_execution": "disabled"
         },
@@ -3789,10 +3694,7 @@
             "ev_0c63bfbd876e4d42c5ee",
             "ev_00f040050ada0bacccbf"
           ],
-          "conditions": [
-            "运行人员值守",
-            "报警仍 active"
-          ],
+          "conditions": ["运行人员值守", "报警仍 active"],
           "requires_human": true,
           "control_execution": "disabled"
         },
@@ -3800,12 +3702,8 @@
           "id": "rec_4",
           "kind": "repair",
           "text": "人工审批后采集振动频谱与高频包络，排除轴承磨损。",
-          "evidence_ids": [
-            "ev_0c63bfbd876e4d42c5ee"
-          ],
-          "conditions": [
-            "具备频谱分析设备"
-          ],
+          "evidence_ids": ["ev_0c63bfbd876e4d42c5ee"],
+          "conditions": ["具备频谱分析设备"],
           "requires_human": true,
           "control_execution": "disabled"
         }
@@ -3836,10 +3734,7 @@
     "status": "awaiting_human",
     "passed": true,
     "failure_reasons": [],
-    "predicted_root_causes": [
-      "misalignment",
-      "lubrication"
-    ],
+    "predicted_root_causes": ["misalignment", "lubrication"],
     "required_tools_missing": [],
     "citation_issues": [],
     "handoff": false,

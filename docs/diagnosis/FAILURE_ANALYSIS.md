@@ -10,82 +10,82 @@
 
 ## 1. 基线数字
 
-| 指标 | full-02 |
-| --- | ---: |
-| 总通过率 | 23/50 = 0.460 |
-| false_alarm | 7/10 = 0.700 |
-| insufficient_safety | 9/10 = 0.900 |
-| mechanical_fault | 5/10 = 0.500 |
-| multi_fault | 0/10 = 0.000 |
-| sensor_anomaly | 2/10 = 0.200 |
-| multi-fault Recall / Precision | 0.20 / 0.40 |
-| counter-evidence retention | 0.826 |
-| tool selection | 0.971 |
-| handoff accuracy | 0.780 |
-| mean latency | 44.6 s |
-| model calls / total tokens | 337 / 2,736,940 |
-| model call failures | 10 |
+| 指标                           |         full-02 |
+| ------------------------------ | --------------: |
+| 总通过率                       |   23/50 = 0.460 |
+| false_alarm                    |    7/10 = 0.700 |
+| insufficient_safety            |    9/10 = 0.900 |
+| mechanical_fault               |    5/10 = 0.500 |
+| multi_fault                    |    0/10 = 0.000 |
+| sensor_anomaly                 |    2/10 = 0.200 |
+| multi-fault Recall / Precision |     0.20 / 0.40 |
+| counter-evidence retention     |           0.826 |
+| tool selection                 |           0.971 |
+| handoff accuracy               |           0.780 |
+| mean latency                   |          44.6 s |
+| model calls / total tokens     | 337 / 2,736,940 |
+| model call failures            |              10 |
 
 失败原因计数（一个案例可有多条）：
 
-| 失败原因 | 次数 |
-| --- | ---: |
-| `ROOT_CAUSE_MISMATCH` | 26 |
-| `UNNECESSARY_HANDOFF` | 11 |
-| `NO_REPORT` | 4 |
-| `EXECUTION_ERROR` | 4 |
-| `MISSING_SUPPORT` | 4 |
-| `MISSING_CONTRADICTION` | 4 |
-| `MISSING_TOOLS` | 1 |
-| `REPORT_VALIDATION_FAILED` | 1 |
+| 失败原因                   | 次数 |
+| -------------------------- | ---: |
+| `ROOT_CAUSE_MISMATCH`      |   26 |
+| `UNNECESSARY_HANDOFF`      |   11 |
+| `NO_REPORT`                |    4 |
+| `EXECUTION_ERROR`          |    4 |
+| `MISSING_SUPPORT`          |    4 |
+| `MISSING_CONTRADICTION`    |    4 |
+| `MISSING_TOOLS`            |    1 |
+| `REPORT_VALIDATION_FAILED` |    1 |
 
 ## 2. 分类口径
 
 每条失败只归入一个“首要类别”，必要时标注次要类别。类别定义：
 
-| 代码 | 类别 | 含义 |
-| --- | --- | --- |
-| T | 任务定义 / 证据标准错位 | 模型把“supported”理解成“现场已确认”，因缺少手持测温、频谱、油液、对中或报警组态记录而降级 |
-| M | 多故障 / 互斥规则 | 只输出一个主根因，或用 `multi_fault` 占位，未分别保留独立根因 |
-| Q | 采样缺口误分类 | 把 `sampling_gap` 当作“数据质量观察”，不敢作为 supported 根因 |
-| H | 阈值误报优先 | 只要触发值低于手册阈值就判 `false_alarm_threshold`，忽略并存的独立异常 |
-| S | 传感器子类型 | `sensor_range` / `sensor_stuck` / `sensor_drift` 判别错误 |
-| E | 机械判别证据不足 | 只用“振动升高”或“温度升高”单一指标，未比较温度幅度、电流、流量/压力组合 |
-| C | 反证 / 报告状态 | 反证丢失，或报告层改写已验证状态 |
-| G | 工程 / Provider | 报告截断、非法 JSON、Provider 空响应 |
-| A | 评测口径 / 场景歧义 | 计分把占位码当根因，或场景本身不可分 |
+| 代码 | 类别                    | 含义                                                                                      |
+| ---- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| T    | 任务定义 / 证据标准错位 | 模型把“supported”理解成“现场已确认”，因缺少手持测温、频谱、油液、对中或报警组态记录而降级 |
+| M    | 多故障 / 互斥规则       | 只输出一个主根因，或用 `multi_fault` 占位，未分别保留独立根因                             |
+| Q    | 采样缺口误分类          | 把 `sampling_gap` 当作“数据质量观察”，不敢作为 supported 根因                             |
+| H    | 阈值误报优先            | 只要触发值低于手册阈值就判 `false_alarm_threshold`，忽略并存的独立异常                    |
+| S    | 传感器子类型            | `sensor_range` / `sensor_stuck` / `sensor_drift` 判别错误                                 |
+| E    | 机械判别证据不足        | 只用“振动升高”或“温度升高”单一指标，未比较温度幅度、电流、流量/压力组合                   |
+| C    | 反证 / 报告状态         | 反证丢失，或报告层改写已验证状态                                                          |
+| G    | 工程 / Provider         | 报告截断、非法 JSON、Provider 空响应                                                      |
+| A    | 评测口径 / 场景歧义     | 计分把占位码当根因，或场景本身不可分                                                      |
 
 ## 3. 27 条失败总表
 
-| 案例 | 期望 → 实际 | 失败阶段 | 类别 | 直接证据 | 根因假设 | 修复位置 | 独立验证 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| FA-01 | `false_alarm_comm` → 无报告 | confirm_status | G | `data_investigator MODEL_ERROR 模型响应没有 choices[0].message.content`；3 次调用后仍空 | Provider 空响应，非推理错误 | `live-role-runner.ts` 空响应重试；`orchestrator.ts` 失败转人工 | 单测模拟空 content；live 复验 FA-01 |
-| FA-05 | `false_alarm_time` → 同码，但缺反证 | produce_report | C | `MISSING_CONTRADICTION telemetry:EQ-DEMO-001:vibration_rms` | 报告未保留 vibration_rms 反证 | `context-builder.ts` 反证 pin；`orchestrator.ts` 报告反证对账 | `counter_evidence_retained`；context/report 单测 |
-| FA-08 | `false_alarm_threshold` → `insufficient_evidence` | verify_evidence | T+H | 模型原文：“触发值 72.43°C 低于 80°C……但报警实际配置阈值及来源版本记录缺失……不能标 supported” | 把“缺配置记录”当成 supported 前提；阈值规则未区分“无其他异常” | `context-builder.ts` 结论标准 + 阈值规则 | 复验 FA-08；构造“无配置记录但阈值矛盾”单测 |
-| INS-10 | `sensor_drift` → `false_alarm_threshold` | produce_report | H+S | 温度 65.9→81.37°C 单调升，振动 2.22–2.37、电流 73.7–74.35 平稳；模型仍判阈值误报 | 温度趋势未算“其他异常”；未识别 drift | 阈值规则 + 传感器鉴别 + 异常清单 `trend` | 复验 INS-10；feature 单测 |
-| MEC-03 | `bearing_wear` → 无报告 | produce_report | G | `report_reviewer INVALID_OUTPUT ... position 6098` | 报告输出 3000 token 截断（历史问题） | `REPORT_OUTPUT_RESERVE=4500`（已修复）；targeted rerun 通过 | `targeted-budget-MEC-03.json` evaluation passed |
-| MEC-06 | `misalignment` → `insufficient_evidence` | verify_evidence | T | 模型：振动上升但“缺频谱/相位/对中记录”，故 inconclusive | 把现场确认当 supported 前提 | 结论标准 | 复验 MEC-06 |
-| MEC-07 | `misalignment` → `bearing_wear` | produce_report | E | 振动 2.11→6.17（超 4.5），电流 48.0→50.9，温度 62.1→66.0；模型判 bearing_wear | 只用振动+电流，忽略温升幅度小 | 机械鉴别规则 + 温度/振动/电流 delta 特征 | 复验 MEC-07；feature 单测 |
-| MEC-08 | `misalignment` → `insufficient_evidence` | verify_evidence | T | 模型：缺频谱/相位/对中记录 | 同 MEC-06 | 结论标准 | 复验 MEC-08 |
-| MEC-09 | `lubrication` → `bearing_wear` | produce_report | E | 温度 65.8→74.9，振动 2.29→5.39，电流 73.7→74.35 基本稳定；模型判 bearing_wear | 忽略“电流稳定”对 bearing_wear 的反证 | 机械鉴别规则要求电流组合 | 复验 MEC-09 |
-| MUL-01 | `bearing_wear+sensor_drift` → 无报告 | produce_report | G+M | 首次 `INVALID_OUTPUT ... position 1370`；targeted rerun 输出 `multi_fault:supported` | 截断已修复；随后暴露 `multi_fault` 占位 | 4500 reserve；禁止 supported `multi_fault`；eval 过滤占位码 | targeted rerun + validator/eval 单测 |
-| MUL-02 | `bearing_wear+sensor_drift` → `bearing_wear` | produce_report | M+T | 模型：`sensor_drift inconclusive`（缺手持比对），`multi_fault inconclusive`；报告只 supported bearing_wear | 多故障未分别 supported；现场确认标准 | 独立根因规则 + 结论标准 + eval 过滤 | 复验 MUL-02 |
-| MUL-03 | `bearing_wear+sensor_drift` → `bearing_wear` | produce_report | M+T | 同 MUL-02，模型只保留主根因 | 同上 | 同上 | 复验 MUL-03 |
-| MUL-04 | `bearing_wear+sensor_drift` → `insufficient_evidence` | verify_evidence | T+M | 两个假设都因缺现场确认标 inconclusive，触发 handoff | 同上 | 同上 | 复验 MUL-04 |
-| MUL-05 | `misalignment+lubrication` → `insufficient_evidence` | verify_evidence | T+M | 模型：缺频谱/对中记录 | 同上 | 同上 | 复验 MUL-05 |
-| MUL-06 | `misalignment+lubrication` → `bearing_wear` | produce_report | E+M | 振动 2.x→6.69，温度 61.8→67.8，电流升 4.07；模型判 bearing_wear | 未用温升幅度区分；未同时列 lubrication | 机械鉴别 + 独立根因 | 复验 MUL-06 |
-| MUL-07 | `bearing_wear+false_alarm_comm` → `false_alarm_comm` | produce_report | M+A+G | 首次 `INVALID_OUTPUT`；重试后只 supported false_alarm_comm；MES 有网络维护；振动升 4.61 但温度/电流平 | 漏 bearing_wear；场景温度平但 MES 文本称“温升”，存在歧义 | 独立根因 + 异常清单；场景歧义只记录，不调 prompt 迎合 | 复验；文档标注歧义 |
-| MUL-08 | `bearing_wear+false_alarm_comm` → 无报告 | produce_report | G+M+A | 首次 `INVALID_OUTPUT ... position 6188`；targeted rerun 只 `false_alarm_comm` | 截断已修复；仍漏 bearing_wear；场景歧义 | 同上 | targeted rerun + 复验 |
-| MUL-09 | `sensor_stuck+bearing_wear` → `bearing_wear` | produce_report | M | 振动/电流上升，温度恒定 72°C；模型只判 bearing_wear | 未逐项解释恒定温度；未保留 sensor_stuck | 异常清单 `constant` + 独立根因 | 复验 MUL-09 |
-| MUL-10 | `sensor_stuck+bearing_wear` → 无报告 | produce_report | C+M | 报告把 bearing_wear 从 supported 改成 inconclusive；`HYPOTHESIS_STATUS_DRIFT`；stored 为 supported + 1 条反证 | 报告状态漂移；恒定温度被当成 bearing_wear 反证，未分离为独立故障 | 报告对账 + 反证边界 + 异常清单 | orchestrator 单测 + 复验 |
-| SEN-01 | `sensor_drift` → `insufficient_evidence` | verify_evidence | T | 模型：温度升、振动/电流稳，符合 5.3，但“缺手持比对，不能 supported” | 现场确认标准 | 结论标准 | 复验 SEN-01 |
-| SEN-02 | `sensor_drift` → `insufficient_evidence` | verify_evidence | T | 同 SEN-01 | 同上 | 同上 | 复验 SEN-02 |
-| SEN-03 | `sensor_drift` → `insufficient_evidence` | verify_evidence | T | 同 SEN-01 | 同上 | 同上 | 复验 SEN-03 |
-| SEN-06 | `sensor_range` → `sensor_drift` | produce_report | S | 温度恒 250°C，振动/电流正常；模型引 5.3 判 drift | 未区分量程饱和与漂移 | 传感器鉴别 + `range_limit` | 复验 SEN-06；feature 单测 |
-| SEN-07 | `sensor_range` → `sensor_stuck` | produce_report | S | 温度恒 250°C；模型判 stuck | 同上 | 同上 | 复验 SEN-07 |
-| SEN-08 | `sampling_gap` → `insufficient_evidence` | verify_evidence | Q | 模型原文：“9 个采样点 missing……属数据质量观察，不作为根因” | Prompt 明确禁止 sampling_gap supported | 数据质量规则 | 复验 SEN-08 |
-| SEN-09 | `sampling_gap` → `false_alarm_threshold` | produce_report | Q+H | 9 个 missing；模型称“属观察”；温度 < 80 且“无其他异常” → threshold | 采样缺口被排除 + 阈值优先 | 数据质量 + 阈值规则 + `missing` | 复验 SEN-09 |
-| SEN-10 | `sampling_gap` → `false_alarm_threshold` | produce_report | Q+H | 同 SEN-09 | 同上 | 同上 | 复验 SEN-10 |
+| 案例   | 期望 → 实际                                           | 失败阶段        | 类别  | 直接证据                                                                                                      | 根因假设                                                         | 修复位置                                                       | 独立验证                                         |
+| ------ | ----------------------------------------------------- | --------------- | ----- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
+| FA-01  | `false_alarm_comm` → 无报告                           | confirm_status  | G     | `data_investigator MODEL_ERROR 模型响应没有 choices[0].message.content`；3 次调用后仍空                       | Provider 空响应，非推理错误                                      | `live-role-runner.ts` 空响应重试；`orchestrator.ts` 失败转人工 | 单测模拟空 content；live 复验 FA-01              |
+| FA-05  | `false_alarm_time` → 同码，但缺反证                   | produce_report  | C     | `MISSING_CONTRADICTION telemetry:EQ-DEMO-001:vibration_rms`                                                   | 报告未保留 vibration_rms 反证                                    | `context-builder.ts` 反证 pin；`orchestrator.ts` 报告反证对账  | `counter_evidence_retained`；context/report 单测 |
+| FA-08  | `false_alarm_threshold` → `insufficient_evidence`     | verify_evidence | T+H   | 模型原文：“触发值 72.43°C 低于 80°C……但报警实际配置阈值及来源版本记录缺失……不能标 supported”                  | 把“缺配置记录”当成 supported 前提；阈值规则未区分“无其他异常”    | `context-builder.ts` 结论标准 + 阈值规则                       | 复验 FA-08；构造“无配置记录但阈值矛盾”单测       |
+| INS-10 | `sensor_drift` → `false_alarm_threshold`              | produce_report  | H+S   | 温度 65.9→81.37°C 单调升，振动 2.22–2.37、电流 73.7–74.35 平稳；模型仍判阈值误报                              | 温度趋势未算“其他异常”；未识别 drift                             | 阈值规则 + 传感器鉴别 + 异常清单 `trend`                       | 复验 INS-10；feature 单测                        |
+| MEC-03 | `bearing_wear` → 无报告                               | produce_report  | G     | `report_reviewer INVALID_OUTPUT ... position 6098`                                                            | 报告输出 3000 token 截断（历史问题）                             | `REPORT_OUTPUT_RESERVE=4500`（已修复）；targeted rerun 通过    | `targeted-budget-MEC-03.json` evaluation passed  |
+| MEC-06 | `misalignment` → `insufficient_evidence`              | verify_evidence | T     | 模型：振动上升但“缺频谱/相位/对中记录”，故 inconclusive                                                       | 把现场确认当 supported 前提                                      | 结论标准                                                       | 复验 MEC-06                                      |
+| MEC-07 | `misalignment` → `bearing_wear`                       | produce_report  | E     | 振动 2.11→6.17（超 4.5），电流 48.0→50.9，温度 62.1→66.0；模型判 bearing_wear                                 | 只用振动+电流，忽略温升幅度小                                    | 机械鉴别规则 + 温度/振动/电流 delta 特征                       | 复验 MEC-07；feature 单测                        |
+| MEC-08 | `misalignment` → `insufficient_evidence`              | verify_evidence | T     | 模型：缺频谱/相位/对中记录                                                                                    | 同 MEC-06                                                        | 结论标准                                                       | 复验 MEC-08                                      |
+| MEC-09 | `lubrication` → `bearing_wear`                        | produce_report  | E     | 温度 65.8→74.9，振动 2.29→5.39，电流 73.7→74.35 基本稳定；模型判 bearing_wear                                 | 忽略“电流稳定”对 bearing_wear 的反证                             | 机械鉴别规则要求电流组合                                       | 复验 MEC-09                                      |
+| MUL-01 | `bearing_wear+sensor_drift` → 无报告                  | produce_report  | G+M   | 首次 `INVALID_OUTPUT ... position 1370`；targeted rerun 输出 `multi_fault:supported`                          | 截断已修复；随后暴露 `multi_fault` 占位                          | 4500 reserve；禁止 supported `multi_fault`；eval 过滤占位码    | targeted rerun + validator/eval 单测             |
+| MUL-02 | `bearing_wear+sensor_drift` → `bearing_wear`          | produce_report  | M+T   | 模型：`sensor_drift inconclusive`（缺手持比对），`multi_fault inconclusive`；报告只 supported bearing_wear    | 多故障未分别 supported；现场确认标准                             | 独立根因规则 + 结论标准 + eval 过滤                            | 复验 MUL-02                                      |
+| MUL-03 | `bearing_wear+sensor_drift` → `bearing_wear`          | produce_report  | M+T   | 同 MUL-02，模型只保留主根因                                                                                   | 同上                                                             | 同上                                                           | 复验 MUL-03                                      |
+| MUL-04 | `bearing_wear+sensor_drift` → `insufficient_evidence` | verify_evidence | T+M   | 两个假设都因缺现场确认标 inconclusive，触发 handoff                                                           | 同上                                                             | 同上                                                           | 复验 MUL-04                                      |
+| MUL-05 | `misalignment+lubrication` → `insufficient_evidence`  | verify_evidence | T+M   | 模型：缺频谱/对中记录                                                                                         | 同上                                                             | 同上                                                           | 复验 MUL-05                                      |
+| MUL-06 | `misalignment+lubrication` → `bearing_wear`           | produce_report  | E+M   | 振动 2.x→6.69，温度 61.8→67.8，电流升 4.07；模型判 bearing_wear                                               | 未用温升幅度区分；未同时列 lubrication                           | 机械鉴别 + 独立根因                                            | 复验 MUL-06                                      |
+| MUL-07 | `bearing_wear+false_alarm_comm` → `false_alarm_comm`  | produce_report  | M+A+G | 首次 `INVALID_OUTPUT`；重试后只 supported false_alarm_comm；MES 有网络维护；振动升 4.61 但温度/电流平         | 漏 bearing_wear；场景温度平但 MES 文本称“温升”，存在歧义         | 独立根因 + 异常清单；场景歧义只记录，不调 prompt 迎合          | 复验；文档标注歧义                               |
+| MUL-08 | `bearing_wear+false_alarm_comm` → 无报告              | produce_report  | G+M+A | 首次 `INVALID_OUTPUT ... position 6188`；targeted rerun 只 `false_alarm_comm`                                 | 截断已修复；仍漏 bearing_wear；场景歧义                          | 同上                                                           | targeted rerun + 复验                            |
+| MUL-09 | `sensor_stuck+bearing_wear` → `bearing_wear`          | produce_report  | M     | 振动/电流上升，温度恒定 72°C；模型只判 bearing_wear                                                           | 未逐项解释恒定温度；未保留 sensor_stuck                          | 异常清单 `constant` + 独立根因                                 | 复验 MUL-09                                      |
+| MUL-10 | `sensor_stuck+bearing_wear` → 无报告                  | produce_report  | C+M   | 报告把 bearing_wear 从 supported 改成 inconclusive；`HYPOTHESIS_STATUS_DRIFT`；stored 为 supported + 1 条反证 | 报告状态漂移；恒定温度被当成 bearing_wear 反证，未分离为独立故障 | 报告对账 + 反证边界 + 异常清单                                 | orchestrator 单测 + 复验                         |
+| SEN-01 | `sensor_drift` → `insufficient_evidence`              | verify_evidence | T     | 模型：温度升、振动/电流稳，符合 5.3，但“缺手持比对，不能 supported”                                           | 现场确认标准                                                     | 结论标准                                                       | 复验 SEN-01                                      |
+| SEN-02 | `sensor_drift` → `insufficient_evidence`              | verify_evidence | T     | 同 SEN-01                                                                                                     | 同上                                                             | 同上                                                           | 复验 SEN-02                                      |
+| SEN-03 | `sensor_drift` → `insufficient_evidence`              | verify_evidence | T     | 同 SEN-01                                                                                                     | 同上                                                             | 同上                                                           | 复验 SEN-03                                      |
+| SEN-06 | `sensor_range` → `sensor_drift`                       | produce_report  | S     | 温度恒 250°C，振动/电流正常；模型引 5.3 判 drift                                                              | 未区分量程饱和与漂移                                             | 传感器鉴别 + `range_limit`                                     | 复验 SEN-06；feature 单测                        |
+| SEN-07 | `sensor_range` → `sensor_stuck`                       | produce_report  | S     | 温度恒 250°C；模型判 stuck                                                                                    | 同上                                                             | 同上                                                           | 复验 SEN-07                                      |
+| SEN-08 | `sampling_gap` → `insufficient_evidence`              | verify_evidence | Q     | 模型原文：“9 个采样点 missing……属数据质量观察，不作为根因”                                                    | Prompt 明确禁止 sampling_gap supported                           | 数据质量规则                                                   | 复验 SEN-08                                      |
+| SEN-09 | `sampling_gap` → `false_alarm_threshold`              | produce_report  | Q+H   | 9 个 missing；模型称“属观察”；温度 < 80 且“无其他异常” → threshold                                            | 采样缺口被排除 + 阈值优先                                        | 数据质量 + 阈值规则 + `missing`                                | 复验 SEN-09                                      |
+| SEN-10 | `sampling_gap` → `false_alarm_threshold`              | produce_report  | Q+H   | 同 SEN-09                                                                                                     | 同上                                                             | 同上                                                           | 复验 SEN-10                                      |
 
 ## 4. 分类详述
 
@@ -128,6 +128,7 @@
 supported 根因。这说明 `multi_fault` 被模型当成“两个故障”的合法替代，而评测要求具体根因码。
 
 修复：
+
 - 互斥只适用于“同一异常现象的竞争解释”；不同测点/不同机理的独立根因可同时 supported。
 - 禁止用 `multi_fault` 作为 supported 假设根因码；报告校验新增 `MULTI_FAULT_PLACEHOLDER`。
 - eval 的 `supportedCodes` 过滤 `multi_fault` 占位码，以及非期望的 `insufficient_evidence` /
@@ -156,7 +157,7 @@ SEN-09 模型原文完全照做：“00:08–00:16 共 9 个采样点标记 miss
 
 旧 Prompt 的优先级规则是：
 
-> 4) 报警仍 active 且触发值低于手册阈值、无其他异常 → false_alarm_threshold。
+> 4. 报警仍 active 且触发值低于手册阈值、无其他异常 → false_alarm_threshold。
 
 模型把“无其他异常”理解成“没有别的报警”，而不是“没有别的测点异常”。INS-10 中温度
 65.9→81.37°C 单调上升，模型仍写“振动、电流、压力、流量均正常，排除机械与数据路径因素”，
@@ -210,6 +211,7 @@ unique、尖峰、缺失；Prompt 增加 bearing_wear / misalignment / lubricati
 不是 bearing_wear 的反证。
 
 修复：
+
 - `deriveStatus` 对声明 supported 但仍有反证、或声明 contradicted 但无反证的假设做一致性归一化。
 - 报告层 `reconcileReportHypotheses` 以假设库为准恢复 status / 支持证据 / 反证，并补回被删掉的
   已验证假设；纠正写入 `report.reconciled` 事件，不静默修改。
@@ -224,11 +226,11 @@ MUL-07 / MUL-08（场景歧义）、MUL-01 / MUL-02（占位码计分）。
 约 3,000 token 处被截断，JSON 在 position 1370–6188 处非法；MUL-07 第一次尝试也非法、重试成功。
 Phase 2 已通过 `REPORT_OUTPUT_RESERVE = 4_500` 为报告预留输出额度。targeted rerun 结果：
 
-| 案例 | 截断是否消失 | 报告是否有效 | 根因是否修复 |
-| --- | --- | --- | --- |
-| MEC-03 | 是 | 是 | 是（bearing_wear） |
-| MUL-01 | 是 | 是 | 否（输出 `multi_fault:supported`，暴露占位码问题） |
-| MUL-08 | 是 | 是 | 否（只输出 false_alarm_comm，漏 bearing_wear） |
+| 案例   | 截断是否消失 | 报告是否有效 | 根因是否修复                                       |
+| ------ | ------------ | ------------ | -------------------------------------------------- |
+| MEC-03 | 是           | 是           | 是（bearing_wear）                                 |
+| MUL-01 | 是           | 是           | 否（输出 `multi_fault:supported`，暴露占位码问题） |
+| MUL-08 | 是           | 是           | 否（只输出 false_alarm_comm，漏 bearing_wear）     |
 
 因此“报告截断”应作为已修复的工程问题单独记录，不能混入“模型多故障推理失败”。MUL-01 的
 targeted rerun 反而证明：截断修好后，真正的多故障/占位码问题才暴露出来。
@@ -252,17 +254,17 @@ MUL-04/05 的 `insufficient_evidence` 也会参与集合比较。已改为：`mu
 
 27 条失败的归因分布（按首要类别）：
 
-| 类别 | 数量 | 说明 |
-| --- | ---: | --- |
-| T 任务定义 / 证据标准 | 10 | Prompt 语义与评测定义冲突，可用规则修复 |
-| M 多故障 / 互斥 | 8 | 规则设计错误，可用规则修复 |
-| Q 采样缺口 | 3 | Prompt 明确写反，可用规则修复 |
-| H 阈值优先 | 6（含交叉） | 规则缺少“其他独立异常”约束 |
-| S 传感器子类型 | 3 | 缺少子类型判别 |
-| E 机械判别 | 3 | 上下文特征不足 + 规则不足 |
-| C 反证 / 报告状态 | 2 | 存储/报告一致性缺陷 |
-| G 工程 / Provider | 5（含交叉） | 截断已修复；Provider 空响应非推理 |
-| A 评测 / 场景 | 3（含交叉） | 计分口径 + 场景歧义 |
+| 类别                  |        数量 | 说明                                    |
+| --------------------- | ----------: | --------------------------------------- |
+| T 任务定义 / 证据标准 |          10 | Prompt 语义与评测定义冲突，可用规则修复 |
+| M 多故障 / 互斥       |           8 | 规则设计错误，可用规则修复              |
+| Q 采样缺口            |           3 | Prompt 明确写反，可用规则修复           |
+| H 阈值优先            | 6（含交叉） | 规则缺少“其他独立异常”约束              |
+| S 传感器子类型        |           3 | 缺少子类型判别                          |
+| E 机械判别            |           3 | 上下文特征不足 + 规则不足               |
+| C 反证 / 报告状态     |           2 | 存储/报告一致性缺陷                     |
+| G 工程 / Provider     | 5（含交叉） | 截断已修复；Provider 空响应非推理       |
+| A 评测 / 场景         | 3（含交叉） | 计分口径 + 场景歧义                     |
 
 结论：至少 5 条涉及工程/Provider/评测口径，2 条场景本身可分辨性不足；不能把 27 条全部
 归因于“模型推理差”或“Prompt 不好”。真正的模型推理错误主要集中在机械判别（E）和部分
@@ -270,13 +272,13 @@ MUL-04/05 的 `insufficient_evidence` 也会参与集合比较。已改为：`mu
 
 ## 6. 修复后的独立验证方法
 
-| 修复 | 离线验证 | 真实模型验证 |
-| --- | --- | --- |
+| 修复                                                      | 离线验证                                                                                                      | 真实模型验证                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | 结论标准 / 独立根因 / 数据质量 / 阈值 / 传感器 / 机械鉴别 | `tests/diagnosis/context-builder.test.ts`、`analysis-features.test.ts` 断言特征与规则文本；Fixture Eval 50/50 | Phase 3 pilot：2 机械 + 2 传感器 + 2 多故障 + 1 反证 + 1 单故障负例 |
-| 异常清单 / 动态复核 | `deriveTelemetryFeatures` / `deriveAnomalyLedger` 单测；orchestrator 复核路径 | 观察 pilot 的 model_calls / tokens / latency 与是否新增第二轮 |
-| 报告状态对账 | `orchestrator.test.ts` 的 `ReportStatusDriftRunner` 用例；`report-validator.test.ts` | 复验 MUL-10 / MUL-01 |
-| 占位码计分 | `eval-scorer.test.ts` 三个用例 | 复验 MUL-01 / MUL-02 |
-| 报告截断 | targeted rerun 已有证据 | 不再重复付费验证，保留 `targeted-budget-*.json` |
+| 异常清单 / 动态复核                                       | `deriveTelemetryFeatures` / `deriveAnomalyLedger` 单测；orchestrator 复核路径                                 | 观察 pilot 的 model_calls / tokens / latency 与是否新增第二轮       |
+| 报告状态对账                                              | `orchestrator.test.ts` 的 `ReportStatusDriftRunner` 用例；`report-validator.test.ts`                          | 复验 MUL-10 / MUL-01                                                |
+| 占位码计分                                                | `eval-scorer.test.ts` 三个用例                                                                                | 复验 MUL-01 / MUL-02                                                |
+| 报告截断                                                  | targeted rerun 已有证据                                                                                       | 不再重复付费验证，保留 `targeted-budget-*.json`                     |
 
 ## 7. 未解决与风险
 
@@ -304,10 +306,10 @@ MUL-04/05 的 `insufficient_evidence` 也会参与集合比较。已改为：`mu
 
 首轮 10 例复验的前两例在 `report_reviewer` 失败：
 
-| 用例 | 第一次输出 | 修复调用 | 失败分类 |
-| --- | --- | --- | --- |
+| 用例               | 第一次输出                                                                                             | 修复调用                                                   | 失败分类               |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ---------------------- |
 | `phase3-mec-align` | Schema 拒绝 `report.hypotheses.*: Unrecognized key: "status_note"`（5,883 字符 / 2,775 output tokens） | 非法 JSON，position 6230 截断（6,264 字符 / 2,929 tokens） | S 报告 Schema / G 工程 |
-| `phase3-mec-lube` | 同一 `status_note` 额外字段 | 同一 Schema 错误 | S 报告 Schema |
+| `phase3-mec-lube`  | 同一 `status_note` 额外字段                                                                            | 同一 Schema 错误                                           | S 报告 Schema          |
 
 诊断结论本身已经正确（misalignment / lubrication），失败发生在报告序列化层。处理：
 

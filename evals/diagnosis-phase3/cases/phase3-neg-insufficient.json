@@ -13,7 +13,5 @@
   },
   "source_snapshot": "phase3-neg-insufficient",
   "clock": "2026-12-12T00:30:00.000Z",
-  "fault_injections": [
-    "telemetry_unavailable"
-  ]
+  "fault_injections": ["telemetry_unavailable"]
 }

@@ -14,29 +14,19 @@
     },
     "source_snapshot": "phase3-neg-single-sensor",
     "clock": "2026-12-11T00:30:00.000Z",
-    "fault_injections": [
-      "sensor_drift"
-    ]
+    "fault_injections": ["sensor_drift"]
   },
   "gold": {
     "case_id": "phase3-neg-single-sensor",
     "category": "sensor_anomaly",
     "split": "holdout",
-    "expected_root_causes": [
-      "sensor_drift"
-    ],
+    "expected_root_causes": ["sensor_drift"],
     "must_handoff": false,
-    "required_tool_families": [
-      "equipment_query"
-    ],
+    "required_tool_families": ["equipment_query"],
     "forbidden_tool_families": [],
-    "required_support": [
-      "telemetry:EQ-DEMO-003:bearing_temperature"
-    ],
+    "required_support": ["telemetry:EQ-DEMO-003:bearing_temperature"],
     "required_contradictions": [],
-    "citation_constraints": [
-      "manual_model:NP-300"
-    ],
+    "citation_constraints": ["manual_model:NP-300"],
     "control_intent": false,
     "force_repeat": false
   },
@@ -683,12 +673,7 @@
           "false_alarm_threshold",
           "bearing_wear"
         ],
-        "statuses": [
-          "proposed",
-          "proposed",
-          "proposed",
-          "contradicted"
-        ]
+        "statuses": ["proposed", "proposed", "proposed", "contradicted"]
       },
       "schema_version": "1"
     },
@@ -1567,9 +1552,7 @@
         "kind": "db",
         "ref": "status/EQ-DEMO-003"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "status_snapshot",
         "equipment_id": "EQ-DEMO-003",
@@ -1639,9 +1622,7 @@
         "kind": "db",
         "ref": "alarms/ALM-phase3-neg-single-sensor"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "alarm",
         "alarm_event_id": "ALM-phase3-neg-single-sensor",
@@ -1670,9 +1651,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/bearing_temperature"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -1856,9 +1835,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/vibration_rms"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2042,9 +2019,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/motor_winding_temperature"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2228,9 +2203,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/motor_current"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2414,9 +2387,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/flow_rate"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2600,9 +2571,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-003/discharge_pressure"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-003",
@@ -2787,9 +2756,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 2
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2823,9 +2790,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 4
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2859,9 +2824,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np300-v1.pdf",
         "page": 2
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP300-V1",
@@ -2894,9 +2857,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-003"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-003",
@@ -2925,9 +2886,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-006"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-006",
@@ -2956,9 +2915,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-008"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-008",
@@ -3046,17 +3003,12 @@
       "status": "contradicted",
       "confidence": "low",
       "rationale": "振动RMS与电机电流全程平稳无上升趋势，直接反驳轴承磨损机理。",
-      "supporting_evidence_ids": [
-        "ev_1efc78bec4ebb6621e5c"
-      ],
+      "supporting_evidence_ids": ["ev_1efc78bec4ebb6621e5c"],
       "contradicting_evidence_ids": [
         "ev_984da30bed888c0c7989",
         "ev_00753b13254f54bc5298"
       ],
-      "missing_evidence": [
-        "振动频谱分析",
-        "轴承检查记录"
-      ],
+      "missing_evidence": ["振动频谱分析", "轴承检查记录"],
       "next_check": null
     }
   ],
@@ -3263,30 +3215,22 @@
         {
           "id": "obs-1",
           "text": "设备 EQ-DEMO-003 状态 alarm，最后上报 2026-12-11T00:30:00Z；各测点质量均为 good。",
-          "evidence_ids": [
-            "ev_9b8395b198b9c4947777"
-          ]
+          "evidence_ids": ["ev_9b8395b198b9c4947777"]
         },
         {
           "id": "obs-2",
           "text": "报警 DEMO-BRG-01（high）active，触发于 2026-12-11T00:18:00Z，信息为“3号给水泵轴承温度高”，未清除。",
-          "evidence_ids": [
-            "ev_4864a00596b125756a81"
-          ]
+          "evidence_ids": ["ev_4864a00596b125756a81"]
         },
         {
           "id": "obs-3",
           "text": "bearing_temperature 30 分钟由 66°C 单调缓升至 75.65°C（Δ+9.65），无尖峰、无缺失，标记显著趋势；全程低于正常上限 85°C。",
-          "evidence_ids": [
-            "ev_1efc78bec4ebb6621e5c"
-          ]
+          "evidence_ids": ["ev_1efc78bec4ebb6621e5c"]
         },
         {
           "id": "obs-4",
           "text": "vibration_rms 稳定在 2.29–2.36 mm/s（Δ+0.03），远低于 3.5 mm/s 上限，无上升趋势。",
-          "evidence_ids": [
-            "ev_984da30bed888c0c7989"
-          ]
+          "evidence_ids": ["ev_984da30bed888c0c7989"]
         },
         {
           "id": "obs-5",
@@ -3300,23 +3244,17 @@
         {
           "id": "obs-6",
           "text": "motor_winding_temperature 70–70.29°C 平稳，无过热迹象。",
-          "evidence_ids": [
-            "ev_bc14e7397f0207a8f76d"
-          ]
+          "evidence_ids": ["ev_bc14e7397f0207a8f76d"]
         },
         {
           "id": "obs-7",
           "text": "手册 DOC-NP300-V1 v1 第 2 页 5.2 规定 NP-300 轴承温度报警阈值为 85°C。",
-          "evidence_ids": [
-            "ev_79925d9ce5da1a9ab3bf"
-          ]
+          "evidence_ids": ["ev_79925d9ce5da1a9ab3bf"]
         },
         {
           "id": "obs-8",
           "text": "历史案例 CASE-H-006 记录 NP-300 因旧阈值配置导致误报，根因码 false_alarm_threshold。",
-          "evidence_ids": [
-            "ev_8a93015ea1113abeedfa"
-          ]
+          "evidence_ids": ["ev_8a93015ea1113abeedfa"]
         }
       ],
       "hypotheses": [
@@ -3394,17 +3332,12 @@
           "confidence": "low",
           "status": "contradicted",
           "rationale": "振动 2.29–2.36 mm/s 与电流 73.99–74.11 A 全程平稳，与轴承磨损形态不符。",
-          "supporting_evidence_ids": [
-            "ev_1efc78bec4ebb6621e5c"
-          ],
+          "supporting_evidence_ids": ["ev_1efc78bec4ebb6621e5c"],
           "contradicting_evidence_ids": [
             "ev_984da30bed888c0c7989",
             "ev_00753b13254f54bc5298"
           ],
-          "missing_evidence": [
-            "振动频谱分析",
-            "轴承检查记录"
-          ],
+          "missing_evidence": ["振动频谱分析", "轴承检查记录"],
           "next_check": null,
           "id": "hyp_88b1fb1e1b99400297ab"
         }
@@ -3414,9 +3347,7 @@
           "id": "chk-1",
           "kind": "diagnostic",
           "purpose": "核对报警组态中轴承温度报警阈值的实际数值与版本",
-          "preconditions": [
-            "具备报警组态只读查看权限"
-          ],
+          "preconditions": ["具备报警组态只读查看权限"],
           "steps": [
             "只读导出 DEMO-BRG-01 报警阈值配置",
             "与手册 DOC-NP300-V1 85°C 阈值比对",
@@ -3435,10 +3366,7 @@
           "id": "chk-2",
           "kind": "diagnostic",
           "purpose": "独立验证轴承温度读数真实性",
-          "preconditions": [
-            "设备可安全接近测温点",
-            "具备手持测温仪"
-          ],
+          "preconditions": ["设备可安全接近测温点", "具备手持测温仪"],
           "steps": [
             "在轴承座同位置手持测温",
             "与 SCADA bearing_temperature 同时刻读数比对",
@@ -3447,28 +3375,19 @@
           "expected_observation": "偏差在合理范围内则支持真实温升，偏差大则提示传感器漂移",
           "risk": "low",
           "role": "report_reviewer",
-          "evidence_ids": [
-            "ev_1efc78bec4ebb6621e5c"
-          ],
+          "evidence_ids": ["ev_1efc78bec4ebb6621e5c"],
           "requires_human": true
         },
         {
           "id": "chk-3",
           "kind": "diagnostic",
           "purpose": "排查润滑状态",
-          "preconditions": [
-            "具备取样条件与油液分析渠道"
-          ],
-          "steps": [
-            "取润滑油样做粘度/水分/铁谱分析",
-            "核对加注与换油维护记录"
-          ],
+          "preconditions": ["具备取样条件与油液分析渠道"],
+          "steps": ["取润滑油样做粘度/水分/铁谱分析", "核对加注与换油维护记录"],
           "expected_observation": "油液指标正常则降低润滑不良可能性",
           "risk": "low",
           "role": "report_reviewer",
-          "evidence_ids": [
-            "ev_1efc78bec4ebb6621e5c"
-          ],
+          "evidence_ids": ["ev_1efc78bec4ebb6621e5c"],
           "requires_human": true
         }
       ],
@@ -3482,10 +3401,7 @@
             "ev_79925d9ce5da1a9ab3bf",
             "ev_8a93015ea1113abeedfa"
           ],
-          "conditions": [
-            "报警组态阈值记录已核对",
-            "适用手册版本已确认"
-          ],
+          "conditions": ["报警组态阈值记录已核对", "适用手册版本已确认"],
           "requires_human": true,
           "control_execution": "disabled"
         },
@@ -3493,12 +3409,8 @@
           "id": "rec-2",
           "kind": "repair",
           "text": "安排轴承温度独立测温比对与传感器校准核查，排除测点漂移。",
-          "evidence_ids": [
-            "ev_1efc78bec4ebb6621e5c"
-          ],
-          "conditions": [
-            "设备处于可安全接近状态"
-          ],
+          "evidence_ids": ["ev_1efc78bec4ebb6621e5c"],
+          "conditions": ["设备处于可安全接近状态"],
           "requires_human": true,
           "control_execution": "disabled"
         },
@@ -3510,9 +3422,7 @@
             "ev_1efc78bec4ebb6621e5c",
             "ev_984da30bed888c0c7989"
           ],
-          "conditions": [
-            "监视窗口延续"
-          ],
+          "conditions": ["监视窗口延续"],
           "requires_human": true,
           "control_execution": "disabled"
         }
@@ -3546,9 +3456,7 @@
     "failure_reasons": [
       "ROOT_CAUSE_MISMATCH expected=sensor_drift actual=false_alarm_threshold"
     ],
-    "predicted_root_causes": [
-      "false_alarm_threshold"
-    ],
+    "predicted_root_causes": ["false_alarm_threshold"],
     "required_tools_missing": [],
     "citation_issues": [],
     "handoff": false,

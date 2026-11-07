@@ -63,7 +63,7 @@
   证据标准、多故障/互斥、采样缺口、阈值优先、传感器子类型、机械判别、反证/报告状态、
   工程/Provider 与评测口径；并单独记录已修复的报告截断问题。
 - 该分析不读取 gold 生成规则，也不把 `case_id` / `expected_root_causes` 注入模型上下文。
-- Phase 3 独立 10 例的真实模型复验 Trace 与最终 `NOT_RUN` 记录见
+- Phase 3 开发集 10 例的真实模型复验 Trace 与最终 `NOT_RUN` 记录见
   `docs/diagnosis/artifacts/phase3-live/`；`full-2` 是最终三项修复前的完整尝试，
   不能当作最终代码通过率。
 

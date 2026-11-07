@@ -60,10 +60,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "misalignment",
-        "lubrication"
-      ],
+      "predicted_root_causes": ["misalignment", "lubrication"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,

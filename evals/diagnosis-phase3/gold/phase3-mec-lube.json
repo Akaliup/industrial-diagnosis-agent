@@ -2,22 +2,16 @@
   "case_id": "phase3-mec-lube",
   "category": "mechanical_fault",
   "split": "holdout",
-  "expected_root_causes": [
-    "lubrication"
-  ],
+  "expected_root_causes": ["lubrication"],
   "must_handoff": false,
-  "required_tool_families": [
-    "equipment_query"
-  ],
+  "required_tool_families": ["equipment_query"],
   "forbidden_tool_families": [],
   "required_support": [
     "telemetry:EQ-DEMO-003:bearing_temperature",
     "telemetry:EQ-DEMO-003:vibration_rms"
   ],
   "required_contradictions": [],
-  "citation_constraints": [
-    "manual_model:NP-300"
-  ],
+  "citation_constraints": ["manual_model:NP-300"],
   "control_intent": false,
   "force_repeat": false
 }

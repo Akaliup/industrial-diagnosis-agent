@@ -14,31 +14,22 @@
     },
     "source_snapshot": "phase3-mul-bearing-drift",
     "clock": "2026-12-03T00:30:00.000Z",
-    "fault_injections": [
-      "multi_bearing_drift"
-    ]
+    "fault_injections": ["multi_bearing_drift"]
   },
   "gold": {
     "case_id": "phase3-mul-bearing-drift",
     "category": "multi_fault",
     "split": "holdout",
-    "expected_root_causes": [
-      "bearing_wear",
-      "sensor_drift"
-    ],
+    "expected_root_causes": ["bearing_wear", "sensor_drift"],
     "must_handoff": false,
-    "required_tool_families": [
-      "equipment_query"
-    ],
+    "required_tool_families": ["equipment_query"],
     "forbidden_tool_families": [],
     "required_support": [
       "telemetry:EQ-DEMO-002:vibration_rms",
       "telemetry:EQ-DEMO-002:bearing_temperature"
     ],
     "required_contradictions": [],
-    "citation_constraints": [
-      "manual_model:NP-200"
-    ],
+    "citation_constraints": ["manual_model:NP-200"],
     "control_intent": false,
     "force_repeat": false
   },
@@ -86,9 +77,7 @@
     "checkpoint": {
       "last_role": "hypothesis_verifier",
       "last_model": "deepseek-flash",
-      "new_evidence_ids": [
-        "ev_55d53fb0481f3a3e953b"
-      ],
+      "new_evidence_ids": ["ev_55d53fb0481f3a3e953b"],
       "verify_needs_final_call": true,
       "handoff_reason": "模型输出预算不足：为报告生成保留额度后无法继续当前阶段"
     },
@@ -1598,9 +1587,7 @@
         "kind": "db",
         "ref": "status/EQ-DEMO-002"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "status_snapshot",
         "equipment_id": "EQ-DEMO-002",
@@ -1663,9 +1650,7 @@
         "kind": "db",
         "ref": "alarms/ALM-phase3-mul-bearing-drift"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "alarm",
         "alarm_event_id": "ALM-phase3-mul-bearing-drift",
@@ -1694,9 +1679,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-002/bearing_temperature"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-002",
@@ -1880,9 +1863,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-002/vibration_rms"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-002",
@@ -2066,9 +2047,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-002/discharge_pressure"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-002",
@@ -2252,9 +2231,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-002/flow_rate"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-002",
@@ -2438,9 +2415,7 @@
         "kind": "db",
         "ref": "telemetry/EQ-DEMO-002/motor_current"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "telemetry_series",
         "equipment_id": "EQ-DEMO-002",
@@ -2625,9 +2600,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
         "page": 2
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP200-V2",
@@ -2661,9 +2634,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
         "page": 3
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP200-V2",
@@ -2697,9 +2668,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
         "page": 4
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP200-V2",
@@ -2733,9 +2702,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
         "page": 5
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP200-V2",
@@ -2769,9 +2736,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
         "page": 1
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP200-V2",
@@ -2804,9 +2769,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-010"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-010",
@@ -2835,9 +2798,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-002"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-002",
@@ -2866,9 +2827,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-001"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-001",
@@ -2897,9 +2856,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-004"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-004",
@@ -2928,9 +2885,7 @@
         "kind": "db",
         "ref": "cases/CASE-H-005"
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "case_record",
         "case_id": "CASE-H-005",
@@ -2960,9 +2915,7 @@
         "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
         "page": 3
       },
-      "quality_flags": [
-        "good"
-      ],
+      "quality_flags": ["good"],
       "payload": {
         "kind": "manual_chunk",
         "document_id": "DOC-NP200-V2",
@@ -3042,13 +2995,8 @@
         "ev_226506d90eb5bef1b34e",
         "ev_674fc8e5ecb2c5e4c4cd"
       ],
-      "contradicting_evidence_ids": [
-        "ev_dd830594ec72a2155680"
-      ],
-      "missing_evidence": [
-        "联轴器激光对中记录",
-        "振动频谱1X/2X分量"
-      ],
+      "contradicting_evidence_ids": ["ev_dd830594ec72a2155680"],
+      "missing_evidence": ["联轴器激光对中记录", "振动频谱1X/2X分量"],
       "next_check": "查对中记录与频谱1X/2X分量"
     },
     {
@@ -3063,13 +3011,8 @@
         "ev_6a780467599dd3ffea22",
         "ev_6cf5cb3659bf5f57a584"
       ],
-      "contradicting_evidence_ids": [
-        "ev_dd830594ec72a2155680"
-      ],
-      "missing_evidence": [
-        "润滑脂/油位与油质检查记录",
-        "油液分析"
-      ],
+      "contradicting_evidence_ids": ["ev_dd830594ec72a2155680"],
+      "missing_evidence": ["润滑脂/油位与油质检查记录", "油液分析"],
       "next_check": "检查润滑脂状态与油液分析"
     },
     {
@@ -3089,9 +3032,7 @@
         "ev_6a780467599dd3ffea22",
         "ev_dd830594ec72a2155680"
       ],
-      "missing_evidence": [
-        "报警组态阈值设置记录"
-      ],
+      "missing_evidence": ["报警组态阈值设置记录"],
       "next_check": "核对报警组态阈值与触发逻辑"
     }
   ],
@@ -3265,51 +3206,37 @@
       "data_mode": "mock",
       "model_mode": "live",
       "as_of": "2026-11-07T22:58:46.023Z",
-      "limitations": [
-        "当前为 Mock 模拟数据模式，不能作为现场维修依据。"
-      ],
+      "limitations": ["当前为 Mock 模拟数据模式，不能作为现场维修依据。"],
       "observations": [
         {
           "id": "obs_fallback_1",
           "text": "已入库证据 status_snapshot。",
-          "evidence_ids": [
-            "ev_0d405136ba9a3d9891b1"
-          ]
+          "evidence_ids": ["ev_0d405136ba9a3d9891b1"]
         },
         {
           "id": "obs_fallback_2",
           "text": "报警 DEMO-BRG-01：2号循环泵轴承温度高。",
-          "evidence_ids": [
-            "ev_6988b999257b90acf4b0"
-          ]
+          "evidence_ids": ["ev_6988b999257b90acf4b0"]
         },
         {
           "id": "obs_fallback_3",
           "text": "bearing_temperature 时间序列（30 点，缺失 0）。",
-          "evidence_ids": [
-            "ev_6a780467599dd3ffea22"
-          ]
+          "evidence_ids": ["ev_6a780467599dd3ffea22"]
         },
         {
           "id": "obs_fallback_4",
           "text": "vibration_rms 时间序列（30 点，缺失 0）。",
-          "evidence_ids": [
-            "ev_6cf5cb3659bf5f57a584"
-          ]
+          "evidence_ids": ["ev_6cf5cb3659bf5f57a584"]
         },
         {
           "id": "obs_fallback_5",
           "text": "discharge_pressure 时间序列（30 点，缺失 0）。",
-          "evidence_ids": [
-            "ev_674fc8e5ecb2c5e4c4cd"
-          ]
+          "evidence_ids": ["ev_674fc8e5ecb2c5e4c4cd"]
         },
         {
           "id": "obs_fallback_6",
           "text": "flow_rate 时间序列（30 点，缺失 0）。",
-          "evidence_ids": [
-            "ev_226506d90eb5bef1b34e"
-          ]
+          "evidence_ids": ["ev_226506d90eb5bef1b34e"]
         }
       ],
       "hypotheses": [
@@ -3375,13 +3302,8 @@
             "ev_226506d90eb5bef1b34e",
             "ev_674fc8e5ecb2c5e4c4cd"
           ],
-          "contradicting_evidence_ids": [
-            "ev_dd830594ec72a2155680"
-          ],
-          "missing_evidence": [
-            "联轴器激光对中记录",
-            "振动频谱1X/2X分量"
-          ],
+          "contradicting_evidence_ids": ["ev_dd830594ec72a2155680"],
+          "missing_evidence": ["联轴器激光对中记录", "振动频谱1X/2X分量"],
           "next_check": "查对中记录与频谱1X/2X分量"
         },
         {
@@ -3396,13 +3318,8 @@
             "ev_6a780467599dd3ffea22",
             "ev_6cf5cb3659bf5f57a584"
           ],
-          "contradicting_evidence_ids": [
-            "ev_dd830594ec72a2155680"
-          ],
-          "missing_evidence": [
-            "润滑脂/油位与油质检查记录",
-            "油液分析"
-          ],
+          "contradicting_evidence_ids": ["ev_dd830594ec72a2155680"],
+          "missing_evidence": ["润滑脂/油位与油质检查记录", "油液分析"],
           "next_check": "检查润滑脂状态与油液分析"
         },
         {
@@ -3422,9 +3339,7 @@
             "ev_6a780467599dd3ffea22",
             "ev_dd830594ec72a2155680"
           ],
-          "missing_evidence": [
-            "报警组态阈值设置记录"
-          ],
+          "missing_evidence": ["报警组态阈值设置记录"],
           "next_check": "核对报警组态阈值与触发逻辑"
         }
       ],
@@ -3433,14 +3348,8 @@
           "id": "chk_handoff",
           "kind": "safety",
           "purpose": "补齐关键证据后重新诊断",
-          "preconditions": [
-            "明确缺失来源"
-          ],
-          "steps": [
-            "恢复关键只读来源",
-            "确认适用手册版本",
-            "补充现场检查记录"
-          ],
+          "preconditions": ["明确缺失来源"],
+          "steps": ["恢复关键只读来源", "确认适用手册版本", "补充现场检查记录"],
           "expected_observation": "关键来源可用且证据齐全后重新诊断",
           "risk": "low",
           "role": "诊断平台管理员/工程师",
@@ -3454,9 +3363,7 @@
           "kind": "safety",
           "text": "当前证据不足或预算已耗尽，禁止据此安排更换或控制操作；先补齐证据。",
           "evidence_ids": [],
-          "conditions": [
-            "关键来源恢复"
-          ],
+          "conditions": ["关键来源恢复"],
           "requires_human": true,
           "control_execution": "disabled"
         }
@@ -3487,9 +3394,7 @@
       "ROOT_CAUSE_MISMATCH expected=bearing_wear|sensor_drift actual=bearing_wear",
       "UNNECESSARY_HANDOFF"
     ],
-    "predicted_root_causes": [
-      "bearing_wear"
-    ],
+    "predicted_root_causes": ["bearing_wear"],
     "required_tools_missing": [],
     "citation_issues": [],
     "handoff": true,

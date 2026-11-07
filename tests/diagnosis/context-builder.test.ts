@@ -142,7 +142,9 @@ describe('role context builder', () => {
       evidence: [telemetry],
       toolHistory: [],
       newEvidenceIds: [telemetry.id],
-      focusAnomalies: ['bearing_temperature 首 65°C → 末 82°C，尚未被 supported 根因解释'],
+      focusAnomalies: [
+        'bearing_temperature 首 65°C → 末 82°C，尚未被 supported 根因解释',
+      ],
     });
 
     expect(built.user).toContain('[异常清单]');

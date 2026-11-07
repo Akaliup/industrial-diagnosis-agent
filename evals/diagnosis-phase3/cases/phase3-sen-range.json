@@ -13,7 +13,5 @@
   },
   "source_snapshot": "phase3-sen-range",
   "clock": "2026-12-06T00:30:00.000Z",
-  "fault_injections": [
-    "sensor_range"
-  ]
+  "fault_injections": ["sensor_range"]
 }

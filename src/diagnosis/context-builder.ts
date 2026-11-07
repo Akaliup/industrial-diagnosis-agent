@@ -568,7 +568,9 @@ export function buildRoleContext(input: BuildContextInput): BuiltContext {
                 ? item.referencedAsContradiction.join(',')
                 : '无';
             return `- [${item.evidenceId}] ${item.summary}；作为支持=${support}；仅作反证=${contra}；${
-              item.unexplained ? '尚未被 supported 根因解释' : '已由 supported 根因解释'
+              item.unexplained
+                ? '尚未被 supported 根因解释'
+                : '已由 supported 根因解释'
             }`;
           })
           .join('\n')

@@ -105,9 +105,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "misalignment"
-      ],
+      "predicted_root_causes": ["misalignment"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -152,9 +150,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "lubrication"
-      ],
+      "predicted_root_causes": ["lubrication"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -199,10 +195,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "misalignment",
-        "lubrication"
-      ],
+      "predicted_root_causes": ["misalignment", "lubrication"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -247,10 +240,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "bearing_wear",
-        "false_alarm_comm"
-      ],
+      "predicted_root_causes": ["bearing_wear", "false_alarm_comm"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -295,10 +285,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "bearing_wear",
-        "sensor_drift"
-      ],
+      "predicted_root_causes": ["bearing_wear", "sensor_drift"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -343,9 +330,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "bearing_wear"
-      ],
+      "predicted_root_causes": ["bearing_wear"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -390,9 +375,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "insufficient_evidence"
-      ],
+      "predicted_root_causes": ["insufficient_evidence"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": true,
@@ -437,9 +420,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "sensor_drift"
-      ],
+      "predicted_root_causes": ["sensor_drift"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -484,9 +465,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "sampling_gap"
-      ],
+      "predicted_root_causes": ["sampling_gap"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -531,9 +510,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "sensor_range"
-      ],
+      "predicted_root_causes": ["sensor_range"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,

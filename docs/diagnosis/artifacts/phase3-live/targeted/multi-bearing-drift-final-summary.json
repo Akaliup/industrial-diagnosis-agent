@@ -60,10 +60,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "bearing_wear",
-        "sensor_drift"
-      ],
+      "predicted_root_causes": ["bearing_wear", "sensor_drift"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,

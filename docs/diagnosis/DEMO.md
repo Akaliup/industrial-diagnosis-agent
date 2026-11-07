@@ -70,7 +70,7 @@ npm run diagnosis:server
    端点：10 例 dev 试点全部通过，全量 50 例通过 23（dev 14/29、holdout 9/21），指标与
    失败分析见 `ACCEPTANCE.md` §6.1；这不代表企业现场精度。未配置真实模型时 Live Eval
    显示 `NOT_RUN`，不展示任何伪造的准确率。
-7. Phase 3 独立 10 例：展示 `docs/diagnosis/artifacts/phase3-live/` 的 Trace 目录。
+7. Phase 3 开发集 10 例：展示 `docs/diagnosis/artifacts/phase3-live/` 的 Trace 目录。
    说明 Fixture 10/10 只是回归；真实模型完整尝试 6/10（最终修复前），修复后的机械 2/2、
    `mul-align-lube`、`mul-bearing-drift` 定向通过；最终 10 例复验因 HTTP 402 为
    `NOT_RUN`。打开 `full-2/phase3-mul-bearing-drift.json` 展示预算耗尽误转人工的失败，

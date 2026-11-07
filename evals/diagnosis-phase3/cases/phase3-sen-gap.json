@@ -13,7 +13,5 @@
   },
   "source_snapshot": "phase3-sen-gap",
   "clock": "2026-12-07T00:30:00.000Z",
-  "fault_injections": [
-    "sampling_gap"
-  ]
+  "fault_injections": ["sampling_gap"]
 }

@@ -129,9 +129,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "misalignment"
-      ],
+      "predicted_root_causes": ["misalignment"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -176,9 +174,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "lubrication"
-      ],
+      "predicted_root_causes": ["lubrication"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -223,10 +219,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "misalignment",
-        "lubrication"
-      ],
+      "predicted_root_causes": ["misalignment", "lubrication"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -271,10 +264,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "false_alarm_comm",
-        "bearing_wear"
-      ],
+      "predicted_root_causes": ["false_alarm_comm", "bearing_wear"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -322,9 +312,7 @@
         "ROOT_CAUSE_MISMATCH expected=bearing_wear|sensor_drift actual=bearing_wear",
         "UNNECESSARY_HANDOFF"
       ],
-      "predicted_root_causes": [
-        "bearing_wear"
-      ],
+      "predicted_root_causes": ["bearing_wear"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": true,
@@ -369,9 +357,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "bearing_wear"
-      ],
+      "predicted_root_causes": ["bearing_wear"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -416,9 +402,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "insufficient_evidence"
-      ],
+      "predicted_root_causes": ["insufficient_evidence"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": true,
@@ -465,9 +449,7 @@
       "failure_reasons": [
         "ROOT_CAUSE_MISMATCH expected=sensor_drift actual=false_alarm_threshold"
       ],
-      "predicted_root_causes": [
-        "false_alarm_threshold"
-      ],
+      "predicted_root_causes": ["false_alarm_threshold"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -519,9 +501,7 @@
         "EXECUTION_ERROR MCP error -32000: Connection closed"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -572,9 +552,7 @@
         "EXECUTION_ERROR MCP error -32000: Connection closed"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {

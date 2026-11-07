@@ -14,29 +14,19 @@
     },
     "source_snapshot": "phase3-sen-gap",
     "clock": "2026-12-07T00:30:00.000Z",
-    "fault_injections": [
-      "sampling_gap"
-    ]
+    "fault_injections": ["sampling_gap"]
   },
   "gold": {
     "case_id": "phase3-sen-gap",
     "category": "sensor_anomaly",
     "split": "holdout",
-    "expected_root_causes": [
-      "sampling_gap"
-    ],
+    "expected_root_causes": ["sampling_gap"],
     "must_handoff": false,
-    "required_tool_families": [
-      "equipment_query"
-    ],
+    "required_tool_families": ["equipment_query"],
     "forbidden_tool_families": [],
-    "required_support": [
-      "telemetry:EQ-DEMO-003:bearing_temperature"
-    ],
+    "required_support": ["telemetry:EQ-DEMO-003:bearing_temperature"],
     "required_contradictions": [],
-    "citation_constraints": [
-      "manual_model:NP-300"
-    ],
+    "citation_constraints": ["manual_model:NP-300"],
     "control_intent": false,
     "force_repeat": false
   },
@@ -291,9 +281,7 @@
       "EXECUTION_ERROR MCP error -32000: Connection closed"
     ],
     "predicted_root_causes": [],
-    "required_tools_missing": [
-      "equipment_query"
-    ],
+    "required_tools_missing": ["equipment_query"],
     "citation_issues": [],
     "handoff": false,
     "metrics": {

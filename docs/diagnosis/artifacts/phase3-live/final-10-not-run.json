@@ -182,9 +182,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -235,9 +233,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -288,9 +284,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -341,9 +335,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -394,9 +386,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -447,9 +437,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -500,9 +488,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -553,9 +539,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -606,9 +590,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {
@@ -659,9 +641,7 @@
         "EXECUTION_ERROR 模型调用失败（HTTP 402）"
       ],
       "predicted_root_causes": [],
-      "required_tools_missing": [
-        "equipment_query"
-      ],
+      "required_tools_missing": ["equipment_query"],
       "citation_issues": [],
       "handoff": false,
       "metrics": {

@@ -65,9 +65,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "misalignment"
-      ],
+      "predicted_root_causes": ["misalignment"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,
@@ -112,9 +110,7 @@
       "status": "awaiting_human",
       "passed": true,
       "failure_reasons": [],
-      "predicted_root_causes": [
-        "lubrication"
-      ],
+      "predicted_root_causes": ["lubrication"],
       "required_tools_missing": [],
       "citation_issues": [],
       "handoff": false,

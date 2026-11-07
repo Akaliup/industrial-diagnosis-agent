@@ -135,7 +135,10 @@ class BudgetExhaustedVerifyRunner implements RoleRunner {
   }
 
   async run(input: RoleCallInput): Promise<RoleCallResult> {
-    if (input.role === 'hypothesis_verifier' && input.stage === 'verify_evidence') {
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'verify_evidence'
+    ) {
       const error = new RoleRunnerError(
         '角色 hypothesis_verifier 输出不是合法 JSON：模拟截断',
         'INVALID_OUTPUT',
@@ -469,8 +472,7 @@ describe('diagnosis orchestrator', () => {
       context.repo
         .listModelCalls(run.id)
         .some(
-          (call) =>
-            call.status === 'error' && call.stage === 'verify_evidence',
+          (call) => call.status === 'error' && call.stage === 'verify_evidence',
         ),
     ).toBe(true);
     expect(

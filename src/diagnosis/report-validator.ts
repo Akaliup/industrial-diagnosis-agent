@@ -461,7 +461,10 @@ export function validateReport(input: {
         ),
       );
     }
-    if (hypothesis.code === 'multi_fault' && hypothesis.status === 'supported') {
+    if (
+      hypothesis.code === 'multi_fault' &&
+      hypothesis.status === 'supported'
+    ) {
       errors.push(
         issue(
           'error',

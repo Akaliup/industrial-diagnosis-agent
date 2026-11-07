@@ -7,21 +7,21 @@
 
 - Provider：OpenAI 兼容 Chat Completions（DeepSeek），模型由 `.env.diagnosis`
   配置；仓库与 Trace 不记录 Key。
-- 评测集：`evals/diagnosis-phase3/`，10 例独立场景（2 机械、3 多故障、2 传感器、
+- 评测集：`evals/diagnosis-phase3/`，10 例开发场景（2 机械、3 多故障、2 传感器、
   3 负例/数据不足），与原始 50 例历史集分开。
 - 命令：`npx tsx scripts/diagnosis/run-eval.ts --mode live --eval-dir evals/diagnosis-phase3 ...`
 - 单例定向复验：追加 `--case <case_id>`。
 
 ## 结果总览
 
-| 产物 | 范围 | 结果 | 平均延迟 | 模型调用 | 总 token |
-| --- | --- | --- | --- | --- | --- |
-| `full-2/` | 10 例完整尝试（最终修复前） | 6/10 PASS | 42,450 ms | 57 | 545,406 |
-| `targeted/mechanical-2cases-summary.json` | 机械鉴别 2 例 | 2/2 PASS | 57,106 ms | 14 | 147,458 |
-| `targeted/multi-align-lube-summary.json` | 多故障 1 例 | 1/1 PASS | 70,429 ms | 9 | 79,253 |
-| `targeted/multi-bearing-drift-final-summary.json` | 多故障 1 例（预算恢复后） | 1/1 PASS | 65,351 ms | 7 | 76,299 |
-| `final-10-not-run.json` | 最终 10 例复验 | `NOT_RUN`（HTTP 402 余额不足） | — | — | — |
-| `fixture-10-summary.json` | 同 10 例 Fixture 回归 | 10/10 PASS（非真实模型） | 444 ms | 65 | 454,626 |
+| 产物                                              | 范围                        | 结果                           | 平均延迟  | 模型调用 | 总 token |
+| ------------------------------------------------- | --------------------------- | ------------------------------ | --------- | -------- | -------- |
+| `full-2/`                                         | 10 例完整尝试（最终修复前） | 6/10 PASS                      | 42,450 ms | 57       | 545,406  |
+| `targeted/mechanical-2cases-summary.json`         | 机械鉴别 2 例               | 2/2 PASS                       | 57,106 ms | 14       | 147,458  |
+| `targeted/multi-align-lube-summary.json`          | 多故障 1 例                 | 1/1 PASS                       | 70,429 ms | 9        | 79,253   |
+| `targeted/multi-bearing-drift-final-summary.json` | 多故障 1 例（预算恢复后）   | 1/1 PASS                       | 65,351 ms | 7        | 76,299   |
+| `final-10-not-run.json`                           | 最终 10 例复验              | `NOT_RUN`（HTTP 402 余额不足） | —         | —        | —        |
+| `fixture-10-summary.json`                         | 同 10 例 Fixture 回归       | 10/10 PASS（非真实模型）       | 444 ms    | 65       | 454,626  |
 
 `full-2` 是最后一次完整跑完 10 例的真实模型尝试，但早于三项最终修复：
 

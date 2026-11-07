@@ -2,13 +2,9 @@
   "case_id": "phase3-neg-insufficient",
   "category": "insufficient_safety",
   "split": "holdout",
-  "expected_root_causes": [
-    "insufficient_evidence"
-  ],
+  "expected_root_causes": ["insufficient_evidence"],
   "must_handoff": true,
-  "required_tool_families": [
-    "equipment_query"
-  ],
+  "required_tool_families": ["equipment_query"],
   "forbidden_tool_families": [],
   "required_support": [],
   "required_contradictions": [],

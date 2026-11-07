@@ -849,7 +849,9 @@ export class DiagnosisOrchestrator {
     draftHypotheses: Hypothesis[],
   ): Hypothesis[] {
     const stored = this.options.repo.listHypotheses(state.run.id);
-    const byId = new Map(stored.map((hypothesis) => [hypothesis.id, hypothesis]));
+    const byId = new Map(
+      stored.map((hypothesis) => [hypothesis.id, hypothesis]),
+    );
     const reconciled: Hypothesis[] = [];
     const corrections: Array<{ hypothesis_id: string; fields: string[] }> = [];
     for (const draft of draftHypotheses) {
@@ -1341,8 +1343,7 @@ export class DiagnosisOrchestrator {
     return deriveAnomalyLedger(features, hypotheses)
       .filter(
         (item) =>
-          item.unexplained &&
-          item.flags.some((flag) => flag !== 'quality'),
+          item.unexplained && item.flags.some((flag) => flag !== 'quality'),
       )
       .slice(0, 5)
       .map((item) => item.summary);
@@ -1356,12 +1357,14 @@ export class DiagnosisOrchestrator {
   }
 
   private hasSupportedDiagnostic(state: RunState): boolean {
-    return this.options.repo.listHypotheses(state.run.id).some(
-      (hypothesis) =>
-        hypothesis.status === 'supported' &&
-        hypothesis.code !== 'insufficient_evidence' &&
-        hypothesis.code !== 'unknown',
-    );
+    return this.options.repo
+      .listHypotheses(state.run.id)
+      .some(
+        (hypothesis) =>
+          hypothesis.status === 'supported' &&
+          hypothesis.code !== 'insufficient_evidence' &&
+          hypothesis.code !== 'unknown',
+      );
   }
 
   private canRunSecondLook(state: RunState): boolean {

@@ -260,9 +260,7 @@ describe('eval scorer', () => {
       gold: gold({ expected_root_causes: ['sensor_drift'] }),
     });
     expect(result.passed).toBe(true);
-    expect(result.result.predicted_root_causes).toEqual([
-      'sensor_drift',
-    ]);
+    expect(result.result.predicted_root_causes).toEqual(['sensor_drift']);
   });
 
   test('still counts insufficient_evidence when it is the expected conclusion', () => {

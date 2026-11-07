@@ -13,7 +13,5 @@
   },
   "source_snapshot": "phase3-neg-single-sensor",
   "clock": "2026-12-11T00:30:00.000Z",
-  "fault_injections": [
-    "sensor_drift"
-  ]
+  "fault_injections": ["sensor_drift"]
 }
