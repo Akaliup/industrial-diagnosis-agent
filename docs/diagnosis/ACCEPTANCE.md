@@ -10,12 +10,12 @@
 
 ## 1. 状态结论
 
-| 维度     | 状态                   | 说明                                                                                                                                                                             |
-| -------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 工程版   | **PASS（附平台限制）** | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例                               |
-| 真实模型 | **PASS（10 例试点）**  | 已用已授权 DeepSeek 兼容端点完成 10 例 dev Live Eval，10/10 通过；全量 50 例结果见 §6.1，未把试点分数外推为企业现场精度。Key 只存在本机 `.env.diagnosis`，未写入 Trace/报告/前端 |
-| 企业接入 | **UNCONFIGURED**       | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路                                                                                              |
-| 控制执行 | **DISABLED**           | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制                                                                                                       |
+| 维度     | 状态                          | 说明                                                                                                                                                                                                                                          |
+| -------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 工程版   | **PASS（附平台限制）**        | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例                                                                                            |
+| 真实模型 | **PASS（集成）/ 质量见 §6.1** | 已用已授权 DeepSeek 兼容端点完成 10 例 dev 试点（10/10）和全量 50 例（23/50，dev 14/29、holdout 9/21）；全量暴露机械故障鉴别、多故障与反证保留的真实弱点，未把分数外推为企业现场精度。Key 只存在本机 `.env.diagnosis`，未写入 Trace/报告/前端 |
+| 企业接入 | **UNCONFIGURED**              | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路                                                                                                                                                           |
+| 控制执行 | **DISABLED**                  | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制                                                                                                                                                                    |
 
 本报告记录审计补修 R1–R6 与四项残余风险检查的实际代码、测试与命令结果。
 Fixture 分数只代表工程回归，不代表真实模型精度。
@@ -169,8 +169,9 @@ npm run diagnosis:server
 的旧失败已消失。失败仍集中在 Windows 符号链接 `EPERM`、POSIX 路径、进程树终止和
 CardKit/streaming 环境差异，诊断 20 文件全部通过。
 
-GitHub Actions 在同一提交 `7bc77df` 上两项工作流均通过：Diagnosis CI（run
-42410313417）与 CI（run 42410313357）。此前 `7b02f24` 的 CI 因根测试先于诊断 MCP
+GitHub Actions 在 `7bc77df` 上两项工作流均通过：Diagnosis CI（run 42410313417）与
+CI（run 42410313357）；最终提交 `8ea4006` 上再次通过：Diagnosis CI（run
+42410992913）与 CI（run 42410993044）。此前 `7b02f24` 的 CI 因根测试先于诊断 MCP
 安装/构建而失败，已由 `a2c467f` 修复并复验。
 
 ## 6. 50 例 Fixture Eval
@@ -242,7 +243,9 @@ Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Liv
 
 1. 模型自造工具参数名导致 `schema_invalid`：把每个角色的工具 JSON Schema 注入系统提示。
 2. 空 200 响应被当作不可重试：改为读取原始 body、记录 `{status, body}`、允许有界重试。
-3. 报告 JSON 被 8,000 输出 token 截断：提升到 12,000，并为报告阶段预留 3,000。
+3. 报告 JSON 被 8,000 输出 token 截断：提升到 12,000，并为报告阶段预留 3,000；
+   全量 50 例又发现 3,000 仍会截断长报告（MEC-03、MUL-01、MUL-08），报告阶段预留与
+   单次上限提升到 4,500，并用这三个用例复验（见 §6.1.1）。
 4. 有 supported 根因时仍因 `insufficient_evidence` 转人工：只有无确定性根因才 handoff。
 5. 模型声明的 hypothesis status 被忽略：`HypothesisDraftSchema` 增加可选 `status`。
 6. 撤回手册仍被翻译/参考片段替代：上下文标注撤回状态，报告校验拒绝非适用版本引用，
@@ -257,16 +260,79 @@ Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Liv
 `docs/diagnosis/artifacts/live-failures/`，最终通过批次的摘要保存在同一目录的
 `pilot-15-summary.json`。
 
-全量 50 例（dev 29 + holdout 21）曾以 `--split all` 启动（`work/diagnosis/live-full-01`），
-但在外部端点延迟升高到约 4 分钟/例后停止，只完成 FA-01..FA-05（5/5 通过，Trace 已保留），
-没有写出全量 `summary.json`。因此：
+全量 50 例（dev 29 + holdout 21）实际执行过两次：
 
-- **全量 50 例 Live Eval：`NOT_RUN`**，原因是外部端点延迟导致单次全量运行超出有界评测窗口；
-  未用试点分数替代全量结论。
-- **Holdout Live Eval：`NOT_RUN`**；holdout 仅跑过 Fixture，不能声称真实模型在 holdout 上的精度。
-- **Dev 10 例 Live Eval：PASS**（上表），这是本报告唯一可引用的真实模型指标。
-- 若供应商端点返回空响应或超时，该用例标记执行错误并保留 Trace；重试上限为 3 次，
-  不做无限重试，也不把外部故障算作模型诊断错误。
+- `work/diagnosis/live-full-01`（04:08–04:11）：50 例全部执行，但评测期间本地 MCP 构建
+  重写 `dist/server.js`，FA-07 起 44 例在首个工具调用即报 `MCP error -32000: Connection closed`，
+  最终 5/50。该批次是评测环境干扰，不作为模型质量结论；summary 与代表性 Trace 保存在
+  `docs/diagnosis/artifacts/live-failures/`。
+- `work/diagnosis/live-full-02`（04:28–05:05）：在稳定 MCP 构建上重跑全量 50 例。该批次
+  使用修复前的 3,000 报告输出上限，MEC-03/MUL-01/MUL-08 因报告 JSON 截断记 `NO_REPORT`；
+  其余失败是真实模型诊断结论问题。
+
+| 指标                                  | 全量 50                         | dev 29             | holdout 21         |
+| ------------------------------------- | ------------------------------- | ------------------ | ------------------ |
+| total / passed                        | 50 / 23                         | 29 / 14            | 21 / 9             |
+| top1_hit / top3_hit                   | 0.60 / 0.60 (n=40)              | 0.625 (n=24)       | 0.563 (n=16)       |
+| evidence_coverage                     | 0.878 (n=49)                    | 0.871 (n=31)       | 0.889 (n=18)       |
+| citation_integrity                    | 0.90                            | 0.931              | 0.857              |
+| tool_selection_accuracy               | 0.971 (n=69)                    | 0.953 (n=43)       | 1.0 (n=26)         |
+| counter_evidence_retained             | 0.826 (n=23)                    | 0.786 (n=14)       | 0.889 (n=9)        |
+| handoff_accuracy                      | 0.78                            | 0.793              | 0.762              |
+| task_success_rate                     | 0.46                            | 0.483              | 0.429              |
+| multi_fault_coverage / precision      | 0.20 / 0.40 (n=10)              | 0.30 / 0.60 (n=5)  | 0.10 / 0.20 (n=5)  |
+| unauthorized_calls / blocked_attempts | 0 / 9                           | 0 / 6              | 0 / 3              |
+| model_calls                           | 337（失败 10）                  | 194（失败 6）      | 143（失败 4）      |
+| tokens（in / out / total）            | 2,380,307 / 356,633 / 2,736,940 | 1,568,545          | 1,168,395          |
+| mean / p95 latency                    | 44,563 / 67,673 ms              | 44,824 / 69,178 ms | 44,202 / 65,160 ms |
+| estimated_cost_usd                    | n/a（未配置单价）               | n/a                | n/a                |
+
+按类别通过：FA 7/10、INS 9/10、MEC 5/10、MUL 0/10、SEN 2/10。27 个失败用例的完整
+Trace、输入、模型调用、工具轨迹、报告与评分原因保存在
+`docs/diagnosis/artifacts/live-failures/full-02-*.json`，汇总为 `full-02-summary.json`。
+
+失败分类（真实模型行为）：
+
+1. **机械故障鉴别不足**（MEC-06/07/08/09、MUL-05/06）：模型很少生成 `misalignment` 或
+   `lubrication` 假设，或生成后判为 inconclusive，最终落到 `bearing_wear` 或
+   `insufficient_evidence`。例如 MEC-07 只生成 bearing_wear、false_alarm_threshold、
+   sensor_drift 三个假设，没有 misalignment。
+2. **多故障覆盖**（MUL-01..10 全部失败）：模型倾向只输出一个主根因，漏掉同时存在的
+   `sensor_drift`/`false_alarm_comm`；MUL-02 把“多故障”写成单个 `multi_fault` 假设，
+   而不是两个独立根因；`multi_fault_coverage=0.20`。
+3. **传感器异常子类**（SEN-01/02/03/06/07/08/09/10）：`sensor_drift`、`sensor_range`、
+   `sensor_stuck`、`sampling_gap` 互相混淆；证据不足时倾向 `insufficient_evidence` 并
+   多余转人工（`unnecessary_handoff=11`）。
+4. **反证保留不足**（FA-05、MEC-06）：结论接近正确，但未引用 `vibration_rms` 反证；
+   `counter_evidence_retained=0.826`。
+5. **执行与工程问题**（FA-01、MEC-03、MUL-01、MUL-08、MUL-10）：FA-01 是外部端点空响应
+   （`EXECUTION_ERROR`，不计作模型诊断错误）；MEC-03/MUL-01/MUL-08 是报告 JSON 在 3,000
+   输出 token 处截断（已修复，见 §6.1.1）；MUL-10 是模型报告把 supported 假设写成
+   inconclusive，被 `HYPOTHESIS_STATUS_DRIFT` 校验拒绝，校验器按预期工作。
+
+`live-full-02` 的 23/50 使用修复前的报告预算，是下界；不把 3 个截断用例事后改判为通过，
+也不重新计算通过率。按 Fixture 门禁阈值检查该批次会失败（pass_rate、citation_integrity、
+evidence_coverage、top3_hit、counter_evidence_retained、unnecessary_handoff），这正是
+真实模型与 Fixture 的差距，不能把 Fixture 阈值当作真实模型质量结论。
+
+### 6.1.1 报告输出预算修复复验
+
+`REPORT_OUTPUT_RESERVE` 与报告单次输出上限从 3,000 提升到 4,500 后，用 full-02 中三个
+`NO_REPORT` 用例在稳定 MCP 构建上重跑（`work/diagnosis/targeted-report-budget-out`）：
+
+| 用例   | full-02（上限 3,000）                     | 复验（上限 4,500）                                                                |
+| ------ | ----------------------------------------- | --------------------------------------------------------------------------------- |
+| MEC-03 | `NO_REPORT`（JSON 在第 6,098 字符处截断） | **PASS**                                                                          |
+| MUL-01 | `NO_REPORT`（JSON 截断）                  | 报告生成成功；根因仍错（`multi_fault`，期望 bearing_wear\|sensor_drift）          |
+| MUL-08 | `NO_REPORT`（JSON 截断）                  | 报告生成成功；根因仍错（`false_alarm_comm`，期望 bearing_wear\|false_alarm_comm） |
+
+结论：截断是工程缺陷，已修复并由 3 例复验；MUL-01/MUL-08 的剩余失败是多故障推理缺陷，
+不能归因于报告预算。复验 Trace 保存在
+`docs/diagnosis/artifacts/live-failures/targeted-budget-*.json`。
+
+失败用例与评分原因保存在 `docs/diagnosis/artifacts/live-failures/`；空响应/超时标记为执行
+错误，重试上限 3 次，不把外部故障算作模型诊断错误。Holdout 用例包含在全量运行中，不单独
+声称 holdout-only 精度。
 
 ## 7. E2E 与截图
 
@@ -345,9 +411,9 @@ work/diagnosis/logs/
 
 ## 11. 未完成 / 外部条件
 
-1. **真实模型**：已有本机授权的 DeepSeek 兼容端点，完成 10 例 dev 试点（10/10）；
-   全量 50 例与 holdout Live Eval 因外部端点延迟 `NOT_RUN`。不把试点分数声明为企业
-   现场准确率；生产级密钥托管、配额/限流与数据合规仍未配置。
+1. **真实模型**：已有本机授权的 DeepSeek 兼容端点，完成 10 例 dev 试点（10/10）与全量
+   50 例（23/50，dev 14/29、holdout 9/21）；全量失败类别与 Trace 见 §6.1，不把分数
+   声明为企业现场准确率。生产级密钥托管、配额/限流与数据合规仍未配置。
 2. **企业来源**：SCADA、MES、工单、RootCloud 均缺接口文档、地址、认证、字段样例、
    资产映射、时区/单位/限流说明和只读测试账号；状态 `UNCONFIGURED`。
 3. **Docker/Container**：未验证容器隔离与容器内 Runner；本版使用 Host 本地运行。
@@ -360,6 +426,6 @@ work/diagnosis/logs/
 
 工程版可以本地启动、从报警跑到带引用报告、复核、审批、Eval、真实 Trace replay 与导出；
 R1–R6 与四项残余风险均有代码、自动化测试和实测命令支撑。真实模型链路已用授权
-DeepSeek 兼容端点跑通 10 例 dev 试点，但全量/holdout Live Eval 因外部延迟未完成；
-企业实时接入、生产级模型配额与数据合规、容器隔离和签名安装包仍需外部条件，未计入
-工程版 PASS。
+DeepSeek 兼容端点跑通 10 例 dev 试点（10/10）和全量 50 例（23/50）；全量结果暴露的
+机械故障鉴别、多故障覆盖与反证保留差距已如实记录，不声明企业现场精度。企业实时接入、
+生产级模型配额与数据合规、容器隔离和签名安装包仍需外部条件，未计入工程版 PASS。

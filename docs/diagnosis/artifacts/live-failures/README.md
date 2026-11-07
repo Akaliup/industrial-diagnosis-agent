@@ -28,6 +28,31 @@
   Trace 用于证明空响应会按执行错误处理、不会伪装成诊断失败。
 - `pilot-14-FA-01.json`、`pilot-14-FA-02.json`、`pilot-14-FA-05.json`：对应 Trace。
 
+## 全量 50 例：环境干扰批次（不作为模型质量结论）
+
+- `full-01-summary.json`：2026-11-08 04:08–04:11 的全量 50 例运行，5/50。FA-07 起 44 例
+  在首个工具调用即报 `MCP error -32000: Connection closed`；原因是评测期间本地 MCP
+  构建重写了 `packages/industrial-diagnosis-mcp/dist/server.js`（文件时间 04:12），
+  不是模型诊断结论。该批次不能用于计算真实模型通过率。
+- `full-01-FA-07.json`：上述连接关闭的代表性 Trace。
+- 修正后的全量重跑结果见下一节或 `ACCEPTANCE.md` §6.1。
+
+## 全量 50 例：稳定构建批次（full-02）
+
+- `full-02-summary.json`：2026-11-08 04:28–05:05 的全量 50 例，23/50 通过
+  （dev 14/29、holdout 9/21）。该批次使用修复前的 3,000 报告输出上限，MEC-03、
+  MUL-01、MUL-08 因报告 JSON 截断记 `NO_REPORT`；其余失败是真实模型结论或执行问题。
+- `full-02-*.json`：27 个失败用例的完整 Trace、输入、模型调用、工具轨迹、报告与评分原因。
+- 主要失败类别：机械故障鉴别（misalignment/lubrication 常被 bearing_wear 或
+  insufficient_evidence 替代）、多故障覆盖（10/10 失败，漏掉 sensor_drift 等第二根因）、
+  传感器异常子类混淆（sensor_drift/sensor_range/sensor_stuck/sampling_gap）、
+  反证未引用（vibration_rms），以及 1 例外部分端空响应。
+- FA-01 的空响应属于执行错误；MEC-03/MUL-01/MUL-08 属于报告预算工程缺陷，修复后
+  复验结果见 `ACCEPTANCE.md` §6.1.1。
+- `targeted-budget-MEC-03.json`、`targeted-budget-MUL-01.json`、
+  `targeted-budget-MUL-08.json`：报告上限提升到 4,500 后的复验 Trace；MEC-03 通过，
+  MUL-01/MUL-08 报告不再截断但根因仍错（多故障推理缺陷）。
+
 ## 最终试点
 
 - `pilot-15-summary.json`：修复后的最终 10 例 dev 试点，10/10 通过，全部指标 1.0。

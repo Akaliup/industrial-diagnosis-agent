@@ -66,9 +66,10 @@ npm run diagnosis:server
    请求与回执之间崩溃，恢复时不会把它当成成功。
 5. 运行 `npm run diagnosis:replay`，展示 `inference_calls=0 tool_calls=0`：
    这是只读 Trace 重放，不是重新调用模型。
-6. 强调：Fixture Eval 是工程回归，不是真实模型精度。真实模型试点使用已授权 DeepSeek
-   兼容端点，10 例 dev 全部通过，指标与失败分析见 `ACCEPTANCE.md` §6.1；这不代表企业
-   现场精度。未配置真实模型时 Live Eval 显示 `NOT_RUN`，不展示任何伪造的准确率。
+6. 强调：Fixture Eval 是工程回归，不是真实模型精度。真实模型使用已授权 DeepSeek 兼容
+   端点：10 例 dev 试点全部通过，全量 50 例通过 23（dev 14/29、holdout 9/21），指标与
+   失败分析见 `ACCEPTANCE.md` §6.1；这不代表企业现场精度。未配置真实模型时 Live Eval
+   显示 `NOT_RUN`，不展示任何伪造的准确率。
 
 ## 3. 报告导出
 

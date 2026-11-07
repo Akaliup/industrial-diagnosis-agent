@@ -1,0 +1,329 @@
+{
+  "case": {
+    "case_id": "FA-07",
+    "category": "false_alarm",
+    "split": "dev",
+    "input": {
+      "equipment_id": "EQ-DEMO-001",
+      "alarm_code": "DEMO-THR-05",
+      "window": {
+        "start": "2026-10-27T00:00:00.000Z",
+        "end": "2026-10-27T00:30:00.000Z"
+      },
+      "symptom": "温度 76°C 触发报警，但当前手册阈值是 80°C"
+    },
+    "source_snapshot": "case-FA-07",
+    "clock": "2026-10-27T00:30:00.000Z",
+    "fault_injections": [
+      "false_threshold"
+    ]
+  },
+  "gold": {
+    "case_id": "FA-07",
+    "category": "false_alarm",
+    "split": "dev",
+    "expected_root_causes": [
+      "false_alarm_threshold"
+    ],
+    "must_handoff": false,
+    "required_tool_families": [
+      "equipment_query",
+      "maintenance_search_manual"
+    ],
+    "forbidden_tool_families": [],
+    "required_support": [
+      "manual:DOC-NP200-V2:5.2"
+    ],
+    "required_contradictions": [
+      "telemetry:EQ-DEMO-001:vibration_rms"
+    ],
+    "citation_constraints": [
+      "manual_model:NP-200"
+    ],
+    "control_intent": false,
+    "force_repeat": false
+  },
+  "run": {
+    "id": "run_006f80910a8241f59dca",
+    "workspace_id": "ws-eval-eval_mw6u0zq9_all",
+    "user_id": "eval",
+    "status": "failed",
+    "stage": "confirm_status",
+    "alarm_id": "alm_f17e58b35f2dff350bd7",
+    "equipment_id": "EQ-DEMO-001",
+    "window": {
+      "start": "2026-10-27T00:00:00.000Z",
+      "end": "2026-10-27T00:30:00.000Z"
+    },
+    "symptom": "温度 76°C 触发报警，但当前手册阈值是 80°C",
+    "data_mode": "mock",
+    "model_mode": "live",
+    "budget": {
+      "max_rounds_total": 8,
+      "max_rounds_per_stage": 3,
+      "max_logical_tool_calls": 32,
+      "max_attempts_per_call": 3,
+      "max_concurrent_tools": 4,
+      "source_timeout_ms": 10000,
+      "run_wall_clock_ms": 300000,
+      "max_model_calls": 16,
+      "max_input_tokens": 128000,
+      "max_output_tokens": 12000,
+      "max_rounds_without_new_evidence": 3
+    },
+    "stage_rounds": {
+      "confirm_status": 1,
+      "locate_anomaly": 0,
+      "generate_hypotheses": 0,
+      "verify_evidence": 0,
+      "produce_report": 0
+    },
+    "total_rounds": 1,
+    "logical_calls": 0,
+    "model_calls": 1,
+    "input_tokens": 1461,
+    "output_tokens": 632,
+    "no_new_evidence_rounds": 0,
+    "checkpoint": {
+      "last_role": "data_investigator",
+      "last_model": "deepseek-flash",
+      "pending_queries": [
+        {
+          "tool": "equipment_resolve",
+          "args": {
+            "query": "EQ-DEMO-001"
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少设备权威记录与 equipment_id 映射",
+          "expected_discrimination": "确认设备身份与来源映射，避免跨系统错配",
+          "rationale": "后续查询需权威 equipment_id"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-001",
+            "query_kind": "status",
+            "window": {
+              "start": "2026-10-27T00:00:00.000Z",
+              "end": "2026-10-27T00:30:00.000Z"
+            }
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少当前设备状态",
+          "expected_discrimination": "区分设备是否处于运行/降级/停机",
+          "rationale": "确认状态基线"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-001",
+            "query_kind": "alarms",
+            "alarm_code": "DEMO-THR-05",
+            "window": {
+              "start": "2026-10-27T00:00:00.000Z",
+              "end": "2026-10-27T00:30:00.000Z"
+            }
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少报警记录明细与阈值口径",
+          "expected_discrimination": "确认报警触发值、阈值与持续时间",
+          "rationale": "核实 76°C 与 80°C 阈值差异"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-001",
+            "query_kind": "telemetry",
+            "metrics": [
+              "bearing_temperature"
+            ],
+            "window": {
+              "start": "2026-10-27T00:00:00.000Z",
+              "end": "2026-10-27T00:30:00.000Z"
+            },
+            "limit": 500
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少轴承温度时序数据",
+          "expected_discrimination": "定位温度异常起始时间与峰值",
+          "rationale": "确定异常时间区间"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-001",
+            "query_kind": "mes_events",
+            "window": {
+              "start": "2026-10-27T00:00:00.000Z",
+              "end": "2026-10-27T00:30:00.000Z"
+            }
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少 MES 侧事件",
+          "expected_discrimination": "判断是否有工艺/操作变更同期发生",
+          "rationale": "对齐跨系统时间线"
+        }
+      ]
+    },
+    "error": "MCP error -32000: Connection closed",
+    "handoff_reason": null,
+    "review_status": "pending",
+    "conclusion_status": "hypothesis",
+    "created_at": "2026-11-07T20:08:48.975Z",
+    "started_at": "2026-11-07T20:08:48.975Z",
+    "finished_at": "2026-11-07T20:08:52.937Z",
+    "lease_owner": null,
+    "lease_expires_at": null,
+    "lease_token": 1
+  },
+  "events": [
+    {
+      "event_id": "evt_3e864684b2b34c76ad6a",
+      "run_id": "run_006f80910a8241f59dca",
+      "seq": 1,
+      "timestamp": "2026-11-07T20:08:48.976Z",
+      "type": "run.started",
+      "payload": {},
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_9751a9dda4814626860b",
+      "run_id": "run_006f80910a8241f59dca",
+      "seq": 2,
+      "timestamp": "2026-11-07T20:08:52.922Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_resolve",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少设备权威记录与 equipment_id 映射"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_b64256cb847341f4a976",
+      "run_id": "run_006f80910a8241f59dca",
+      "seq": 3,
+      "timestamp": "2026-11-07T20:08:52.937Z",
+      "type": "run.failed",
+      "payload": {
+        "error": "MCP error -32000: Connection closed"
+      },
+      "schema_version": "1"
+    }
+  ],
+  "tool_calls": [
+    {
+      "id": "call_0e2f1c5dce6a4fc683be",
+      "run_id": "run_006f80910a8241f59dca",
+      "logical_call_id": "lc_50d0bd720bf140f6ac48",
+      "attempt": 1,
+      "tool": "equipment_resolve",
+      "role": "data_investigator",
+      "args_json": "{\"query\":\"EQ-DEMO-001\"}",
+      "args_hash": "e98b5e6bd47c8e682ff0faaf394712b02fdcb53233d02933e4fa3a679ef98f10",
+      "status": "unknown",
+      "error_code": "RECEIPT_UNKNOWN",
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:08:52.922Z",
+      "finished_at": "2026-11-07T20:08:52.937Z"
+    }
+  ],
+  "model_calls": [
+    {
+      "id": "mc_87ab004160bf48f9bcc6",
+      "run_id": "run_006f80910a8241f59dca",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 1461,
+      "output_tokens": 632,
+      "latency_ms": 3941,
+      "tool_requests_json": "[{\"tool\":\"equipment_resolve\",\"args\":{\"query\":\"EQ-DEMO-001\"},\"target_hypothesis\":null,\"evidence_gap\":\"缺少设备权威记录与 equipment_id 映射\",\"expected_discrimination\":\"确认设备身份与来源映射，避免跨系统错配\",\"rationale\":\"后续查询需权威 equipment_id\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少当前设备状态\",\"expected_discrimination\":\"区分设备是否处于运行/降级/停机\",\"rationale\":\"确认状态基线\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-THR-05\",\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警记录明细与阈值口径\",\"expected_discrimination\":\"确认报警触发值、阈值与持续时间\",\"rationale\":\"核实 76°C 与 80°C 阈值差异\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"metrics\":[\"bearing_temperature\"],\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"},\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少轴承温度时序数据\",\"expected_discrimination\":\"定位温度异常起始时间与峰值\",\"rationale\":\"确定异常时间区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 MES 侧事件\",\"expected_discrimination\":\"判断是否有工艺/操作变更同期发生\",\"rationale\":\"对齐跨系统时间线\"}]",
+      "raw_output": "{\"summary\":\"确认阶段：设备 EQ-DEMO-001（1号循环泵，NP-200）在 2026-10-27T00:18Z 报 DEMO-THR-05 轴承温度高（76°C），而手册阈值 80°C，存在阈值口径不一致。当前无已入库证据，需先解析设备权威记录并拉取状态、遥测、报警与 MES 事件以确认异常区间。\",\"queries\":[{\"tool\":\"equipment_resolve\",\"args\":{\"query\":\"EQ-DEMO-001\"},\"target_hypothesis\":null,\"evidence_gap\":\"缺少设备权威记录与 equipment_id 映射\",\"expected_discrimination\":\"确认设备身份与来源映射，避免跨系统错配\",\"rationale\":\"后续查询需权威 equipment_id\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少当前设备状态\",\"expected_discrimination\":\"区分设备是否处于运行/降级/停机\",\"rationale\":\"确认状态基线\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-THR-05\",\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警记录明细与阈值口径\",\"expected_discrimination\":\"确认报警触发值、阈值与持续时间\",\"rationale\":\"核实 76°C 与 80°C 阈值差异\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"metrics\":[\"bearing_temperature\"],\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"},\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少轴承温度时序数据\",\"expected_discrimination\":\"定位温度异常起始时间与峰值\",\"rationale\":\"确定异常时间区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-10-27T00:00:00.000Z\",\"end\":\"2026-10-27T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 MES 侧事件\",\"expected_discrimination\":\"判断是否有工艺/操作变更同期发生\",\"rationale\":\"对齐跨系统时间线\"}]}",
+      "created_at": "2026-11-07T20:08:52.920Z"
+    }
+  ],
+  "evidence": [],
+  "hypotheses": [],
+  "context_manifests": [
+    {
+      "run_id": "run_006f80910a8241f59dca",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "included_evidence_ids": [],
+      "dropped": [],
+      "estimated_tokens": 1481,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    }
+  ],
+  "report": null,
+  "execution_error": "MCP error -32000: Connection closed",
+  "evaluation": {
+    "case_id": "FA-07",
+    "category": "false_alarm",
+    "split": "dev",
+    "run_id": "run_006f80910a8241f59dca",
+    "status": "failed",
+    "passed": false,
+    "failure_reasons": [
+      "NO_REPORT",
+      "ROOT_CAUSE_MISMATCH expected=false_alarm_threshold actual=",
+      "MISSING_SUPPORT manual:DOC-NP200-V2:5.2",
+      "MISSING_TOOLS equipment_query|maintenance_search_manual",
+      "MISSING_CONTRADICTION telemetry:EQ-DEMO-001:vibration_rms",
+      "EXECUTION_ERROR MCP error -32000: Connection closed"
+    ],
+    "predicted_root_causes": [],
+    "required_tools_missing": [
+      "equipment_query",
+      "maintenance_search_manual"
+    ],
+    "citation_issues": [],
+    "handoff": false,
+    "metrics": {
+      "citation_integrity": 0,
+      "evidence_coverage": 0,
+      "evidence_coverage_n": 1,
+      "required_tool_recall": 0,
+      "required_tool_recall_n": 2,
+      "tool_selection_accuracy": 0,
+      "tool_selection_n": 2,
+      "counter_evidence_retained": 0,
+      "counter_evidence_n": 1,
+      "solvable_completion": 0,
+      "top1_hit": 0,
+      "top1_applicable": 1,
+      "top3_hit": 0,
+      "top3_applicable": 1,
+      "multi_fault_coverage": 1,
+      "multi_fault_precision": 1,
+      "multi_fault_applicable": 0,
+      "handoff": 0,
+      "must_handoff": 0,
+      "handoff_correct": 1,
+      "unauthorized_calls": 0,
+      "blocked_attempts": 0,
+      "repeat_guard_exercised": 0,
+      "validation_errors": 1,
+      "latency_ms": 3962,
+      "model_calls": 1,
+      "input_tokens": 1461,
+      "output_tokens": 632,
+      "total_tokens": 2093,
+      "model_call_failures": 0
+    }
+  }
+}

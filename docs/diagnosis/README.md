@@ -49,4 +49,5 @@ docs/diagnosis/                       本目录
 - `control_execution: disabled`；高风险建议不能自审批；审批不触发设备控制。
 - 未配置企业来源返回 `UNCONFIGURED`，`live` 模式不回退 Mock。
 - 未配置真实模型时 Live Eval 为 `NOT_RUN`，不声明真实模型精度；本轮已用授权 DeepSeek
-  兼容端点完成 10 例试点（10/10），详见 `ACCEPTANCE.md` §6.1，不外推为企业现场精度。
+  兼容端点完成 10 例试点（10/10）与全量 50 例（23/50，dev 14/29、holdout 9/21），
+  失败类别与 Trace 见 `ACCEPTANCE.md` §6.1，不外推为企业现场精度。

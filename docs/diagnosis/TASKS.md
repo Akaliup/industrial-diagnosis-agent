@@ -70,7 +70,7 @@
 - [x] Fixture Eval 50/50，门禁通过；执行/阻断与分母分离（`eval-scorer.test.ts`）
 - [x] `LiveRoleRunner` 真实调用路径、配置模板、错误处理
 - [x] Live Eval 10 例 dev 试点 — 10/10，指标见 `ACCEPTANCE.md` §6.1
-- [ ] Live Eval 全量 50 例 — `NOT_RUN`（外部端点延迟约 4 分钟/例；已完成的 5 例保留 Trace）
+- [x] Live Eval 全量 50 例 — 23/50（dev 14/29、holdout 9/21）；失败类别与 27 条 Trace 见 `ACCEPTANCE.md` §6.1
 - [ ] 企业现场模型准确率 — 不作声明（无企业数据与现场基线）
 
 ## M8 总体验收与交接 — PARTIAL（外部条件待补）
@@ -81,7 +81,7 @@
 - [x] 本地 Git 提交准备与差异检查
 - [x] 验收报告、启动说明、架构、演示步骤、来源记录
 - [x] 停止自建测试服务；保留用户原有进程
-- [ ] 企业现场验收 / 真实模型质量验收 — `BLOCKED_EXTERNAL` / `NOT_RUN`
+- [ ] 企业现场验收 — `BLOCKED_EXTERNAL`（真实模型质量已在仓库 Fixture 场景测量，见 `ACCEPTANCE.md` §6.1）
 
 ## 工程检查表（对应方案 12.3）
 
