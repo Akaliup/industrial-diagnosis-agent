@@ -1,0 +1,3880 @@
+{
+  "case": {
+    "case_id": "MUL-06",
+    "category": "multi_fault",
+    "split": "holdout",
+    "input": {
+      "equipment_id": "EQ-DEMO-001",
+      "alarm_code": "DEMO-VIB-02",
+      "window": {
+        "start": "2026-11-05T00:00:00.000Z",
+        "end": "2026-11-05T00:30:00.000Z"
+      },
+      "symptom": "检修后振动仍高，润滑状态未知"
+    },
+    "source_snapshot": "case-MUL-06",
+    "clock": "2026-11-05T00:30:00.000Z",
+    "fault_injections": [
+      "multi_align_lube"
+    ]
+  },
+  "gold": {
+    "case_id": "MUL-06",
+    "category": "multi_fault",
+    "split": "holdout",
+    "expected_root_causes": [
+      "misalignment",
+      "lubrication"
+    ],
+    "must_handoff": false,
+    "required_tool_families": [
+      "equipment_query"
+    ],
+    "forbidden_tool_families": [],
+    "required_support": [
+      "telemetry:EQ-DEMO-001:vibration_rms"
+    ],
+    "required_contradictions": [],
+    "citation_constraints": [
+      "manual_model:NP-200"
+    ],
+    "control_intent": false,
+    "force_repeat": false
+  },
+  "run": {
+    "id": "run_b9da3b623c704693ab0d",
+    "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+    "user_id": "eval",
+    "status": "awaiting_human",
+    "stage": "produce_report",
+    "alarm_id": "alm_fe07c4c0510da8212097",
+    "equipment_id": "EQ-DEMO-001",
+    "window": {
+      "start": "2026-11-05T00:00:00.000Z",
+      "end": "2026-11-05T00:30:00.000Z"
+    },
+    "symptom": "检修后振动仍高，润滑状态未知",
+    "data_mode": "mock",
+    "model_mode": "live",
+    "budget": {
+      "max_rounds_total": 8,
+      "max_rounds_per_stage": 3,
+      "max_logical_tool_calls": 32,
+      "max_attempts_per_call": 3,
+      "max_concurrent_tools": 4,
+      "source_timeout_ms": 10000,
+      "run_wall_clock_ms": 300000,
+      "max_model_calls": 16,
+      "max_input_tokens": 128000,
+      "max_output_tokens": 12000,
+      "max_rounds_without_new_evidence": 3
+    },
+    "stage_rounds": {
+      "confirm_status": 1,
+      "locate_anomaly": 1,
+      "generate_hypotheses": 2,
+      "verify_evidence": 2,
+      "produce_report": 1
+    },
+    "total_rounds": 7,
+    "logical_calls": 19,
+    "model_calls": 7,
+    "input_tokens": 53682,
+    "output_tokens": 7397,
+    "no_new_evidence_rounds": 1,
+    "checkpoint": {
+      "last_role": "report_reviewer",
+      "last_model": "deepseek-flash",
+      "new_evidence_ids": [],
+      "handoff_reason": null
+    },
+    "error": null,
+    "handoff_reason": null,
+    "review_status": "pending",
+    "conclusion_status": "hypothesis",
+    "created_at": "2026-11-07T20:53:51.149Z",
+    "started_at": "2026-11-07T20:53:51.150Z",
+    "finished_at": "2026-11-07T20:54:35.310Z",
+    "lease_owner": null,
+    "lease_expires_at": null,
+    "lease_token": 1
+  },
+  "events": [
+    {
+      "event_id": "evt_de14bbd24f964e10a40e",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 1,
+      "timestamp": "2026-11-07T20:53:51.150Z",
+      "type": "run.started",
+      "payload": {},
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_625856034faf480bb370",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 2,
+      "timestamp": "2026-11-07T20:53:54.939Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_resolve",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少权威设备记录与设备ID映射"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_dc18ad9b0f774e38b389",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 3,
+      "timestamp": "2026-11-07T20:53:55.227Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_resolve",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_605f8bf7759a4a07a8b8",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 4,
+      "timestamp": "2026-11-07T20:53:55.228Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少设备当前运行状态"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_d0e34d7dc37647369e17",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 5,
+      "timestamp": "2026-11-07T20:53:55.235Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_944e77e7928174e0f91c",
+        "source_kind": "scada",
+        "summary": "status_snapshot"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_294546dc2eb747f1bf17",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 6,
+      "timestamp": "2026-11-07T20:53:55.235Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 1,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_674c8a501be348ef9a1f",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 7,
+      "timestamp": "2026-11-07T20:53:55.236Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少报警记录明细与持续区间"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_457368ddd471453ea274",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 8,
+      "timestamp": "2026-11-07T20:53:55.240Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_cae59986147c332805b5",
+        "source_kind": "scada",
+        "summary": "alarm"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_f984551950d442d19a94",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 9,
+      "timestamp": "2026-11-07T20:53:55.247Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 1,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_ec050242f3ec41faa495",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 10,
+      "timestamp": "2026-11-07T20:53:55.249Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少振动等测点时序数据"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_58c2877844724f2abae0",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 11,
+      "timestamp": "2026-11-07T20:53:55.252Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "error",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": "INVALID_ARGUMENT"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_b366289f5d864a359bc0",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 12,
+      "timestamp": "2026-11-07T20:53:55.253Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少检修工单记录"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_241a159adfbe437194c2",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 13,
+      "timestamp": "2026-11-07T20:53:55.255Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "no_data",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_0efaf2e5f4d64a42899f",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 14,
+      "timestamp": "2026-11-07T20:53:55.256Z",
+      "type": "stage.changed",
+      "payload": {
+        "from": "confirm_status",
+        "to": "locate_anomaly"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_2894b0e344704666835b",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 15,
+      "timestamp": "2026-11-07T20:53:59.915Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少 00:00–00:30 遥测时序，无法确定振动上升起点与幅度"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_6e0dc11d82bf48c8b786",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 16,
+      "timestamp": "2026-11-07T20:53:59.921Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_2351228aa227a9157dd5",
+        "source_kind": "scada",
+        "summary": "telemetry_series"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_45a557ded07e43cfa790",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 17,
+      "timestamp": "2026-11-07T20:53:59.922Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_cee4380c18d7ccae93e1",
+        "source_kind": "scada",
+        "summary": "telemetry_series"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_4124332a70b84ce68e2c",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 18,
+      "timestamp": "2026-11-07T20:53:59.922Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_34eee04bdcb6e7df8765",
+        "source_kind": "scada",
+        "summary": "telemetry_series"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_09930104a1174999938b",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 19,
+      "timestamp": "2026-11-07T20:53:59.923Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_1cec622eb6c64244a8cf",
+        "source_kind": "scada",
+        "summary": "telemetry_series"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_3b2f9e92923540abb66c",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 20,
+      "timestamp": "2026-11-07T20:53:59.923Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_b22442c2958a7df9acde",
+        "source_kind": "scada",
+        "summary": "telemetry_series"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_4a90ccb5abc144fba3ea",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 21,
+      "timestamp": "2026-11-07T20:53:59.924Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 5,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_e49de847f34f4f8e83c2",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 22,
+      "timestamp": "2026-11-07T20:53:59.924Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "仅有 DEMO-VIB-02 单条报警摘要，缺少同窗其他报警与重复触发记录"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_b98e946025194336baf5",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 23,
+      "timestamp": "2026-11-07T20:53:59.927Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_72545e48853147719944",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 24,
+      "timestamp": "2026-11-07T20:53:59.927Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少检修工单记录，无法确认检修完成时间与检修内容"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c4ad36cab4c74e30b08a",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 25,
+      "timestamp": "2026-11-07T20:53:59.928Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "no_data",
+        "policy_decision": "cached",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_54662db2d0c3428eafe4",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 26,
+      "timestamp": "2026-11-07T20:53:59.928Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少 MES 事件，无法确认工况切换或负载变化"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_bead8fa6d9d941878924",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 27,
+      "timestamp": "2026-11-07T20:53:59.932Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_11ddbc9d4139b266999b",
+        "source_kind": "mes",
+        "summary": "mes_event"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_43758d9fc8794b2c8c21",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 28,
+      "timestamp": "2026-11-07T20:53:59.932Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 1,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_850c237a07024a009581",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 29,
+      "timestamp": "2026-11-07T20:53:59.933Z",
+      "type": "stage.changed",
+      "payload": {
+        "from": "locate_anomaly",
+        "to": "generate_hypotheses"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_40d5f3fbe226490a9c9d",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 30,
+      "timestamp": "2026-11-07T20:54:05.357Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "role": "knowledge_retriever",
+        "target_hypothesis": "检修后对中/联轴器不良导致振动与轴承温升",
+        "evidence_gap": "缺少NP-200 v2手册中对中公差、振动限值与检修后验收条款"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c01f5319ce90431baca8",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 31,
+      "timestamp": "2026-11-07T20:54:05.359Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_188ebe6ab4020aa882fd",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_3eb2be6c242b46938630",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 32,
+      "timestamp": "2026-11-07T20:54:05.360Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_9ba63f88d7b4724de4f4",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_3a433edc9cea45daad9a",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 33,
+      "timestamp": "2026-11-07T20:54:05.361Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_a16e633e7518c7354546",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_ed5a518357354d83bd90",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 34,
+      "timestamp": "2026-11-07T20:54:05.361Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_90dcc715db9ac649d2de",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_5a3132c4f1094f6ca243",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 35,
+      "timestamp": "2026-11-07T20:54:05.362Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_e62155bd21c0bf8e38a4",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_6ac2962c67cb4ac5b5bb",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 36,
+      "timestamp": "2026-11-07T20:54:05.362Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_11c2f54762f1a919df33",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_336c919c1eab4c80a39d",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 37,
+      "timestamp": "2026-11-07T20:54:05.363Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_334e20e830e43e52e869",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_51ecf63fcc9f474e916b",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 38,
+      "timestamp": "2026-11-07T20:54:05.363Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_011771e0c25be1b81e10",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_f7cf6722a00f426d8ff6",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 39,
+      "timestamp": "2026-11-07T20:54:05.363Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 8,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_a9aa1510046647c99fbe",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 40,
+      "timestamp": "2026-11-07T20:54:05.364Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "role": "knowledge_retriever",
+        "target_hypothesis": "润滑不良（缺脂/油脂劣化）导致轴承温升与振动",
+        "evidence_gap": "缺少润滑脂牌号、加注量与润滑周期条款"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_763826dc28304c67b650",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 41,
+      "timestamp": "2026-11-07T20:54:05.365Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_ba801593148c4dcfad16",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 42,
+      "timestamp": "2026-11-07T20:54:05.366Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "role": "knowledge_retriever",
+        "target_hypothesis": "振动报警阈值与验收标准确认",
+        "evidence_gap": "缺少DEMO-VIB-02对应手册振动限值/报警阈值"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_8bf5d4c6a39c46cb8cf1",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 43,
+      "timestamp": "2026-11-07T20:54:05.368Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_2bb2b54125ff037e7d49",
+        "source_kind": "manual",
+        "summary": "manual_chunk"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_3e405dc8a1db4451a6d6",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 44,
+      "timestamp": "2026-11-07T20:54:05.368Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 1,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_279be7013171405f9789",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 45,
+      "timestamp": "2026-11-07T20:54:05.369Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_cases",
+        "role": "knowledge_retriever",
+        "target_hypothesis": "历史同类案例根因分布",
+        "evidence_gap": "缺少同型号检修后振动高的历史案例"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_2adc05d2c2b74dcc984c",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 46,
+      "timestamp": "2026-11-07T20:54:05.369Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_cases",
+        "status": "no_data",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_0d86e5aea69d46029e8a",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 47,
+      "timestamp": "2026-11-07T20:54:05.370Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "role": "knowledge_retriever",
+        "target_hypothesis": "叶轮/密封环磨损或汽蚀导致振动",
+        "evidence_gap": "缺少叶轮间隙与汽蚀判据条款"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_f108df372d5a4b989997",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 48,
+      "timestamp": "2026-11-07T20:54:05.372Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_manual",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_b164b32d61a84d91853a",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 49,
+      "timestamp": "2026-11-07T20:54:12.005Z",
+      "type": "hypothesis.updated",
+      "payload": {
+        "count": 3,
+        "codes": [
+          "bearing_wear",
+          "lubrication",
+          "false_alarm_threshold"
+        ],
+        "statuses": [
+          "supported",
+          "inconclusive",
+          "contradicted"
+        ]
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_75009ce37b40430298b9",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 50,
+      "timestamp": "2026-11-07T20:54:12.006Z",
+      "type": "stage.changed",
+      "payload": {
+        "from": "generate_hypotheses",
+        "to": "verify_evidence"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_efa44fe9231a45318358",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 51,
+      "timestamp": "2026-11-07T20:54:12.007Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "hypothesis_verifier",
+        "target_hypothesis": "bearing_wear",
+        "evidence_gap": "检修工单内容与更换部件未知"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c30f1b262118481d9c56",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 52,
+      "timestamp": "2026-11-07T20:54:12.008Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "error",
+        "policy_decision": "schema_invalid",
+        "evidence_count": 0,
+        "error_code": "INVALID_ARGUMENT"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c92e73b72f04495fa600",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 53,
+      "timestamp": "2026-11-07T20:54:12.008Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_cases",
+        "role": "hypothesis_verifier",
+        "target_hypothesis": "bearing_wear",
+        "evidence_gap": "缺少同类故障历史案例"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_13ded8fbe84147758f41",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 54,
+      "timestamp": "2026-11-07T20:54:12.010Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_685c9ae70a6c855a42f5",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_dceaf61ee63941a985d7",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 55,
+      "timestamp": "2026-11-07T20:54:12.010Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_b03f397bed1cb518652a",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_685821dcca124e6ba189",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 56,
+      "timestamp": "2026-11-07T20:54:12.011Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_38358f5ce72cabddde74",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_0a6143742d8a4d66b726",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 57,
+      "timestamp": "2026-11-07T20:54:12.011Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_1060200484e0c8a67dd5",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_6cee4b14faee4a9dad9f",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 58,
+      "timestamp": "2026-11-07T20:54:12.012Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_5094b76e547e42f64e75",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c1bf513699974077a248",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 59,
+      "timestamp": "2026-11-07T20:54:12.013Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_ff12e65931467a55a9e0",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_b9731d73688b47ce84d7",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 60,
+      "timestamp": "2026-11-07T20:54:12.014Z",
+      "type": "evidence.added",
+      "payload": {
+        "evidence_id": "ev_9274a7eace324f727b8e",
+        "source_kind": "case",
+        "summary": "case_record"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_6890e94fe80e447c9f69",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 61,
+      "timestamp": "2026-11-07T20:54:12.014Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_cases",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 7,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_094b4a54b47246da97a0",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 62,
+      "timestamp": "2026-11-07T20:54:12.015Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "hypothesis_verifier",
+        "target_hypothesis": "false_alarm_comm",
+        "evidence_gap": "未核查通讯/维护事件"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_5326017c555f4a8fbd89",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 63,
+      "timestamp": "2026-11-07T20:54:12.018Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_bfe27d633c0044aab7ac",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 64,
+      "timestamp": "2026-11-07T20:54:17.375Z",
+      "type": "hypothesis.updated",
+      "payload": {
+        "count": 3,
+        "codes": [
+          "bearing_wear",
+          "lubrication",
+          "false_alarm_threshold"
+        ],
+        "statuses": [
+          "supported",
+          "inconclusive",
+          "contradicted"
+        ]
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c706a97a1a464d00a38d",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 65,
+      "timestamp": "2026-11-07T20:54:17.376Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_query",
+        "role": "hypothesis_verifier",
+        "target_hypothesis": "bearing_wear",
+        "evidence_gap": "检修工单内容缺失"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_7f31df343ee448c39792",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 66,
+      "timestamp": "2026-11-07T20:54:17.378Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "equipment_query",
+        "status": "no_data",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_c96093b3b72841f48811",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 67,
+      "timestamp": "2026-11-07T20:54:17.378Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "maintenance_search_cases",
+        "role": "hypothesis_verifier",
+        "target_hypothesis": "bearing_wear",
+        "evidence_gap": "缺乏频谱与油液分析佐证"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_653f6f393b014a6393c8",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 68,
+      "timestamp": "2026-11-07T20:54:17.379Z",
+      "type": "tool.finished",
+      "payload": {
+        "tool": "maintenance_search_cases",
+        "status": "success",
+        "policy_decision": "allowed",
+        "evidence_count": 0,
+        "error_code": null
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_47ac15015ce840a2a1d8",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 69,
+      "timestamp": "2026-11-07T20:54:23.034Z",
+      "type": "hypothesis.updated",
+      "payload": {
+        "count": 3,
+        "codes": [
+          "bearing_wear",
+          "lubrication",
+          "false_alarm_threshold"
+        ],
+        "statuses": [
+          "supported",
+          "inconclusive",
+          "contradicted"
+        ]
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_6aadb1d94de0424896cb",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 70,
+      "timestamp": "2026-11-07T20:54:23.035Z",
+      "type": "stage.changed",
+      "payload": {
+        "from": "verify_evidence",
+        "to": "produce_report"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_e335e7c4e81b4933a21b",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 71,
+      "timestamp": "2026-11-07T20:54:35.310Z",
+      "type": "report.ready",
+      "payload": {
+        "report_hash": "validated",
+        "errors": 0,
+        "warnings": 0,
+        "conclusion_status": "hypothesis"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_9428a5a4ad3f42bab5ee",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 72,
+      "timestamp": "2026-11-07T20:54:35.313Z",
+      "type": "review.required",
+      "payload": {
+        "handoff_reason": null,
+        "validation_errors": []
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_9c10eaefe702412c8895",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "seq": 73,
+      "timestamp": "2026-11-07T20:54:35.313Z",
+      "type": "run.awaiting_human",
+      "payload": {
+        "handoff_reason": null
+      },
+      "schema_version": "1"
+    }
+  ],
+  "tool_calls": [
+    {
+      "id": "call_bdaa105172a14435ade2",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_7652082f9f2043ea8e3c",
+      "attempt": 1,
+      "tool": "equipment_resolve",
+      "role": "data_investigator",
+      "args_json": "{\"query\":\"EQ-DEMO-001\",\"vendor\":\"Northwind Pumps\",\"model\":\"NP-200\"}",
+      "args_hash": "8c55860bf13cd607a81c30bc1d68eab5ceca60571cfe8a55217f482b4a85a312",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 288,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:54.939Z",
+      "finished_at": "2026-11-07T20:53:55.227Z"
+    },
+    {
+      "id": "call_e075a65c37b44e4aa0ca",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_48bfd45a770e4c87a23f",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}}",
+      "args_hash": "f3333afd3eacaa0ed531215893fa6c9fabb5eceaf4203257503859a51eb54f09",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 6,
+      "evidence_count": 1,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:55.228Z",
+      "finished_at": "2026-11-07T20:53:55.234Z"
+    },
+    {
+      "id": "call_1755fdd05790434f9b70",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_2cfe4c3bf8f542b3aa88",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-VIB-02\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":200}",
+      "args_hash": "aa328b0152390d76a884242c61e2899bb708e41e09f09aaef4b31f5dd775715b",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 3,
+      "evidence_count": 1,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:55.236Z",
+      "finished_at": "2026-11-07T20:53:55.239Z"
+    },
+    {
+      "id": "call_e36a5ad24f3946df9ad6",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_abfe8b597c86499488ba",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"metrics\":[\"vibration\",\"temperature\",\"pressure\",\"flow\",\"current\"],\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":500}",
+      "args_hash": "1cb2e3a78f3d0f8451369efaddf56d5c80249865da08de282d025920794a9eaa",
+      "status": "error",
+      "error_code": "INVALID_ARGUMENT",
+      "duration_ms": 3,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:55.249Z",
+      "finished_at": "2026-11-07T20:53:55.252Z"
+    },
+    {
+      "id": "call_2f7a899279084e2a9ff2",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_3af0fe122a734cb6bc14",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100}",
+      "args_hash": "3dd25190bb5a26739536f2368464f4f12961158b796f1209a4f1f7e3af38a7e0",
+      "status": "no_data",
+      "error_code": null,
+      "duration_ms": 2,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:55.253Z",
+      "finished_at": "2026-11-07T20:53:55.255Z"
+    },
+    {
+      "id": "call_77ab36cc271e484290ed",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_5cff9bd612224310b7f7",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"metrics\":[\"vibration_rms\",\"bearing_temperature\",\"discharge_pressure\",\"flow_rate\",\"motor_current\"],\"limit\":500}",
+      "args_hash": "f284c84e7d135a5bdb6c81d5c5dad29db19249c752fc3c8c1e4f30cec606dee9",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 4,
+      "evidence_count": 5,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:59.915Z",
+      "finished_at": "2026-11-07T20:53:59.921Z"
+    },
+    {
+      "id": "call_5b6e73f206e34d70b482",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_53628e333cd84cada299",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":200}",
+      "args_hash": "1cdcf6478c616ef67a5bd26ead67882c61152bb9839cce3987c8475f16c52ba1",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 1,
+      "evidence_count": 1,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:59.924Z",
+      "finished_at": "2026-11-07T20:53:59.927Z"
+    },
+    {
+      "id": "call_05585d19509e439c8a93",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_5b9596cf3da0427e9629",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100}",
+      "args_hash": "3dd25190bb5a26739536f2368464f4f12961158b796f1209a4f1f7e3af38a7e0",
+      "status": "cached",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "cached",
+      "started_at": "2026-11-07T20:53:59.928Z",
+      "finished_at": "2026-11-07T20:53:59.928Z"
+    },
+    {
+      "id": "call_6fc4d2d1e2db4a43a427",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_7c5eafaef36f44b8adf3",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "data_investigator",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100}",
+      "args_hash": "16382b279c77a15904b1919ad05a7ec59d53d5ed097e007f2edc82bacd4a4949",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 2,
+      "evidence_count": 1,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:53:59.928Z",
+      "finished_at": "2026-11-07T20:53:59.932Z"
+    },
+    {
+      "id": "call_b04507792eb040dfb876",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_9594675c812d4030b0b6",
+      "attempt": 1,
+      "tool": "maintenance_search_manual",
+      "role": "knowledge_retriever",
+      "args_json": "{\"query\":\"vibration high after maintenance alignment coupling imbalance bearing temperature rise\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10}",
+      "args_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 8,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:05.357Z",
+      "finished_at": "2026-11-07T20:54:05.363Z"
+    },
+    {
+      "id": "call_20343045fc1946578cab",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_4baf2dc065dc4b578348",
+      "attempt": 1,
+      "tool": "maintenance_search_manual",
+      "role": "knowledge_retriever",
+      "args_json": "{\"query\":\"bearing lubrication grease level specification vibration\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10}",
+      "args_hash": "39f28d9c0275b3a23029fe8ff8581bd629a31e53af53a3611e50e8a5cc03ab43",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:05.364Z",
+      "finished_at": "2026-11-07T20:54:05.365Z"
+    },
+    {
+      "id": "call_c5c3a006a279422c805b",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_e482cc23b803445aa50a",
+      "attempt": 1,
+      "tool": "maintenance_search_manual",
+      "role": "knowledge_retriever",
+      "args_json": "{\"query\":\"vibration alarm threshold limits condition monitoring acceptance\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10}",
+      "args_hash": "4839371a07c6a55002b1a5c9c9e94ac73ceef1225ccecd3de5a278123d67befd",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 1,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:05.366Z",
+      "finished_at": "2026-11-07T20:54:05.368Z"
+    },
+    {
+      "id": "call_3e230c4acf0b4922aeb2",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_e071880c0fb544609883",
+      "attempt": 1,
+      "tool": "maintenance_search_cases",
+      "role": "knowledge_retriever",
+      "args_json": "{\"query\":\"循环泵 检修后 振动高 轴承温度升高 对中 润滑\",\"equipment_model\":\"NP-200\",\"asset_category\":\"pump\",\"limit\":10}",
+      "args_hash": "b173eee56bf677ceb764c2f88dd5c1ba87454aa84ea891ca7e1feac2a3e8a302",
+      "status": "no_data",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:05.369Z",
+      "finished_at": "2026-11-07T20:54:05.369Z"
+    },
+    {
+      "id": "call_08fae70746564dfda29d",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_f33d6f2e7b71414abefe",
+      "attempt": 1,
+      "tool": "maintenance_search_manual",
+      "role": "knowledge_retriever",
+      "args_json": "{\"query\":\"impeller wear cavitation clearance seal ring\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10}",
+      "args_hash": "2ff47d21dfc07477e691dcaa8a764ea57239b58c8c717e8ea976bf5f5a487f3e",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:05.370Z",
+      "finished_at": "2026-11-07T20:54:05.372Z"
+    },
+    {
+      "id": "call_68d4437787c842bb9460",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_d76b3442bc2a440eb52e",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "hypothesis_verifier",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-01T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}}",
+      "args_hash": "fd76f4e679f70634032c3ce66ffef481f2fac1f2a9ddca9521b7bb5bf73ed28b",
+      "status": "denied",
+      "error_code": "INVALID_ARGUMENT",
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "schema_invalid",
+      "started_at": "2026-11-07T20:54:12.007Z",
+      "finished_at": "2026-11-07T20:54:12.007Z"
+    },
+    {
+      "id": "call_4c41ea9301fb49cb850b",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_c4ef47194b8b47e5a8a6",
+      "attempt": 1,
+      "tool": "maintenance_search_cases",
+      "role": "hypothesis_verifier",
+      "args_json": "{\"query\":\"NP-200 振动上升 轴承磨损 润滑\",\"equipment_model\":\"NP-200\",\"limit\":10}",
+      "args_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 7,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:12.009Z",
+      "finished_at": "2026-11-07T20:54:12.014Z"
+    },
+    {
+      "id": "call_7dc88a24bbc84a93a665",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_42896ab486d449968fdb",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "hypothesis_verifier",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}}",
+      "args_hash": "8253b7f8eecf3da276cccf963a1de019e91cffcb6d818a43bd6fa517cec59a5e",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 3,
+      "evidence_count": 1,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:12.015Z",
+      "finished_at": "2026-11-07T20:54:12.018Z"
+    },
+    {
+      "id": "call_1a82f328ba6f4c41ab25",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_cc29db44de1e4ca98fa5",
+      "attempt": 1,
+      "tool": "equipment_query",
+      "role": "hypothesis_verifier",
+      "args_json": "{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}}",
+      "args_hash": "f076d181bd69c61bfacc05aeb2c49fa0b1a727147d7daa137adcaf3c5cd01c01",
+      "status": "no_data",
+      "error_code": null,
+      "duration_ms": 2,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:17.376Z",
+      "finished_at": "2026-11-07T20:54:17.378Z"
+    },
+    {
+      "id": "call_8917dd7858f04001b14e",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "logical_call_id": "lc_6201dd1d27704c6898fc",
+      "attempt": 1,
+      "tool": "maintenance_search_cases",
+      "role": "hypothesis_verifier",
+      "args_json": "{\"query\":\"NP-200 振动上升 电流上升 轴承磨损 频谱\",\"equipment_model\":\"NP-200\",\"limit\":5}",
+      "args_hash": "3e88b9abbed7e415d1ba0c53cc1f766553ede817b3256f928fe6ac9412d1fb37",
+      "status": "success",
+      "error_code": null,
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T20:54:17.379Z",
+      "finished_at": "2026-11-07T20:54:17.379Z"
+    }
+  ],
+  "model_calls": [
+    {
+      "id": "mc_9dd1f0230a8d42cbb22f",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 1452,
+      "output_tokens": 685,
+      "latency_ms": 3785,
+      "tool_requests_json": "[{\"tool\":\"equipment_resolve\",\"args\":{\"query\":\"EQ-DEMO-001\",\"vendor\":\"Northwind Pumps\",\"model\":\"NP-200\"},\"target_hypothesis\":null,\"evidence_gap\":\"缺少权威设备记录与设备ID映射\",\"expected_discrimination\":\"确认设备身份与权威 equipment_id，供后续查询使用\",\"rationale\":\"先解析设备编号为权威记录，避免用错 ID 查询\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少设备当前运行状态\",\"expected_discrimination\":\"确认设备是否运行/停机及状态码\",\"rationale\":\"confirm_status 阶段需先确认设备状态\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-VIB-02\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警记录明细与持续区间\",\"expected_discrimination\":\"确认报警发生次数、起止时间与是否持续\",\"rationale\":\"定位异常指标与时间区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"metrics\":[\"vibration\",\"temperature\",\"pressure\",\"flow\",\"current\"],\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少振动等测点时序数据\",\"expected_discrimination\":\"确认振动幅值水平及与其它测点的时序关系\",\"rationale\":\"量化异常指标，界定异常时间区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100},\"target_hypothesis\":null,\"evidence_gap\":\"缺少检修工单记录\",\"expected_discrimination\":\"确认检修内容与完成时间，判断振动是否在检修后仍存在\",\"rationale\":\"现象提到检修后振动仍高，需核实工单\"}]",
+      "raw_output": "{\"summary\":\"设备 EQ-DEMO-001（1号循环泵，NP-200）在 2026-11-05T00:18:00Z 报 DEMO-VIB-02 振动超标，检修后振动仍高，润滑状态未知。当前无已入库证据，需先解析权威设备记录并拉取状态、遥测、报警与工单数据以确认设备状态与异常区间。\",\"queries\":[{\"tool\":\"equipment_resolve\",\"args\":{\"query\":\"EQ-DEMO-001\",\"vendor\":\"Northwind Pumps\",\"model\":\"NP-200\"},\"target_hypothesis\":null,\"evidence_gap\":\"缺少权威设备记录与设备ID映射\",\"expected_discrimination\":\"确认设备身份与权威 equipment_id，供后续查询使用\",\"rationale\":\"先解析设备编号为权威记录，避免用错 ID 查询\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少设备当前运行状态\",\"expected_discrimination\":\"确认设备是否运行/停机及状态码\",\"rationale\":\"confirm_status 阶段需先确认设备状态\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-VIB-02\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警记录明细与持续区间\",\"expected_discrimination\":\"确认报警发生次数、起止时间与是否持续\",\"rationale\":\"定位异常指标与时间区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"metrics\":[\"vibration\",\"temperature\",\"pressure\",\"flow\",\"current\"],\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少振动等测点时序数据\",\"expected_discrimination\":\"确认振动幅值水平及与其它测点的时序关系\",\"rationale\":\"量化异常指标，界定异常时间区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100},\"target_hypothesis\":null,\"evidence_gap\":\"缺少检修工单记录\",\"expected_discrimination\":\"确认检修内容与完成时间，判断振动是否在检修后仍存在\",\"rationale\":\"现象提到检修后振动仍高，需核实工单\"}]}",
+      "created_at": "2026-11-07T20:53:54.938Z"
+    },
+    {
+      "id": "mc_34245ffd93bb4b7d896f",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "data_investigator",
+      "stage": "locate_anomaly",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 2221,
+      "output_tokens": 728,
+      "latency_ms": 4655,
+      "tool_requests_json": "[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"metrics\":[\"vibration_rms\",\"bearing_temperature\",\"discharge_pressure\",\"flow_rate\",\"motor_current\"],\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 00:00–00:30 遥测时序，无法确定振动上升起点与幅度\",\"expected_discrimination\":\"给出各测点时间序列，可区分振动是阶跃上升还是渐进漂移，并定位异常起始时刻\",\"rationale\":\"报警触发于 00:18，需回溯前 18 分钟趋势以定位异常区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"仅有 DEMO-VIB-02 单条报警摘要，缺少同窗其他报警与重复触发记录\",\"expected_discrimination\":\"确认是否存在伴随报警（温度、压力、电流）以界定异常范围\",\"rationale\":\"多报警共现可缩小异常指标集合\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100},\"target_hypothesis\":null,\"evidence_gap\":\"缺少检修工单记录，无法确认检修完成时间与检修内容\",\"expected_discrimination\":\"确认检修是否在窗口内完成及其范围，界定异常是否与检修后状态相关\",\"rationale\":\"现象为检修后振动仍高，需工单时间线\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 MES 事件，无法确认工况切换或负载变化\",\"expected_discrimination\":\"区分工况变化导致的振动升高与设备自身异常\",\"rationale\":\"流量/电流变化需与 MES 工况事件对齐\"}]",
+      "raw_output": "{\"summary\":\"EQ-DEMO-001 处于 alarm 状态，DEMO-VIB-02 振动报警自 00:18 起持续 active；00:30 快照显示 vibration_rms=6.69mm/s、轴承温度 67.8°C、出口压力 0.56MPa、流量 118.95m3/h、电流 52.04A，数据质量均为 good。当前仅有单点快照与报警记录，缺少 00:00–00:30 的遥测时序、报警明细与工单/MES 事件，无法定位异常起始区间与变化趋势。\",\"queries\":[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"telemetry\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"metrics\":[\"vibration_rms\",\"bearing_temperature\",\"discharge_pressure\",\"flow_rate\",\"motor_current\"],\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 00:00–00:30 遥测时序，无法确定振动上升起点与幅度\",\"expected_discrimination\":\"给出各测点时间序列，可区分振动是阶跃上升还是渐进漂移，并定位异常起始时刻\",\"rationale\":\"报警触发于 00:18，需回溯前 18 分钟趋势以定位异常区间\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"alarms\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"仅有 DEMO-VIB-02 单条报警摘要，缺少同窗其他报警与重复触发记录\",\"expected_discrimination\":\"确认是否存在伴随报警（温度、压力、电流）以界定异常范围\",\"rationale\":\"多报警共现可缩小异常指标集合\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100},\"target_hypothesis\":null,\"evidence_gap\":\"缺少检修工单记录，无法确认检修完成时间与检修内容\",\"expected_discrimination\":\"确认检修是否在窗口内完成及其范围，界定异常是否与检修后状态相关\",\"rationale\":\"现象为检修后振动仍高，需工单时间线\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"},\"limit\":100},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 MES 事件，无法确认工况切换或负载变化\",\"expected_discrimination\":\"区分工况变化导致的振动升高与设备自身异常\",\"rationale\":\"流量/电流变化需与 MES 工况事件对齐\"}]}",
+      "created_at": "2026-11-07T20:53:59.914Z"
+    },
+    {
+      "id": "mc_d632c0a92f0640e6aa5a",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "knowledge_retriever",
+      "stage": "generate_hypotheses",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 7860,
+      "output_tokens": 694,
+      "latency_ms": 5417,
+      "tool_requests_json": "[{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"vibration high after maintenance alignment coupling imbalance bearing temperature rise\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"检修后对中/联轴器不良导致振动与轴承温升\",\"evidence_gap\":\"缺少NP-200 v2手册中对中公差、振动限值与检修后验收条款\",\"expected_discrimination\":\"若手册给出对中公差与振动限值，可判断6.69mm/s是否超限并支持对中不良假设\",\"rationale\":\"检修后振动仍高，对中不良是常见机械根因，需手册条款支撑\"},{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"bearing lubrication grease level specification vibration\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"润滑不良（缺脂/油脂劣化）导致轴承温升与振动\",\"evidence_gap\":\"缺少润滑脂牌号、加注量与润滑周期条款\",\"expected_discrimination\":\"若手册规定润滑周期与温升限值，可区分润滑不足与机械对中问题\",\"rationale\":\"现象明确提示润滑状态未知，需手册润滑条款\"},{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"vibration alarm threshold limits condition monitoring acceptance\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"振动报警阈值与验收标准确认\",\"evidence_gap\":\"缺少DEMO-VIB-02对应手册振动限值/报警阈值\",\"expected_discrimination\":\"确认6.69mm/s相对限值的严重程度，排除误报\",\"rationale\":\"需以手册限值判断报警合理性\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"循环泵 检修后 振动高 轴承温度升高 对中 润滑\",\"equipment_model\":\"NP-200\",\"asset_category\":\"pump\",\"limit\":10},\"target_hypothesis\":\"历史同类案例根因分布\",\"evidence_gap\":\"缺少同型号检修后振动高的历史案例\",\"expected_discrimination\":\"案例仅作参考，不能直接作为本次根因，但可提示排查顺序\",\"rationale\":\"检索历史案例辅助排序假设，注意相似性非根因\"},{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"impeller wear cavitation clearance seal ring\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"叶轮/密封环磨损或汽蚀导致振动\",\"evidence_gap\":\"缺少叶轮间隙与汽蚀判据条款\",\"expected_discrimination\":\"若流量压力稳定则汽蚀可能性低，可排除\",\"rationale\":\"流量压力平稳但需手册判据确认\"}]",
+      "raw_output": "{\"summary\":\"振动自00:00的2.1mm/s单调升至00:29的6.55mm/s，轴承温度同步由61.8°C升至67.8°C，而流量、压力、电流变化平缓，MES负荷上调仅5%不足以解释。检修后振动仍高、润滑状态未知，需检索NP-200手册中振动/轴承温升/润滑与对中条款及历史案例，形成候选假设。\",\"queries\":[{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"vibration high after maintenance alignment coupling imbalance bearing temperature rise\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"检修后对中/联轴器不良导致振动与轴承温升\",\"evidence_gap\":\"缺少NP-200 v2手册中对中公差、振动限值与检修后验收条款\",\"expected_discrimination\":\"若手册给出对中公差与振动限值，可判断6.69mm/s是否超限并支持对中不良假设\",\"rationale\":\"检修后振动仍高，对中不良是常见机械根因，需手册条款支撑\"},{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"bearing lubrication grease level specification vibration\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"润滑不良（缺脂/油脂劣化）导致轴承温升与振动\",\"evidence_gap\":\"缺少润滑脂牌号、加注量与润滑周期条款\",\"expected_discrimination\":\"若手册规定润滑周期与温升限值，可区分润滑不足与机械对中问题\",\"rationale\":\"现象明确提示润滑状态未知，需手册润滑条款\"},{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"vibration alarm threshold limits condition monitoring acceptance\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"振动报警阈值与验收标准确认\",\"evidence_gap\":\"缺少DEMO-VIB-02对应手册振动限值/报警阈值\",\"expected_discrimination\":\"确认6.69mm/s相对限值的严重程度，排除误报\",\"rationale\":\"需以手册限值判断报警合理性\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"循环泵 检修后 振动高 轴承温度升高 对中 润滑\",\"equipment_model\":\"NP-200\",\"asset_category\":\"pump\",\"limit\":10},\"target_hypothesis\":\"历史同类案例根因分布\",\"evidence_gap\":\"缺少同型号检修后振动高的历史案例\",\"expected_discrimination\":\"案例仅作参考，不能直接作为本次根因，但可提示排查顺序\",\"rationale\":\"检索历史案例辅助排序假设，注意相似性非根因\"},{\"tool\":\"maintenance_search_manual\",\"args\":{\"query\":\"impeller wear cavitation clearance seal ring\",\"equipment_model\":\"NP-200\",\"manual_version\":\"v2\",\"limit\":10},\"target_hypothesis\":\"叶轮/密封环磨损或汽蚀导致振动\",\"evidence_gap\":\"缺少叶轮间隙与汽蚀判据条款\",\"expected_discrimination\":\"若流量压力稳定则汽蚀可能性低，可排除\",\"rationale\":\"流量压力平稳但需手册判据确认\"}]}",
+      "created_at": "2026-11-07T20:54:05.354Z"
+    },
+    {
+      "id": "mc_d92d2d7878a747ecb27f",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "hypothesis_verifier",
+      "stage": "generate_hypotheses",
+      "round": 2,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 10209,
+      "output_tokens": 1081,
+      "latency_ms": 6625,
+      "tool_requests_json": "[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-01T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"检修工单内容与更换部件未知\",\"expected_discrimination\":\"若工单显示轴承更换/润滑作业，支持机械类根因并区分磨损与润滑\",\"rationale\":\"现象称检修后振动仍高，需确认检修范围\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"NP-200 振动上升 轴承磨损 润滑\",\"equipment_model\":\"NP-200\",\"limit\":10},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"缺少同类故障历史案例\",\"expected_discrimination\":\"案例中频谱/油液结论可区分轴承磨损与润滑不良\",\"rationale\":\"用历史案例补充鉴别证据\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"false_alarm_comm\",\"evidence_gap\":\"未核查通讯/维护事件\",\"expected_discrimination\":\"若存在通讯中断或MES维护事件则转向false_alarm_comm\",\"rationale\":\"排除通讯类误报竞争假设\"}]",
+      "raw_output": "{\"summary\":\"30分钟窗口内振动RMS由2.1持续单调升至6.55mm/s（超手册6.1节4.5mm/s限值），报警DEMO-VIB-02仍active；轴承温度67.77°C低于80°C阈值，电流、压力、流量平稳，无通讯/时钟异常证据。振动趋势性上升指向机械类根因，但检修后仍高、润滑未知，需补振动频谱与油液分析。\",\"hypotheses\":[{\"code\":\"bearing_wear\",\"title\":\"轴承磨损导致振动趋势性上升\",\"description\":\"振动RMS在30分钟内由2.1单调升至6.55mm/s，超过手册6.1节4.5mm/s异常机械条件限值；手册指出振动上升伴电流增加提示轴承磨损，需油液分析与频谱确认。\",\"confidence\":\"medium\",\"status\":\"supported\",\"rationale\":\"振动趋势单调上升且超限，符合手册6.1对异常机械条件的判据；但电流未同步上升（47.97–51.79A平稳），轴承温度未达80°C，故仅中等置信，需频谱/油液确认。\",\"supporting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\",\"ev_944e77e7928174e0f91c\"],\"contradicting_evidence_ids\":[\"ev_b22442c2958a7df9acde\"],\"missing_evidence\":[\"振动频谱数据\",\"油液分析结果\",\"检修工单内容\"],\"next_check\":\"检索历史案例与工单，确认检修内容及轴承磨损先例\"},{\"code\":\"lubrication\",\"title\":\"润滑不良引起振动与温升\",\"description\":\"检修后振动仍高、润滑状态未知，润滑不足可同时引起振动上升与轴承温度缓慢爬升（61.83→67.77°C）。\",\"confidence\":\"low\",\"status\":\"inconclusive\",\"rationale\":\"现象与润滑不良相容，但无油位/油质/油液分析证据，无法与轴承磨损区分；温度仍低于80°C阈值。\",\"supporting_evidence_ids\":[\"ev_cee4380c18d7ccae93e1\",\"ev_2351228aa227a9157dd5\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"润滑油位与油质记录\",\"油液分析报告\"],\"next_check\":\"检索润滑相关手册片段与历史案例\"},{\"code\":\"false_alarm_threshold\",\"title\":\"阈值型误报（振动限值判据）\",\"description\":\"报警触发值4.85mm/s高于手册4.5mm/s限值，且报警仍active，不满足阈值误报条件。\",\"confidence\":\"low\",\"status\":\"contradicted\",\"rationale\":\"手册6.1明确RMS>4.5mm/s为异常机械条件，触发值已超限，且无通讯/时钟/恢复证据，阈值误报不成立。\",\"supporting_evidence_ids\":[],\"contradicting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\"],\"missing_evidence\":[],\"next_check\":null}],\"next_checks\":[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-01T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"检修工单内容与更换部件未知\",\"expected_discrimination\":\"若工单显示轴承更换/润滑作业，支持机械类根因并区分磨损与润滑\",\"rationale\":\"现象称检修后振动仍高，需确认检修范围\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"NP-200 振动上升 轴承磨损 润滑\",\"equipment_model\":\"NP-200\",\"limit\":10},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"缺少同类故障历史案例\",\"expected_discrimination\":\"案例中频谱/油液结论可区分轴承磨损与润滑不良\",\"rationale\":\"用历史案例补充鉴别证据\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"false_alarm_comm\",\"evidence_gap\":\"未核查通讯/维护事件\",\"expected_discrimination\":\"若存在通讯中断或MES维护事件则转向false_alarm_comm\",\"rationale\":\"排除通讯类误报竞争假设\"}]}",
+      "created_at": "2026-11-07T20:54:12.003Z"
+    },
+    {
+      "id": "mc_b8f9121278d546aa8a07",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "hypothesis_verifier",
+      "stage": "verify_evidence",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 10399,
+      "output_tokens": 897,
+      "latency_ms": 5341,
+      "tool_requests_json": "[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"检修工单内容缺失\",\"expected_discrimination\":\"确认检修是否涉及轴承/润滑，区分轴承磨损与润滑不良\",\"rationale\":\"检修后振动仍高，工单内容可佐证根因\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"NP-200 振动上升 电流上升 轴承磨损 频谱\",\"equipment_model\":\"NP-200\",\"limit\":5},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"缺乏频谱与油液分析佐证\",\"expected_discrimination\":\"比对历史案例特征频率与电流模式\",\"rationale\":\"用历史案例强化或削弱轴承磨损假设\"}]",
+      "raw_output": "{\"summary\":\"振动RMS在30分钟内由2.1单调升至6.55mm/s，超过手册6.1节4.5mm/s异常限值，报警active；轴承温度与电流同步缓升，符合轴承磨损趋势。润滑不良证据不足，阈值误报被排除。\",\"hypotheses\":[{\"code\":\"bearing_wear\",\"title\":\"轴承磨损导致振动趋势性上升\",\"description\":\"振动RMS持续单调上升并越过4.5mm/s异常限值，轴承温度与电机电流同步缓升，符合手册6.1节描述的轴承磨损特征。\",\"confidence\":\"medium\",\"status\":\"supported\",\"rationale\":\"振动趋势与温升、电流同向变化，手册6.1节明确该组合指向轴承磨损；历史案例CASE-H-002亦为振动与电流同步上升。缺频谱与油液分析，故置信度中等。\",\"supporting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\",\"ev_cee4380c18d7ccae93e1\",\"ev_b22442c2958a7df9acde\",\"ev_685c9ae70a6c855a42f5\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"振动频谱数据\",\"油液分析结果\",\"检修工单内容\"],\"next_check\":\"补充振动频谱与油液分析以确认轴承磨损\"},{\"code\":\"lubrication\",\"title\":\"润滑不良引起振动与温升\",\"description\":\"振动与温度同时上升，历史案例CASE-H-005显示润滑不良可致类似表现，但缺乏油位油质证据。\",\"confidence\":\"low\",\"status\":\"inconclusive\",\"rationale\":\"温升与振动上升与润滑不良相容，但无油位/油质或油液分析证据，无法与轴承磨损区分。\",\"supporting_evidence_ids\":[\"ev_cee4380c18d7ccae93e1\",\"ev_2351228aa227a9157dd5\",\"ev_b03f397bed1cb518652a\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"润滑油位与油质记录\",\"油液分析报告\"],\"next_check\":\"查询润滑油位与油质记录\"},{\"code\":\"false_alarm_threshold\",\"title\":\"阈值型误报（振动限值判据）\",\"description\":\"振动触发值已超手册4.5mm/s异常限值且报警active，不构成阈值型误报。\",\"confidence\":\"low\",\"status\":\"contradicted\",\"rationale\":\"触发值6.55mm/s高于手册6.1节4.5mm/s限值，报警仍active，不符合阈值误报判据。\",\"supporting_evidence_ids\":[],\"contradicting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\"],\"missing_evidence\":[],\"next_check\":null}],\"next_checks\":[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"检修工单内容缺失\",\"expected_discrimination\":\"确认检修是否涉及轴承/润滑，区分轴承磨损与润滑不良\",\"rationale\":\"检修后振动仍高，工单内容可佐证根因\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"NP-200 振动上升 电流上升 轴承磨损 频谱\",\"equipment_model\":\"NP-200\",\"limit\":5},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"缺乏频谱与油液分析佐证\",\"expected_discrimination\":\"比对历史案例特征频率与电流模式\",\"rationale\":\"用历史案例强化或削弱轴承磨损假设\"}]}",
+      "created_at": "2026-11-07T20:54:17.374Z"
+    },
+    {
+      "id": "mc_a406bebc16954efe90a0",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "hypothesis_verifier",
+      "stage": "verify_evidence",
+      "round": 2,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 10644,
+      "output_tokens": 952,
+      "latency_ms": 5639,
+      "tool_requests_json": "[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"检修工单内容\",\"expected_discrimination\":\"确认检修是否涉及轴承/润滑，区分磨损与润滑不良\",\"rationale\":\"检修后振动仍高，工单内容可提供机械处置线索\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"NP-200 振动上升 电流上升 轴承磨损 润滑\",\"equipment_model\":\"NP-200\",\"limit\":5},\"target_hypothesis\":\"lubrication\",\"evidence_gap\":\"润滑不良与轴承磨损的鉴别案例\",\"expected_discrimination\":\"比较两类案例的温度/电流特征差异\",\"rationale\":\"补充鉴别润滑与磨损的案例证据\"}]",
+      "raw_output": "{\"summary\":\"振动RMS由2.1升至6.55mm/s（超手册4.5mm/s限值），电流同步缓升，轴承温度仅中度上升；无通讯/时钟异常，报警仍active且触发值超阈值，故排除误报类。机械类中轴承磨损证据最强（趋势+电流+手册+历史案例），润滑不良证据较弱保留inconclusive。\",\"hypotheses\":[{\"code\":\"bearing_wear\",\"title\":\"轴承磨损导致振动趋势性上升\",\"description\":\"振动RMS在30分钟内单调上升至6.55mm/s，超过手册6.1节4.5mm/s异常机械判据；电机电流同步由47.97升至51.79A，符合手册“振动上升伴电流增加提示轴承磨损”的描述，与历史案例CASE-H-002一致。\",\"confidence\":\"medium\",\"status\":\"supported\",\"rationale\":\"振动趋势+电流同步上升+手册判据+同类历史案例构成一致证据链；但缺振动频谱与油液分析，无法确认BPFO特征频率，故置信度中等。\",\"supporting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_b22442c2958a7df9acde\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\",\"ev_685c9ae70a6c855a42f5\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"振动频谱/BPFO特征频率\",\"油液分析报告\",\"检修工单内容\"],\"next_check\":\"补充振动频谱与油液分析以确认轴承磨损\"},{\"code\":\"lubrication\",\"title\":\"润滑不良引起振动与温升\",\"description\":\"振动升高伴轴承温度中度上升（61.83→67.77°C），与历史案例CASE-H-005润滑不良表现相似，但缺乏油位/油质记录，无法与轴承磨损区分。\",\"confidence\":\"low\",\"status\":\"inconclusive\",\"rationale\":\"温度与振动变化可兼容润滑不良，但无油液/油位证据，且电流同步上升更支持磨损；证据不足以支持或排除。\",\"supporting_evidence_ids\":[\"ev_cee4380c18d7ccae93e1\",\"ev_2351228aa227a9157dd5\",\"ev_b03f397bed1cb518652a\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"润滑油位与油质记录\",\"油液分析报告\"],\"next_check\":\"查询润滑维护记录与油液分析\"},{\"code\":\"false_alarm_threshold\",\"title\":\"阈值型误报（振动限值判据）\",\"description\":\"报警DEMO-VIB-02仍active，触发值6.55mm/s明显高于手册4.5mm/s限值，且无通讯/时钟异常，不满足阈值误报条件。\",\"confidence\":\"low\",\"status\":\"contradicted\",\"rationale\":\"触发值超手册阈值且报警未清除，振动趋势真实上升，排除阈值误报。\",\"supporting_evidence_ids\":[],\"contradicting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\"],\"missing_evidence\":[],\"next_check\":null}],\"next_checks\":[{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-001\",\"query_kind\":\"work_orders\",\"window\":{\"start\":\"2026-11-05T00:00:00.000Z\",\"end\":\"2026-11-05T00:30:00.000Z\"}},\"target_hypothesis\":\"bearing_wear\",\"evidence_gap\":\"检修工单内容\",\"expected_discrimination\":\"确认检修是否涉及轴承/润滑，区分磨损与润滑不良\",\"rationale\":\"检修后振动仍高，工单内容可提供机械处置线索\"},{\"tool\":\"maintenance_search_cases\",\"args\":{\"query\":\"NP-200 振动上升 电流上升 轴承磨损 润滑\",\"equipment_model\":\"NP-200\",\"limit\":5},\"target_hypothesis\":\"lubrication\",\"evidence_gap\":\"润滑不良与轴承磨损的鉴别案例\",\"expected_discrimination\":\"比较两类案例的温度/电流特征差异\",\"rationale\":\"补充鉴别润滑与磨损的案例证据\"}]}",
+      "created_at": "2026-11-07T20:54:23.032Z"
+    },
+    {
+      "id": "mc_2786cb2673244ee5b167",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "report_reviewer",
+      "stage": "produce_report",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 10897,
+      "output_tokens": 2360,
+      "latency_ms": 12257,
+      "tool_requests_json": "[]",
+      "raw_output": "{\"summary\":\"EQ-DEMO-001 在 2026-11-05 00:00–00:30 窗口内振动 RMS 由 2.1 单调升至 6.55 mm/s（末点 6.69），超过手册 6.1 节 4.5 mm/s 异常判据，同时电机电流与轴承温度同步缓升，触发 DEMO-VIB-02 high 报警。轴承磨损为最可能根因，润滑不良待油液/油位证据排除；阈值型误报已被趋势与限值证据反驳。\",\"report\":{\"limitations\":[\"手册证据仅覆盖 DOC-NP200-V2 v2（适用 NP-200，与登记型号一致）；未取得 v1 或其他版本手册，无法评估版本差异。\",\"缺少振动频谱/BPFO 特征频率、油液分析报告、润滑油位与油质记录、检修工单内容，无法最终区分轴承磨损与润滑不良。\",\"设备 mode 字段为空（未知），无法确认运行工况与负荷基准。\",\"窗口仅 30 分钟，无法判断振动上升是长期趋势还是检修后短期现象。\"],\"observations\":[{\"id\":\"obs_1\",\"text\":\"设备 EQ-DEMO-001 状态 alarm，最后上报 2026-11-05T00:30:00Z；末点 vibration_rms=6.69mm/s、bearing_temperature=67.8°C、discharge_pressure=0.56MPa、flow_rate=118.95m3/h、motor_current=52.04A，质量均为 good。\",\"evidence_ids\":[\"ev_944e77e7928174e0f91c\"]},{\"id\":\"obs_2\",\"text\":\"报警 DEMO-VIB-02 high 于 2026-11-05T00:18:00Z 触发且仍 active：泵组振动超标。\",\"evidence_ids\":[\"ev_cae59986147c332805b5\"]},{\"id\":\"obs_3\",\"text\":\"vibration_rms 30 个样本无缺失，由 2.1 单调升至 6.55mm/s（avg 4.32），呈持续上升趋势而非单点尖峰。\",\"evidence_ids\":[\"ev_2351228aa227a9157dd5\"]},{\"id\":\"obs_4\",\"text\":\"bearing_temperature 30 样本由 61.83 升至 67.77°C（avg 64.89），低于手册 5.2 节 80°C 报警阈值，为缓升。\",\"evidence_ids\":[\"ev_cee4380c18d7ccae93e1\",\"ev_a16e633e7518c7354546\"]},{\"id\":\"obs_5\",\"text\":\"motor_current 30 样本由 47.97 升至 51.79A（avg 49.95），与振动同步上升。\",\"evidence_ids\":[\"ev_b22442c2958a7df9acde\"]},{\"id\":\"obs_6\",\"text\":\"discharge_pressure 由 0.62 缓降至 0.56MPa，flow_rate 在 118.95–121.19m3/h 间波动，无明显突变。\",\"evidence_ids\":[\"ev_34eee04bdcb6e7df8765\",\"ev_1cec622eb6c64244a8cf\"]},{\"id\":\"obs_7\",\"text\":\"手册 6.1 节：RMS 高于 4.5mm/s 指示机械异常；振动上升伴随电机电流升高指示轴承磨损，需油液分析与振动频谱验证。\",\"evidence_ids\":[\"ev_9ba63f88d7b4724de4f4\"]},{\"id\":\"obs_8\",\"text\":\"MES 记录 00:01 工艺负荷上调约 5%，不足以单独解释振动与温升。\",\"evidence_ids\":[\"ev_11ddbc9d4139b266999b\"]},{\"id\":\"obs_9\",\"text\":\"历史案例 CASE-H-002：NP-200 振动与电流同步上升、BPFO 特征明显，根因 bearing_wear。\",\"evidence_ids\":[\"ev_685c9ae70a6c855a42f5\"]}],\"hypotheses\":[{\"code\":\"bearing_wear\",\"title\":\"轴承磨损导致振动趋势性上升\",\"description\":\"振动 RMS 在 30 分钟内单调上升并越过 4.5mm/s 异常限值，电机电流同步上升，符合手册 6.1 节对轴承磨损的描述及历史案例 CASE-H-002 模式。\",\"confidence\":\"medium\",\"status\":\"supported\",\"rationale\":\"趋势单调、电流同步、超限值三项证据一致；但缺少频谱 BPFO 与油液分析，故置信度中等。\",\"supporting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_b22442c2958a7df9acde\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\",\"ev_685c9ae70a6c855a42f5\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"振动频谱/BPFO 特征频率\",\"油液分析报告\",\"检修工单内容\"],\"next_check\":\"采集振动频谱确认 BPFO 特征频率，并送油液分析。\",\"id\":\"hyp_76fe8dbd18374f4e95d7\"},{\"code\":\"lubrication\",\"title\":\"润滑不良引起振动与温升\",\"description\":\"轴承温度与振动同步缓升，与历史案例 CASE-H-005 润滑不良模式相似；但缺少油位与油质记录，无法确认。\",\"confidence\":\"low\",\"status\":\"inconclusive\",\"rationale\":\"温度与振动上升可兼容润滑不良，但无油液/油位证据，且温度未接近 80°C 阈值。\",\"supporting_evidence_ids\":[\"ev_cee4380c18d7ccae93e1\",\"ev_2351228aa227a9157dd5\",\"ev_b03f397bed1cb518652a\"],\"contradicting_evidence_ids\":[],\"missing_evidence\":[\"润滑油位与油质记录\",\"油液分析报告\"],\"next_check\":\"检查润滑油位与油质，取样送检。\",\"id\":\"hyp_e7634cf9f9384b2e927d\"},{\"code\":\"false_alarm_threshold\",\"title\":\"阈值型误报（振动限值判据）\",\"description\":\"假设报警由阈值设置不当引起；但振动实测持续上升并超过手册 4.5mm/s 判据，报警为真实超限。\",\"confidence\":\"low\",\"status\":\"contradicted\",\"rationale\":\"振动趋势单调上升且末值 6.55–6.69mm/s 明显高于 4.5mm/s 限值，报警事件与实测一致，排除阈值误报。\",\"supporting_evidence_ids\":[],\"contradicting_evidence_ids\":[\"ev_2351228aa227a9157dd5\",\"ev_9ba63f88d7b4724de4f4\",\"ev_cae59986147c332805b5\"],\"missing_evidence\":[],\"next_check\":null,\"id\":\"hyp_5bd12fbf2bf54c0ba1e8\"}],\"checks\":[{\"id\":\"chk_1\",\"kind\":\"diagnostic\",\"purpose\":\"采集振动频谱，确认是否存在 BPFO 等轴承特征频率\",\"preconditions\":[\"设备处于可测运行状态\",\"具备频谱采集仪\"],\"steps\":[\"在驱动端与非驱动端轴承座采集振动频谱\",\"记录 BPFO/BPFI/1X 分量幅值\",\"与手册 6.1 节判据及历史案例 CASE-H-002 对比\"],\"expected_observation\":\"若存在明显 BPFO 分量则支持轴承磨损\",\"risk\":\"low\",\"role\":\"report_reviewer\",\"evidence_ids\":[\"ev_9ba63f88d7b4724de4f4\",\"ev_685c9ae70a6c855a42f5\"],\"requires_human\":true},{\"id\":\"chk_2\",\"kind\":\"diagnostic\",\"purpose\":\"油液取样分析，区分轴承磨损与润滑不良\",\"preconditions\":[\"停机或安全取样点可用\"],\"steps\":[\"按规程取润滑油样\",\"检测金属颗粒、粘度与水分\",\"与历史案例 CASE-H-005 对比\"],\"expected_observation\":\"金属颗粒升高支持磨损；油质劣化支持润滑不良\",\"risk\":\"low\",\"role\":\"report_reviewer\",\"evidence_ids\":[\"ev_b03f397bed1cb518652a\",\"ev_685c9ae70a6c855a42f5\"],\"requires_human\":true},{\"id\":\"chk_3\",\"kind\":\"diagnostic\",\"purpose\":\"核对检修工单内容，确认检修范围与是否涉及轴承/润滑\",\"preconditions\":[\"可访问工单系统\"],\"steps\":[\"调取最近检修工单\",\"核对更换件与润滑作业记录\"],\"expected_observation\":\"若检修未处理轴承则支持磨损持续\",\"risk\":\"low\",\"role\":\"report_reviewer\",\"evidence_ids\":[\"ev_944e77e7928174e0f91c\"],\"requires_human\":true}],\"recommendations\":[{\"id\":\"rec_1\",\"kind\":\"repair\",\"text\":\"在人工审批后安排振动频谱与油液分析，据结果决定是否拆检驱动端轴承。\",\"evidence_ids\":[\"ev_9ba63f88d7b4724de4f4\",\"ev_2351228aa227a9157dd5\",\"ev_685c9ae70a6c855a42f5\"],\"conditions\":[\"需人工审批\",\"设备停机或降负荷后执行\"],\"requires_human\":true,\"control_execution\":\"disabled\"},{\"id\":\"rec_2\",\"kind\":\"safety\",\"text\":\"振动持续上升期间加强巡检并设定振动上限停机预案，防止轴承失效扩大。\",\"evidence_ids\":[\"ev_cae59986147c332805b5\",\"ev_2351228aa227a9157dd5\"],\"conditions\":[\"需人工审批\",\"由现场负责人确认停机阈值\"],\"requires_human\":true,\"control_execution\":\"disabled\"}],\"unresolved_questions\":[\"振动上升是检修后短期现象还是长期趋势？\",\"检修工单是否涉及轴承更换或润滑作业？\",\"润滑油位与油质当前状态如何？\",\"设备运行模式（mode）为何为空？\"],\"handoff_reason\":\"需人工执行频谱采集、油液取样与工单核对以区分轴承磨损与润滑不良。\"},\"review_notes\":[\"已保留被反驳的 false_alarm_threshold 竞争假设及其反证证据。\",\"所有引用手册证据均为 DOC-NP200-V2 v2，与设备登记型号 NP-200 一致。\",\"控制建议均为人工审批意图，control_execution 置为 disabled。\"]}",
+      "created_at": "2026-11-07T20:54:35.304Z"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_944e77e7928174e0f91c",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:30:00.000Z",
+      "fetched_at": "2026-11-07T20:53:55.231Z",
+      "source_record_id": "status:EQ-DEMO-001:2026-11-05T00:30:00.000Z",
+      "payload_hash": "9ee515d3dc004d60073a842629398dea7ecfb2cb973188f4fac9cebc01d0a513",
+      "query_hash": "f3333afd3eacaa0ed531215893fa6c9fabb5eceaf4203257503859a51eb54f09",
+      "locator": {
+        "kind": "db",
+        "ref": "status/EQ-DEMO-001"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "status_snapshot",
+        "equipment_id": "EQ-DEMO-001",
+        "state": "alarm",
+        "mode": null,
+        "last_seen": "2026-11-05T00:30:00.000Z",
+        "points": [
+          {
+            "metric": "bearing_temperature",
+            "value": 67.8,
+            "unit": "°C",
+            "at": "2026-11-05T00:30:00.000Z",
+            "quality": "good"
+          },
+          {
+            "metric": "vibration_rms",
+            "value": 6.69,
+            "unit": "mm/s",
+            "at": "2026-11-05T00:30:00.000Z",
+            "quality": "good"
+          },
+          {
+            "metric": "discharge_pressure",
+            "value": 0.56,
+            "unit": "MPa",
+            "at": "2026-11-05T00:30:00.000Z",
+            "quality": "good"
+          },
+          {
+            "metric": "flow_rate",
+            "value": 118.95,
+            "unit": "m3/h",
+            "at": "2026-11-05T00:30:00.000Z",
+            "quality": "good"
+          },
+          {
+            "metric": "motor_current",
+            "value": 52.04,
+            "unit": "A",
+            "at": "2026-11-05T00:30:00.000Z",
+            "quality": "good"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ev_cae59986147c332805b5",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:18:00.000Z",
+      "fetched_at": "2026-11-07T20:53:55.237Z",
+      "source_record_id": "alarm:ALM-MUL-06",
+      "payload_hash": "12e4a2ec5814601880a99a36bc4c983e4b7d3aa589629d10072bc9b092689d50",
+      "query_hash": "aa328b0152390d76a884242c61e2899bb708e41e09f09aaef4b31f5dd775715b",
+      "locator": {
+        "kind": "db",
+        "ref": "alarms/ALM-MUL-06"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "alarm",
+        "alarm_event_id": "ALM-MUL-06",
+        "code": "DEMO-VIB-02",
+        "severity": "high",
+        "state": "active",
+        "raised_at": "2026-11-05T00:18:00.000Z",
+        "cleared_at": null,
+        "message": "泵组振动超标"
+      }
+    },
+    {
+      "id": "ev_2351228aa227a9157dd5",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:29:00.000Z",
+      "fetched_at": "2026-11-07T20:53:59.917Z",
+      "source_record_id": "telemetry:EQ-DEMO-001:vibration_rms:2026-11-05T00:00:00.000Z:2026-11-05T00:30:00.000Z",
+      "payload_hash": "a213d88d59eed187d534b8f1180119246b5b9ae62a3c9e96d9ac40fbd0a6080c",
+      "query_hash": "f284c84e7d135a5bdb6c81d5c5dad29db19249c752fc3c8c1e4f30cec606dee9",
+      "locator": {
+        "kind": "db",
+        "ref": "telemetry/EQ-DEMO-001/vibration_rms"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "telemetry_series",
+        "equipment_id": "EQ-DEMO-001",
+        "metric": "vibration_rms",
+        "unit": "mm/s",
+        "points": [
+          {
+            "t": "2026-11-05T00:00:00.000Z",
+            "v": 2.1,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:01:00.000Z",
+            "v": 2.25,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:02:00.000Z",
+            "v": 2.4,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:03:00.000Z",
+            "v": 2.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:04:00.000Z",
+            "v": 2.71,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:05:00.000Z",
+            "v": 2.85,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:06:00.000Z",
+            "v": 3.03,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:07:00.000Z",
+            "v": 3.16,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:08:00.000Z",
+            "v": 3.32,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:09:00.000Z",
+            "v": 3.48,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:10:00.000Z",
+            "v": 3.65,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:11:00.000Z",
+            "v": 3.79,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:12:00.000Z",
+            "v": 3.95,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:13:00.000Z",
+            "v": 4.09,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:14:00.000Z",
+            "v": 4.25,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:15:00.000Z",
+            "v": 4.4,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:16:00.000Z",
+            "v": 4.55,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:17:00.000Z",
+            "v": 4.72,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:18:00.000Z",
+            "v": 4.85,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:19:00.000Z",
+            "v": 5.01,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:20:00.000Z",
+            "v": 5.16,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:21:00.000Z",
+            "v": 5.31,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:22:00.000Z",
+            "v": 5.48,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:23:00.000Z",
+            "v": 5.62,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:24:00.000Z",
+            "v": 5.78,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:25:00.000Z",
+            "v": 5.92,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:26:00.000Z",
+            "v": 6.09,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:27:00.000Z",
+            "v": 6.25,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:28:00.000Z",
+            "v": 6.4,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:29:00.000Z",
+            "v": 6.55,
+            "q": "good"
+          }
+        ],
+        "stats": {
+          "min": 2.1,
+          "max": 6.55,
+          "avg": 4.323000000000001,
+          "count": 30,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "id": "ev_cee4380c18d7ccae93e1",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:29:00.000Z",
+      "fetched_at": "2026-11-07T20:53:59.917Z",
+      "source_record_id": "telemetry:EQ-DEMO-001:bearing_temperature:2026-11-05T00:00:00.000Z:2026-11-05T00:30:00.000Z",
+      "payload_hash": "c34cf1646434dd78eaabd95f688ea006a2ba976842baaf87d66e8b5a842d5302",
+      "query_hash": "f284c84e7d135a5bdb6c81d5c5dad29db19249c752fc3c8c1e4f30cec606dee9",
+      "locator": {
+        "kind": "db",
+        "ref": "telemetry/EQ-DEMO-001/bearing_temperature"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "telemetry_series",
+        "equipment_id": "EQ-DEMO-001",
+        "metric": "bearing_temperature",
+        "unit": "°C",
+        "points": [
+          {
+            "t": "2026-11-05T00:00:00.000Z",
+            "v": 61.83,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:01:00.000Z",
+            "v": 62.26,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:02:00.000Z",
+            "v": 62.55,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:03:00.000Z",
+            "v": 62.6,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:04:00.000Z",
+            "v": 62.81,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:05:00.000Z",
+            "v": 63.19,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:06:00.000Z",
+            "v": 63.04,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:07:00.000Z",
+            "v": 63.25,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:08:00.000Z",
+            "v": 63.62,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:09:00.000Z",
+            "v": 63.9,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:10:00.000Z",
+            "v": 64.04,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:11:00.000Z",
+            "v": 64.13,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:12:00.000Z",
+            "v": 64.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:13:00.000Z",
+            "v": 64.55,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:14:00.000Z",
+            "v": 64.94,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:15:00.000Z",
+            "v": 64.83,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:16:00.000Z",
+            "v": 65.17,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:17:00.000Z",
+            "v": 65.31,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:18:00.000Z",
+            "v": 65.53,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:19:00.000Z",
+            "v": 65.67,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:20:00.000Z",
+            "v": 66.02,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:21:00.000Z",
+            "v": 66.1,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:22:00.000Z",
+            "v": 66.41,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:23:00.000Z",
+            "v": 66.51,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:24:00.000Z",
+            "v": 66.98,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:25:00.000Z",
+            "v": 67.06,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:26:00.000Z",
+            "v": 67.22,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:27:00.000Z",
+            "v": 67.39,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:28:00.000Z",
+            "v": 67.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:29:00.000Z",
+            "v": 67.77,
+            "q": "good"
+          }
+        ],
+        "stats": {
+          "min": 61.83,
+          "max": 67.77,
+          "avg": 64.89433333333334,
+          "count": 30,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "id": "ev_34eee04bdcb6e7df8765",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:29:00.000Z",
+      "fetched_at": "2026-11-07T20:53:59.917Z",
+      "source_record_id": "telemetry:EQ-DEMO-001:discharge_pressure:2026-11-05T00:00:00.000Z:2026-11-05T00:30:00.000Z",
+      "payload_hash": "348c850f94de0f9c5fad3cb10369a2686b47cd3b01b42ff654a42838970fe90d",
+      "query_hash": "f284c84e7d135a5bdb6c81d5c5dad29db19249c752fc3c8c1e4f30cec606dee9",
+      "locator": {
+        "kind": "db",
+        "ref": "telemetry/EQ-DEMO-001/discharge_pressure"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "telemetry_series",
+        "equipment_id": "EQ-DEMO-001",
+        "metric": "discharge_pressure",
+        "unit": "MPa",
+        "points": [
+          {
+            "t": "2026-11-05T00:00:00.000Z",
+            "v": 0.62,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:01:00.000Z",
+            "v": 0.62,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:02:00.000Z",
+            "v": 0.62,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:03:00.000Z",
+            "v": 0.61,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:04:00.000Z",
+            "v": 0.61,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:05:00.000Z",
+            "v": 0.61,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:06:00.000Z",
+            "v": 0.61,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:07:00.000Z",
+            "v": 0.61,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:08:00.000Z",
+            "v": 0.6,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:09:00.000Z",
+            "v": 0.6,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:10:00.000Z",
+            "v": 0.6,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:11:00.000Z",
+            "v": 0.6,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:12:00.000Z",
+            "v": 0.6,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:13:00.000Z",
+            "v": 0.59,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:14:00.000Z",
+            "v": 0.59,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:15:00.000Z",
+            "v": 0.59,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:16:00.000Z",
+            "v": 0.59,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:17:00.000Z",
+            "v": 0.59,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:18:00.000Z",
+            "v": 0.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:19:00.000Z",
+            "v": 0.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:20:00.000Z",
+            "v": 0.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:21:00.000Z",
+            "v": 0.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:22:00.000Z",
+            "v": 0.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:23:00.000Z",
+            "v": 0.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:24:00.000Z",
+            "v": 0.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:25:00.000Z",
+            "v": 0.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:26:00.000Z",
+            "v": 0.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:27:00.000Z",
+            "v": 0.57,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:28:00.000Z",
+            "v": 0.56,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:29:00.000Z",
+            "v": 0.56,
+            "q": "good"
+          }
+        ],
+        "stats": {
+          "min": 0.56,
+          "max": 0.62,
+          "avg": 0.5909999999999999,
+          "count": 30,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "id": "ev_1cec622eb6c64244a8cf",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:29:00.000Z",
+      "fetched_at": "2026-11-07T20:53:59.917Z",
+      "source_record_id": "telemetry:EQ-DEMO-001:flow_rate:2026-11-05T00:00:00.000Z:2026-11-05T00:30:00.000Z",
+      "payload_hash": "e8611ea357b6b2cee956f1c59a25d75d19742ba3c2e80c4ba69923b0fb73e24c",
+      "query_hash": "f284c84e7d135a5bdb6c81d5c5dad29db19249c752fc3c8c1e4f30cec606dee9",
+      "locator": {
+        "kind": "db",
+        "ref": "telemetry/EQ-DEMO-001/flow_rate"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "telemetry_series",
+        "equipment_id": "EQ-DEMO-001",
+        "metric": "flow_rate",
+        "unit": "m3/h",
+        "points": [
+          {
+            "t": "2026-11-05T00:00:00.000Z",
+            "v": 119.43,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:01:00.000Z",
+            "v": 119.39,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:02:00.000Z",
+            "v": 120.87,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:03:00.000Z",
+            "v": 120.22,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:04:00.000Z",
+            "v": 121.05,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:05:00.000Z",
+            "v": 119.43,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:06:00.000Z",
+            "v": 121.14,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:07:00.000Z",
+            "v": 119.17,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:08:00.000Z",
+            "v": 120.42,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:09:00.000Z",
+            "v": 119.89,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:10:00.000Z",
+            "v": 119.54,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:11:00.000Z",
+            "v": 119.1,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:12:00.000Z",
+            "v": 120.85,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:13:00.000Z",
+            "v": 119.85,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:14:00.000Z",
+            "v": 119.91,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:15:00.000Z",
+            "v": 121.16,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:16:00.000Z",
+            "v": 120.81,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:17:00.000Z",
+            "v": 119.86,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:18:00.000Z",
+            "v": 118.95,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:19:00.000Z",
+            "v": 119.55,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:20:00.000Z",
+            "v": 119.39,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:21:00.000Z",
+            "v": 121.19,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:22:00.000Z",
+            "v": 119.28,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:23:00.000Z",
+            "v": 120.98,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:24:00.000Z",
+            "v": 120.89,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:25:00.000Z",
+            "v": 119.4,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:26:00.000Z",
+            "v": 118.95,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:27:00.000Z",
+            "v": 119.3,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:28:00.000Z",
+            "v": 120.41,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:29:00.000Z",
+            "v": 120.9,
+            "q": "good"
+          }
+        ],
+        "stats": {
+          "min": 118.95,
+          "max": 121.19,
+          "avg": 120.04266666666666,
+          "count": 30,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "id": "ev_b22442c2958a7df9acde",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-scada",
+      "source_kind": "scada",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:29:00.000Z",
+      "fetched_at": "2026-11-07T20:53:59.917Z",
+      "source_record_id": "telemetry:EQ-DEMO-001:motor_current:2026-11-05T00:00:00.000Z:2026-11-05T00:30:00.000Z",
+      "payload_hash": "0b6bb3efebae139d78f1cc3d0855575c5b3b9b8abf0d23372e5c9583a49a1685",
+      "query_hash": "f284c84e7d135a5bdb6c81d5c5dad29db19249c752fc3c8c1e4f30cec606dee9",
+      "locator": {
+        "kind": "db",
+        "ref": "telemetry/EQ-DEMO-001/motor_current"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "telemetry_series",
+        "equipment_id": "EQ-DEMO-001",
+        "metric": "motor_current",
+        "unit": "A",
+        "points": [
+          {
+            "t": "2026-11-05T00:00:00.000Z",
+            "v": 47.97,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:01:00.000Z",
+            "v": 48.05,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:02:00.000Z",
+            "v": 48.29,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:03:00.000Z",
+            "v": 48.52,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:04:00.000Z",
+            "v": 48.45,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:05:00.000Z",
+            "v": 48.78,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:06:00.000Z",
+            "v": 48.68,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:07:00.000Z",
+            "v": 48.88,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:08:00.000Z",
+            "v": 49.19,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:09:00.000Z",
+            "v": 49.3,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:10:00.000Z",
+            "v": 49.38,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:11:00.000Z",
+            "v": 49.43,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:12:00.000Z",
+            "v": 49.66,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:13:00.000Z",
+            "v": 49.75,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:14:00.000Z",
+            "v": 49.92,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:15:00.000Z",
+            "v": 49.95,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:16:00.000Z",
+            "v": 50.06,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:17:00.000Z",
+            "v": 50.39,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:18:00.000Z",
+            "v": 50.44,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:19:00.000Z",
+            "v": 50.67,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:20:00.000Z",
+            "v": 50.8,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:21:00.000Z",
+            "v": 50.84,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:22:00.000Z",
+            "v": 51.04,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:23:00.000Z",
+            "v": 50.97,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:24:00.000Z",
+            "v": 51.17,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:25:00.000Z",
+            "v": 51.2,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:26:00.000Z",
+            "v": 51.58,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:27:00.000Z",
+            "v": 51.47,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:28:00.000Z",
+            "v": 51.76,
+            "q": "good"
+          },
+          {
+            "t": "2026-11-05T00:29:00.000Z",
+            "v": 51.79,
+            "q": "good"
+          }
+        ],
+        "stats": {
+          "min": 47.97,
+          "max": 51.79,
+          "avg": 49.946,
+          "count": 30,
+          "missing": 0
+        }
+      }
+    },
+    {
+      "id": "ev_11ddbc9d4139b266999b",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-mes",
+      "source_kind": "mes",
+      "data_mode": "mock",
+      "equipment_id": "EQ-DEMO-001",
+      "observed_at": "2026-11-05T00:01:00.000Z",
+      "fetched_at": "2026-11-07T20:53:59.930Z",
+      "source_record_id": "mes:MES-MUL-06-LOAD",
+      "payload_hash": "b100f60ab2c34b4505c1637b6d705ce052a326158b901786b4c88f66f6993d7a",
+      "query_hash": "16382b279c77a15904b1919ad05a7ec59d53d5ed097e007f2edc82bacd4a4949",
+      "locator": {
+        "kind": "db",
+        "ref": "mes/MES-MUL-06-LOAD"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "mes_event",
+        "event_id": "MES-MUL-06-LOAD",
+        "event_type": "load_change",
+        "occurred_at": "2026-11-05T00:01:00.000Z",
+        "summary": "班组记录：本时段工艺负荷上调约 5%，不足以单独解释振动与温升",
+        "work_order_id": null
+      }
+    },
+    {
+      "id": "ev_188ebe6ab4020aa882fd",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.358Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P3-5",
+      "payload_hash": "27aa87b4d525eb1e73d632465ee37f6d7b0a5b049b3c615d0bf4248e2c6c13d6",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 3
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": "5.3 Temperature sensor drift check",
+        "pdf_page_index": 3,
+        "printed_page": null,
+        "excerpt": "5.3 Temperature sensor drift check. If bearing temperature rises while vibration RMS and\nmotor current remain stable, compare the reading with a handheld thermometer. A\ndifference above 5 C indicates sensor drift; replace the sensor."
+      }
+    },
+    {
+      "id": "ev_9ba63f88d7b4724de4f4",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.358Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P4-7",
+      "payload_hash": "aad885ff993d404e1c5d0abf6e493818dc3219e1d90c7b6cb45c82fa39ea83b7",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 4
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": "6.1 Vibration limits",
+        "pdf_page_index": 4,
+        "printed_page": null,
+        "excerpt": "6.1 Vibration limits. RMS above 4.5 mm/s indicates an abnormal mechanical condition. A\nrising trend with increased motor current indicates bearing wear. Verify with oil\nanalysis and vibration spectrum."
+      }
+    },
+    {
+      "id": "ev_a16e633e7518c7354546",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.358Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P2-3",
+      "payload_hash": "eeac0722ffad7ceec564d05f360fd4dcdada0dedbef1bd5f529b0fa793bfef32",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 2
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": "5.2 Bearing temperature monitoring",
+        "pdf_page_index": 2,
+        "printed_page": null,
+        "excerpt": "5.2 Bearing temperature monitoring. The bearing temperature alarm threshold is 80 C. Use\nthe 30-minute trend; a single spike is not sufficient for a mechanical conclusion."
+      }
+    },
+    {
+      "id": "ev_90dcc715db9ac649d2de",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.358Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P1-1",
+      "payload_hash": "e308ac5b72dd808e1953289f22df8ef3687f41c1fb4889741cb12a0cb58f9542",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 1
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": null,
+        "pdf_page_index": 1,
+        "printed_page": null,
+        "excerpt": "NP-200 Centrifugal Pump Maintenance Manual — page 1\nNP-200 Centrifugal Pump Maintenance Manual, version 2. This version supersedes v1 and\napplies to NP-200 pump units only."
+      }
+    },
+    {
+      "id": "ev_e62155bd21c0bf8e38a4",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.358Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P2-2",
+      "payload_hash": "90e45761f2d229c64e3059ba2872639ab71338aaa94a36231bf726af1505411e",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 2
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": null,
+        "pdf_page_index": 2,
+        "printed_page": null,
+        "excerpt": "NP-200 Centrifugal Pump Maintenance Manual — page 2"
+      }
+    },
+    {
+      "id": "ev_11c2f54762f1a919df33",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.359Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P3-4",
+      "payload_hash": "82ff258678bbfd88b17d4e687fe64161227ae414506a6fbd6c9119e87d22c8ec",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 3
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": null,
+        "pdf_page_index": 3,
+        "printed_page": null,
+        "excerpt": "NP-200 Centrifugal Pump Maintenance Manual — page 3"
+      }
+    },
+    {
+      "id": "ev_334e20e830e43e52e869",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.359Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P4-6",
+      "payload_hash": "3c7b0d02c8dc1f9db8aa272e2108e49c1d652a7e9239a817631cd16254d88019",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 4
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": null,
+        "pdf_page_index": 4,
+        "printed_page": null,
+        "excerpt": "NP-200 Centrifugal Pump Maintenance Manual — page 4"
+      }
+    },
+    {
+      "id": "ev_011771e0c25be1b81e10",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.359Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P5-8",
+      "payload_hash": "87c20155b513ac64fb930ad334717d66e5a7e5fe3b7b78fb27b5fe4554fbe239",
+      "query_hash": "49f24d3cfc13faaa30455193b990bc1b3934d7fc44abfc5f583016726c5b0246",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 5
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": null,
+        "pdf_page_index": 5,
+        "printed_page": null,
+        "excerpt": "NP-200 Centrifugal Pump Maintenance Manual — page 5"
+      }
+    },
+    {
+      "id": "ev_2bb2b54125ff037e7d49",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-manual",
+      "source_kind": "manual",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2024-07-01T00:00:00Z",
+      "fetched_at": "2026-11-07T20:54:05.367Z",
+      "source_record_id": "manual:DOC-NP200-V2:ws-eval-eval_mw6uvwoq_all::DOC-NP200-V2-P5-9",
+      "payload_hash": "214e5302ccf90a9680a613136ef0e28c51ba6fdbc5c74a2254d426c96903a605",
+      "query_hash": "4839371a07c6a55002b1a5c9c9e94ac73ceef1225ccecd3de5a278123d67befd",
+      "locator": {
+        "kind": "file",
+        "ref": "fixtures/diagnosis/manuals/doc-np200-v2.pdf",
+        "page": 5
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "manual_chunk",
+        "document_id": "DOC-NP200-V2",
+        "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "manual_version": "v2",
+        "effective_date": "2024-07-01",
+        "chapter": null,
+        "section": "7.1 Communication and sampling faults",
+        "pdf_page_index": 5,
+        "printed_page": null,
+        "excerpt": "7.1 Communication and sampling faults. Missing samples, out-of-order timestamps, or a\ncleared communication alarm with normal process values indicate a data-path fault, not a\nmechanical fault. Do not replace mechanical parts based on communication alarms alone."
+      }
+    },
+    {
+      "id": "ev_685c9ae70a6c855a42f5",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-08-12T01:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-002",
+      "payload_hash": "4d323ced6deea285aae15ca8ad90a7ff809e63a18b0d920e0db55c32121e6d50",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-002"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-002",
+        "title": "NP-200 驱动端轴承磨损",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-08-12T01:00:00.000Z",
+        "root_cause_code": "bearing_wear",
+        "summary": "振动与电流同步上升，BPFO 特征频率明显。"
+      }
+    },
+    {
+      "id": "ev_b03f397bed1cb518652a",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-10-05T01:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-005",
+      "payload_hash": "8867e507dd9313e53d5a483d90baf91bc654c4cef9c87ce662c53fc30ac21c21",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-005"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-005",
+        "title": "NP-200 润滑不良",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-10-05T01:00:00.000Z",
+        "root_cause_code": "lubrication",
+        "summary": "振动升高、温度中度升高，补充润滑脂后恢复。"
+      }
+    },
+    {
+      "id": "ev_38358f5ce72cabddde74",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-10-18T02:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-010",
+      "payload_hash": "54d4bace8915c9c2b2a630366a721d71b46060e03cf7515364eb1aeb42e99e1f",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-010"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-010",
+        "title": "NP-200 轴承磨损合并温度传感器漂移",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-10-18T02:00:00.000Z",
+        "root_cause_code": "multi_fault",
+        "summary": "振动与电流上升，同时温度出现与负荷不符的尖峰。"
+      }
+    },
+    {
+      "id": "ev_1060200484e0c8a67dd5",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-11-02T02:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-001",
+      "payload_hash": "26f889103df2f5f0a7d0ddfed4db80f025ed69dea3a876c15d0744c0ccaf8cb5",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-001"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-001",
+        "title": "NP-200 轴承温度漂移",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-11-02T02:00:00.000Z",
+        "root_cause_code": "sensor_drift",
+        "summary": "温度上升但振动与电流稳定，传感器对比偏差 8°C。"
+      }
+    },
+    {
+      "id": "ev_5094b76e547e42f64e75",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-06-18T02:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-004",
+      "payload_hash": "f4784d0bbc4bb992914b96d8d7ac639d07c32b088fd7ac548095897763ab9979",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-004"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-004",
+        "title": "NP-200 联轴器不对中",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-06-18T02:00:00.000Z",
+        "root_cause_code": "misalignment",
+        "summary": "振动高但温升有限，径向偏差 0.18mm。"
+      }
+    },
+    {
+      "id": "ev_ff12e65931467a55a9e0",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-03-08T02:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-007",
+      "payload_hash": "06a3cb0942cb74289f991655bf64e591657988588ef9ef3e23fdd110a0fa78cd",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-007"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-007",
+        "title": "NP-200 传感器卡值",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-03-08T02:00:00.000Z",
+        "root_cause_code": "sensor_stuck",
+        "summary": "温度连续 30 分钟恒定在 72.0°C，无正常波动。"
+      }
+    },
+    {
+      "id": "ev_9274a7eace324f727b8e",
+      "workspace_id": "ws-eval-eval_mw6uvwoq_all",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "source_id": "src-case",
+      "source_kind": "case",
+      "data_mode": "mock",
+      "equipment_id": null,
+      "observed_at": "2025-05-09T02:00:00.000Z",
+      "fetched_at": "2026-11-07T20:54:12.009Z",
+      "source_record_id": "case:CASE-H-009",
+      "payload_hash": "97bcb2e25480f83b3320b94cfa072719bc961001203b6e42ae56e6999fe6e757",
+      "query_hash": "01edcbc7cb423da5e675254546a329dd0469f1e89a5f59201bbbe5fc7601b93b",
+      "locator": {
+        "kind": "db",
+        "ref": "cases/CASE-H-009"
+      },
+      "quality_flags": [
+        "good"
+      ],
+      "payload": {
+        "kind": "case_record",
+        "case_id": "CASE-H-009",
+        "title": "NP-200 采样缺口",
+        "equipment_model": "NP-200",
+        "asset_category": "centrifugal_pump",
+        "occurred_at": "2025-05-09T02:00:00.000Z",
+        "root_cause_code": "sampling_gap",
+        "summary": "采集卡缓存溢出导致 10 分钟数据缺口。"
+      }
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "hyp_76fe8dbd18374f4e95d7",
+      "code": "bearing_wear",
+      "title": "轴承磨损导致振动趋势性上升",
+      "description": "振动RMS在30分钟内单调上升至6.55mm/s，超过手册6.1节4.5mm/s异常机械判据；电机电流同步由47.97升至51.79A，符合手册“振动上升伴电流增加提示轴承磨损”的描述，与历史案例CASE-H-002一致。",
+      "status": "supported",
+      "confidence": "medium",
+      "rationale": "振动趋势+电流同步上升+手册判据+同类历史案例构成一致证据链；但缺振动频谱与油液分析，无法确认BPFO特征频率，故置信度中等。",
+      "supporting_evidence_ids": [
+        "ev_2351228aa227a9157dd5",
+        "ev_b22442c2958a7df9acde",
+        "ev_9ba63f88d7b4724de4f4",
+        "ev_cae59986147c332805b5",
+        "ev_685c9ae70a6c855a42f5"
+      ],
+      "contradicting_evidence_ids": [],
+      "missing_evidence": [
+        "振动频谱/BPFO特征频率",
+        "油液分析报告",
+        "检修工单内容"
+      ],
+      "next_check": "补充振动频谱与油液分析以确认轴承磨损"
+    },
+    {
+      "id": "hyp_e7634cf9f9384b2e927d",
+      "code": "lubrication",
+      "title": "润滑不良引起振动与温升",
+      "description": "振动升高伴轴承温度中度上升（61.83→67.77°C），与历史案例CASE-H-005润滑不良表现相似，但缺乏油位/油质记录，无法与轴承磨损区分。",
+      "status": "inconclusive",
+      "confidence": "low",
+      "rationale": "温度与振动变化可兼容润滑不良，但无油液/油位证据，且电流同步上升更支持磨损；证据不足以支持或排除。",
+      "supporting_evidence_ids": [
+        "ev_cee4380c18d7ccae93e1",
+        "ev_2351228aa227a9157dd5",
+        "ev_b03f397bed1cb518652a"
+      ],
+      "contradicting_evidence_ids": [],
+      "missing_evidence": [
+        "润滑油位与油质记录",
+        "油液分析报告"
+      ],
+      "next_check": "查询润滑维护记录与油液分析"
+    },
+    {
+      "id": "hyp_5bd12fbf2bf54c0ba1e8",
+      "code": "false_alarm_threshold",
+      "title": "阈值型误报（振动限值判据）",
+      "description": "报警DEMO-VIB-02仍active，触发值6.55mm/s明显高于手册4.5mm/s限值，且无通讯/时钟异常，不满足阈值误报条件。",
+      "status": "contradicted",
+      "confidence": "low",
+      "rationale": "触发值超手册阈值且报警未清除，振动趋势真实上升，排除阈值误报。",
+      "supporting_evidence_ids": [],
+      "contradicting_evidence_ids": [
+        "ev_2351228aa227a9157dd5",
+        "ev_9ba63f88d7b4724de4f4",
+        "ev_cae59986147c332805b5"
+      ],
+      "missing_evidence": [],
+      "next_check": null
+    }
+  ],
+  "context_manifests": [
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "included_evidence_ids": [],
+      "dropped": [],
+      "estimated_tokens": 1475,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    },
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "data_investigator",
+      "stage": "locate_anomaly",
+      "included_evidence_ids": [
+        "ev_944e77e7928174e0f91c",
+        "ev_cae59986147c332805b5"
+      ],
+      "dropped": [],
+      "estimated_tokens": 2043,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    },
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "knowledge_retriever",
+      "stage": "generate_hypotheses",
+      "included_evidence_ids": [
+        "ev_944e77e7928174e0f91c",
+        "ev_cae59986147c332805b5",
+        "ev_2351228aa227a9157dd5",
+        "ev_cee4380c18d7ccae93e1",
+        "ev_34eee04bdcb6e7df8765",
+        "ev_1cec622eb6c64244a8cf",
+        "ev_b22442c2958a7df9acde",
+        "ev_11ddbc9d4139b266999b"
+      ],
+      "dropped": [],
+      "estimated_tokens": 5457,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    },
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "hypothesis_verifier",
+      "stage": "generate_hypotheses",
+      "included_evidence_ids": [
+        "ev_944e77e7928174e0f91c",
+        "ev_cae59986147c332805b5",
+        "ev_188ebe6ab4020aa882fd",
+        "ev_9ba63f88d7b4724de4f4",
+        "ev_a16e633e7518c7354546",
+        "ev_90dcc715db9ac649d2de",
+        "ev_e62155bd21c0bf8e38a4",
+        "ev_11c2f54762f1a919df33",
+        "ev_334e20e830e43e52e869",
+        "ev_011771e0c25be1b81e10",
+        "ev_2bb2b54125ff037e7d49",
+        "ev_2351228aa227a9157dd5",
+        "ev_cee4380c18d7ccae93e1",
+        "ev_34eee04bdcb6e7df8765",
+        "ev_1cec622eb6c64244a8cf"
+      ],
+      "dropped": [
+        {
+          "id": "ev_11ddbc9d4139b266999b",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_b22442c2958a7df9acde",
+          "reason": "input_budget"
+        }
+      ],
+      "estimated_tokens": 7939,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    },
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "hypothesis_verifier",
+      "stage": "verify_evidence",
+      "included_evidence_ids": [
+        "ev_944e77e7928174e0f91c",
+        "ev_cae59986147c332805b5",
+        "ev_2351228aa227a9157dd5",
+        "ev_cee4380c18d7ccae93e1",
+        "ev_b22442c2958a7df9acde",
+        "ev_9ba63f88d7b4724de4f4",
+        "ev_685c9ae70a6c855a42f5",
+        "ev_b03f397bed1cb518652a",
+        "ev_38358f5ce72cabddde74",
+        "ev_1060200484e0c8a67dd5",
+        "ev_5094b76e547e42f64e75",
+        "ev_ff12e65931467a55a9e0",
+        "ev_9274a7eace324f727b8e",
+        "ev_34eee04bdcb6e7df8765"
+      ],
+      "dropped": [
+        {
+          "id": "ev_11ddbc9d4139b266999b",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_2bb2b54125ff037e7d49",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_011771e0c25be1b81e10",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_334e20e830e43e52e869",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_11c2f54762f1a919df33",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_e62155bd21c0bf8e38a4",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_90dcc715db9ac649d2de",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_a16e633e7518c7354546",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_188ebe6ab4020aa882fd",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_1cec622eb6c64244a8cf",
+          "reason": "input_budget"
+        }
+      ],
+      "estimated_tokens": 7984,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    },
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "hypothesis_verifier",
+      "stage": "verify_evidence",
+      "included_evidence_ids": [
+        "ev_944e77e7928174e0f91c",
+        "ev_cae59986147c332805b5",
+        "ev_2351228aa227a9157dd5",
+        "ev_cee4380c18d7ccae93e1",
+        "ev_b22442c2958a7df9acde",
+        "ev_9ba63f88d7b4724de4f4",
+        "ev_685c9ae70a6c855a42f5",
+        "ev_b03f397bed1cb518652a",
+        "ev_34eee04bdcb6e7df8765",
+        "ev_1cec622eb6c64244a8cf"
+      ],
+      "dropped": [
+        {
+          "id": "ev_9274a7eace324f727b8e",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_ff12e65931467a55a9e0",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_5094b76e547e42f64e75",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_1060200484e0c8a67dd5",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_38358f5ce72cabddde74",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_11ddbc9d4139b266999b",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_2bb2b54125ff037e7d49",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_011771e0c25be1b81e10",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_334e20e830e43e52e869",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_11c2f54762f1a919df33",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_e62155bd21c0bf8e38a4",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_90dcc715db9ac649d2de",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_a16e633e7518c7354546",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_188ebe6ab4020aa882fd",
+          "reason": "input_budget"
+        }
+      ],
+      "estimated_tokens": 7892,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    },
+    {
+      "run_id": "run_b9da3b623c704693ab0d",
+      "role": "report_reviewer",
+      "stage": "produce_report",
+      "included_evidence_ids": [
+        "ev_944e77e7928174e0f91c",
+        "ev_cae59986147c332805b5",
+        "ev_2351228aa227a9157dd5",
+        "ev_cee4380c18d7ccae93e1",
+        "ev_b22442c2958a7df9acde",
+        "ev_9ba63f88d7b4724de4f4",
+        "ev_685c9ae70a6c855a42f5",
+        "ev_b03f397bed1cb518652a",
+        "ev_34eee04bdcb6e7df8765",
+        "ev_1cec622eb6c64244a8cf",
+        "ev_188ebe6ab4020aa882fd",
+        "ev_a16e633e7518c7354546",
+        "ev_90dcc715db9ac649d2de",
+        "ev_e62155bd21c0bf8e38a4",
+        "ev_11c2f54762f1a919df33"
+      ],
+      "dropped": [
+        {
+          "id": "ev_9274a7eace324f727b8e",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_ff12e65931467a55a9e0",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_5094b76e547e42f64e75",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_1060200484e0c8a67dd5",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_38358f5ce72cabddde74",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_11ddbc9d4139b266999b",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_2bb2b54125ff037e7d49",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_011771e0c25be1b81e10",
+          "reason": "input_budget"
+        },
+        {
+          "id": "ev_334e20e830e43e52e869",
+          "reason": "input_budget"
+        }
+      ],
+      "estimated_tokens": 7937,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    }
+  ],
+  "report": {
+    "report": {
+      "report_version": "1",
+      "run_id": "run_b9da3b623c704693ab0d",
+      "equipment_snapshot": {
+        "equipment_id": "EQ-DEMO-001",
+        "name": "1号循环泵",
+        "vendor": "Northwind Pumps",
+        "model": "NP-200",
+        "serial": "NP200-2023-001",
+        "manual_document_id": "DOC-NP200-V2",
+        "manual_version": "v2",
+        "source_ids": {
+          "scada": "EQ-DEMO-001",
+          "mes": "MES-ASSET-001",
+          "work_order": "ASSET-001",
+          "rootcloud": "RC-EQ-001"
+        }
+      },
+      "alarm_context": {
+        "alarm_id": "alm_fe07c4c0510da8212097",
+        "code": "DEMO-VIB-02",
+        "severity": "high",
+        "raised_at": "2026-11-05T00:18:00.000Z",
+        "message": "泵组振动超标"
+      },
+      "data_mode": "mock",
+      "model_mode": "live",
+      "as_of": "2026-11-07T20:54:35.305Z",
+      "limitations": [
+        "手册证据仅覆盖 DOC-NP200-V2 v2（适用 NP-200，与登记型号一致）；未取得 v1 或其他版本手册，无法评估版本差异。",
+        "缺少振动频谱/BPFO 特征频率、油液分析报告、润滑油位与油质记录、检修工单内容，无法最终区分轴承磨损与润滑不良。",
+        "设备 mode 字段为空（未知），无法确认运行工况与负荷基准。",
+        "窗口仅 30 分钟，无法判断振动上升是长期趋势还是检修后短期现象。",
+        "当前为 Mock 模拟数据模式，不能作为现场维修依据。"
+      ],
+      "observations": [
+        {
+          "id": "obs_1",
+          "text": "设备 EQ-DEMO-001 状态 alarm，最后上报 2026-11-05T00:30:00Z；末点 vibration_rms=6.69mm/s、bearing_temperature=67.8°C、discharge_pressure=0.56MPa、flow_rate=118.95m3/h、motor_current=52.04A，质量均为 good。",
+          "evidence_ids": [
+            "ev_944e77e7928174e0f91c"
+          ]
+        },
+        {
+          "id": "obs_2",
+          "text": "报警 DEMO-VIB-02 high 于 2026-11-05T00:18:00Z 触发且仍 active：泵组振动超标。",
+          "evidence_ids": [
+            "ev_cae59986147c332805b5"
+          ]
+        },
+        {
+          "id": "obs_3",
+          "text": "vibration_rms 30 个样本无缺失，由 2.1 单调升至 6.55mm/s（avg 4.32），呈持续上升趋势而非单点尖峰。",
+          "evidence_ids": [
+            "ev_2351228aa227a9157dd5"
+          ]
+        },
+        {
+          "id": "obs_4",
+          "text": "bearing_temperature 30 样本由 61.83 升至 67.77°C（avg 64.89），低于手册 5.2 节 80°C 报警阈值，为缓升。",
+          "evidence_ids": [
+            "ev_cee4380c18d7ccae93e1",
+            "ev_a16e633e7518c7354546"
+          ]
+        },
+        {
+          "id": "obs_5",
+          "text": "motor_current 30 样本由 47.97 升至 51.79A（avg 49.95），与振动同步上升。",
+          "evidence_ids": [
+            "ev_b22442c2958a7df9acde"
+          ]
+        },
+        {
+          "id": "obs_6",
+          "text": "discharge_pressure 由 0.62 缓降至 0.56MPa，flow_rate 在 118.95–121.19m3/h 间波动，无明显突变。",
+          "evidence_ids": [
+            "ev_34eee04bdcb6e7df8765",
+            "ev_1cec622eb6c64244a8cf"
+          ]
+        },
+        {
+          "id": "obs_7",
+          "text": "手册 6.1 节：RMS 高于 4.5mm/s 指示机械异常；振动上升伴随电机电流升高指示轴承磨损，需油液分析与振动频谱验证。",
+          "evidence_ids": [
+            "ev_9ba63f88d7b4724de4f4"
+          ]
+        },
+        {
+          "id": "obs_8",
+          "text": "MES 记录 00:01 工艺负荷上调约 5%，不足以单独解释振动与温升。",
+          "evidence_ids": [
+            "ev_11ddbc9d4139b266999b"
+          ]
+        },
+        {
+          "id": "obs_9",
+          "text": "历史案例 CASE-H-002：NP-200 振动与电流同步上升、BPFO 特征明显，根因 bearing_wear。",
+          "evidence_ids": [
+            "ev_685c9ae70a6c855a42f5"
+          ]
+        }
+      ],
+      "hypotheses": [
+        {
+          "code": "bearing_wear",
+          "title": "轴承磨损导致振动趋势性上升",
+          "description": "振动 RMS 在 30 分钟内单调上升并越过 4.5mm/s 异常限值，电机电流同步上升，符合手册 6.1 节对轴承磨损的描述及历史案例 CASE-H-002 模式。",
+          "confidence": "medium",
+          "status": "supported",
+          "rationale": "趋势单调、电流同步、超限值三项证据一致；但缺少频谱 BPFO 与油液分析，故置信度中等。",
+          "supporting_evidence_ids": [
+            "ev_2351228aa227a9157dd5",
+            "ev_b22442c2958a7df9acde",
+            "ev_9ba63f88d7b4724de4f4",
+            "ev_cae59986147c332805b5",
+            "ev_685c9ae70a6c855a42f5"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "振动频谱/BPFO 特征频率",
+            "油液分析报告",
+            "检修工单内容"
+          ],
+          "next_check": "采集振动频谱确认 BPFO 特征频率，并送油液分析。",
+          "id": "hyp_76fe8dbd18374f4e95d7"
+        },
+        {
+          "code": "lubrication",
+          "title": "润滑不良引起振动与温升",
+          "description": "轴承温度与振动同步缓升，与历史案例 CASE-H-005 润滑不良模式相似；但缺少油位与油质记录，无法确认。",
+          "confidence": "low",
+          "status": "inconclusive",
+          "rationale": "温度与振动上升可兼容润滑不良，但无油液/油位证据，且温度未接近 80°C 阈值。",
+          "supporting_evidence_ids": [
+            "ev_cee4380c18d7ccae93e1",
+            "ev_2351228aa227a9157dd5",
+            "ev_b03f397bed1cb518652a"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "润滑油位与油质记录",
+            "油液分析报告"
+          ],
+          "next_check": "检查润滑油位与油质，取样送检。",
+          "id": "hyp_e7634cf9f9384b2e927d"
+        },
+        {
+          "code": "false_alarm_threshold",
+          "title": "阈值型误报（振动限值判据）",
+          "description": "假设报警由阈值设置不当引起；但振动实测持续上升并超过手册 4.5mm/s 判据，报警为真实超限。",
+          "confidence": "low",
+          "status": "contradicted",
+          "rationale": "振动趋势单调上升且末值 6.55–6.69mm/s 明显高于 4.5mm/s 限值，报警事件与实测一致，排除阈值误报。",
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [
+            "ev_2351228aa227a9157dd5",
+            "ev_9ba63f88d7b4724de4f4",
+            "ev_cae59986147c332805b5"
+          ],
+          "missing_evidence": [],
+          "next_check": null,
+          "id": "hyp_5bd12fbf2bf54c0ba1e8"
+        }
+      ],
+      "checks": [
+        {
+          "id": "chk_1",
+          "kind": "diagnostic",
+          "purpose": "采集振动频谱，确认是否存在 BPFO 等轴承特征频率",
+          "preconditions": [
+            "设备处于可测运行状态",
+            "具备频谱采集仪"
+          ],
+          "steps": [
+            "在驱动端与非驱动端轴承座采集振动频谱",
+            "记录 BPFO/BPFI/1X 分量幅值",
+            "与手册 6.1 节判据及历史案例 CASE-H-002 对比"
+          ],
+          "expected_observation": "若存在明显 BPFO 分量则支持轴承磨损",
+          "risk": "low",
+          "role": "report_reviewer",
+          "evidence_ids": [
+            "ev_9ba63f88d7b4724de4f4",
+            "ev_685c9ae70a6c855a42f5"
+          ],
+          "requires_human": true
+        },
+        {
+          "id": "chk_2",
+          "kind": "diagnostic",
+          "purpose": "油液取样分析，区分轴承磨损与润滑不良",
+          "preconditions": [
+            "停机或安全取样点可用"
+          ],
+          "steps": [
+            "按规程取润滑油样",
+            "检测金属颗粒、粘度与水分",
+            "与历史案例 CASE-H-005 对比"
+          ],
+          "expected_observation": "金属颗粒升高支持磨损；油质劣化支持润滑不良",
+          "risk": "low",
+          "role": "report_reviewer",
+          "evidence_ids": [
+            "ev_b03f397bed1cb518652a",
+            "ev_685c9ae70a6c855a42f5"
+          ],
+          "requires_human": true
+        },
+        {
+          "id": "chk_3",
+          "kind": "diagnostic",
+          "purpose": "核对检修工单内容，确认检修范围与是否涉及轴承/润滑",
+          "preconditions": [
+            "可访问工单系统"
+          ],
+          "steps": [
+            "调取最近检修工单",
+            "核对更换件与润滑作业记录"
+          ],
+          "expected_observation": "若检修未处理轴承则支持磨损持续",
+          "risk": "low",
+          "role": "report_reviewer",
+          "evidence_ids": [
+            "ev_944e77e7928174e0f91c"
+          ],
+          "requires_human": true
+        }
+      ],
+      "recommendations": [
+        {
+          "id": "rec_1",
+          "kind": "repair",
+          "text": "在人工审批后安排振动频谱与油液分析，据结果决定是否拆检驱动端轴承。",
+          "evidence_ids": [
+            "ev_9ba63f88d7b4724de4f4",
+            "ev_2351228aa227a9157dd5",
+            "ev_685c9ae70a6c855a42f5"
+          ],
+          "conditions": [
+            "需人工审批",
+            "设备停机或降负荷后执行"
+          ],
+          "requires_human": true,
+          "control_execution": "disabled"
+        },
+        {
+          "id": "rec_2",
+          "kind": "safety",
+          "text": "振动持续上升期间加强巡检并设定振动上限停机预案，防止轴承失效扩大。",
+          "evidence_ids": [
+            "ev_cae59986147c332805b5",
+            "ev_2351228aa227a9157dd5"
+          ],
+          "conditions": [
+            "需人工审批",
+            "由现场负责人确认停机阈值"
+          ],
+          "requires_human": true,
+          "control_execution": "disabled"
+        }
+      ],
+      "unresolved_questions": [
+        "振动上升是检修后短期现象还是长期趋势？",
+        "检修工单是否涉及轴承更换或润滑作业？",
+        "润滑油位与油质当前状态如何？",
+        "设备运行模式（mode）为何为空？"
+      ],
+      "handoff_reason": null,
+      "review_status": "pending",
+      "conclusion_status": "hypothesis"
+    },
+    "validation": {
+      "valid": true,
+      "errors": 0,
+      "warnings": 0,
+      "issues": []
+    }
+  },
+  "execution_error": null,
+  "evaluation": {
+    "case_id": "MUL-06",
+    "category": "multi_fault",
+    "split": "holdout",
+    "run_id": "run_b9da3b623c704693ab0d",
+    "status": "awaiting_human",
+    "passed": false,
+    "failure_reasons": [
+      "ROOT_CAUSE_MISMATCH expected=misalignment|lubrication actual=bearing_wear"
+    ],
+    "predicted_root_causes": [
+      "bearing_wear"
+    ],
+    "required_tools_missing": [],
+    "citation_issues": [],
+    "handoff": false,
+    "metrics": {
+      "citation_integrity": 1,
+      "evidence_coverage": 1,
+      "evidence_coverage_n": 1,
+      "required_tool_recall": 1,
+      "required_tool_recall_n": 1,
+      "tool_selection_accuracy": 1,
+      "tool_selection_n": 1,
+      "counter_evidence_retained": 1,
+      "counter_evidence_n": 0,
+      "solvable_completion": 0,
+      "top1_hit": 1,
+      "top1_applicable": 0,
+      "top3_hit": 1,
+      "top3_applicable": 0,
+      "multi_fault_coverage": 0,
+      "multi_fault_precision": 0,
+      "multi_fault_applicable": 1,
+      "handoff": 0,
+      "must_handoff": 0,
+      "handoff_correct": 1,
+      "unauthorized_calls": 0,
+      "blocked_attempts": 1,
+      "repeat_guard_exercised": 1,
+      "validation_errors": 0,
+      "latency_ms": 44160,
+      "model_calls": 7,
+      "input_tokens": 53682,
+      "output_tokens": 7397,
+      "total_tokens": 61079,
+      "model_call_failures": 0
+    }
+  }
+}

@@ -55,7 +55,17 @@ interface EvalMetricsView {
   required_tool_recall?: number;
   solvable_completion?: number;
   unnecessary_handoff?: number;
-  top3_hit?: number;
+  top1_hit?: number | null;
+  top3_hit?: number | null;
+  tool_selection_accuracy?: number;
+  handoff_accuracy?: number;
+  task_success_rate?: number;
+  mean_latency_ms?: number;
+  p95_latency_ms?: number;
+  total_tokens?: number;
+  model_calls?: number;
+  model_call_failures?: number;
+  estimated_cost_usd?: number | null;
   multi_fault_coverage?: number | null;
 }
 
@@ -477,12 +487,28 @@ export function EvalPage() {
                     value={percent(metrics.required_tool_recall)}
                   />
                   <MetricCard
+                    label="Top1 命中"
+                    value={percent(metrics.top1_hit)}
+                  />
+                  <MetricCard
                     label="Top3 命中"
                     value={percent(metrics.top3_hit)}
                   />
                   <MetricCard
+                    label="工具选择准确率"
+                    value={percent(metrics.tool_selection_accuracy)}
+                  />
+                  <MetricCard
                     label="反证保留"
                     value={percent(metrics.counter_evidence_retained)}
+                  />
+                  <MetricCard
+                    label="转人工准确率"
+                    value={percent(metrics.handoff_accuracy)}
+                  />
+                  <MetricCard
+                    label="任务成功率"
+                    value={percent(metrics.task_success_rate)}
                   />
                   <MetricCard
                     label="可解完成率"
@@ -514,6 +540,25 @@ export function EvalPage() {
                     value={String(metrics.unnecessary_handoff ?? 0)}
                     tone={
                       (metrics.unnecessary_handoff ?? 0) > 0 ? 'bad' : 'good'
+                    }
+                  />
+                  <MetricCard
+                    label="平均延迟"
+                    value={`${metrics.mean_latency_ms ?? 0} ms`}
+                    hint={`p95 ${metrics.p95_latency_ms ?? 0} ms`}
+                  />
+                  <MetricCard
+                    label="Token 用量"
+                    value={String(metrics.total_tokens ?? 0)}
+                    hint={`${metrics.model_calls ?? 0} 次调用 / ${metrics.model_call_failures ?? 0} 次失败`}
+                  />
+                  <MetricCard
+                    label="估算成本"
+                    value={
+                      metrics.estimated_cost_usd === null ||
+                      metrics.estimated_cost_usd === undefined
+                        ? '未配置单价'
+                        : `$${metrics.estimated_cost_usd.toFixed(4)}`
                     }
                   />
                 </div>

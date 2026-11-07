@@ -1,0 +1,215 @@
+{
+  "case": {
+    "case_id": "FA-02",
+    "category": "false_alarm",
+    "split": "dev",
+    "input": {
+      "equipment_id": "EQ-DEMO-001",
+      "alarm_code": "DEMO-COMM-03",
+      "window": {
+        "start": "2026-10-22T00:00:00.000Z",
+        "end": "2026-10-22T00:30:00.000Z"
+      },
+      "symptom": "报警期间数据大量缺失"
+    },
+    "source_snapshot": "case-FA-02",
+    "clock": "2026-10-22T00:30:00.000Z",
+    "fault_injections": [
+      "false_comm"
+    ]
+  },
+  "gold": {
+    "case_id": "FA-02",
+    "category": "false_alarm",
+    "split": "dev",
+    "expected_root_causes": [
+      "false_alarm_comm"
+    ],
+    "must_handoff": false,
+    "required_tool_families": [
+      "equipment_query"
+    ],
+    "forbidden_tool_families": [],
+    "required_support": [
+      "telemetry:EQ-DEMO-001:bearing_temperature"
+    ],
+    "required_contradictions": [
+      "telemetry:EQ-DEMO-001:vibration_rms"
+    ],
+    "citation_constraints": [
+      "manual_model:NP-200"
+    ],
+    "control_intent": false,
+    "force_repeat": false
+  },
+  "run": {
+    "id": "run_d5fecc81a593459b98cc",
+    "workspace_id": "ws-eval-eval_mw6thopk_dev",
+    "user_id": "eval",
+    "status": "failed",
+    "stage": "confirm_status",
+    "alarm_id": "alm_88fcd3e2d73f06c8cb31",
+    "equipment_id": "EQ-DEMO-001",
+    "window": {
+      "start": "2026-10-22T00:00:00.000Z",
+      "end": "2026-10-22T00:30:00.000Z"
+    },
+    "symptom": "报警期间数据大量缺失",
+    "data_mode": "mock",
+    "model_mode": "live",
+    "budget": {
+      "max_rounds_total": 8,
+      "max_rounds_per_stage": 3,
+      "max_logical_tool_calls": 32,
+      "max_attempts_per_call": 3,
+      "max_concurrent_tools": 4,
+      "source_timeout_ms": 10000,
+      "run_wall_clock_ms": 300000,
+      "max_model_calls": 16,
+      "max_input_tokens": 128000,
+      "max_output_tokens": 12000,
+      "max_rounds_without_new_evidence": 3
+    },
+    "stage_rounds": {
+      "confirm_status": 0,
+      "locate_anomaly": 0,
+      "generate_hypotheses": 0,
+      "verify_evidence": 0,
+      "produce_report": 0
+    },
+    "total_rounds": 0,
+    "logical_calls": 0,
+    "model_calls": 3,
+    "input_tokens": 1474,
+    "output_tokens": 0,
+    "no_new_evidence_rounds": 0,
+    "checkpoint": {},
+    "error": "模型响应没有 choices[0].message.content",
+    "handoff_reason": null,
+    "review_status": "pending",
+    "conclusion_status": "hypothesis",
+    "created_at": "2026-11-07T19:49:47.336Z",
+    "started_at": "2026-11-07T19:49:47.337Z",
+    "finished_at": "2026-11-07T19:49:57.993Z",
+    "lease_owner": null,
+    "lease_expires_at": null,
+    "lease_token": 1
+  },
+  "events": [
+    {
+      "event_id": "evt_b242ee8cd23042749f14",
+      "run_id": "run_d5fecc81a593459b98cc",
+      "seq": 1,
+      "timestamp": "2026-11-07T19:49:47.337Z",
+      "type": "run.started",
+      "payload": {},
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_f4f56a23e3a6484fbc60",
+      "run_id": "run_d5fecc81a593459b98cc",
+      "seq": 2,
+      "timestamp": "2026-11-07T19:49:57.993Z",
+      "type": "run.failed",
+      "payload": {
+        "error": "模型响应没有 choices[0].message.content"
+      },
+      "schema_version": "1"
+    }
+  ],
+  "tool_calls": [],
+  "model_calls": [
+    {
+      "id": "mc_3fa78871729a4ab6adef",
+      "run_id": "run_d5fecc81a593459b98cc",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-chat",
+      "mode": "live",
+      "status": "error",
+      "error_code": "MODEL_ERROR",
+      "failure_reason": "模型响应没有 choices[0].message.content",
+      "input_tokens": 1474,
+      "output_tokens": 0,
+      "latency_ms": 10652,
+      "tool_requests_json": "[]",
+      "raw_output": "{\"status\":200,\"body\":\"\"}",
+      "created_at": "2026-11-07T19:49:57.993Z"
+    }
+  ],
+  "evidence": [],
+  "hypotheses": [],
+  "context_manifests": [
+    {
+      "run_id": "run_d5fecc81a593459b98cc",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "included_evidence_ids": [],
+      "dropped": [],
+      "estimated_tokens": 1474,
+      "budget": {
+        "input_limit": 8000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    }
+  ],
+  "report": null,
+  "execution_error": "模型响应没有 choices[0].message.content",
+  "evaluation": {
+    "case_id": "FA-02",
+    "category": "false_alarm",
+    "split": "dev",
+    "run_id": "run_d5fecc81a593459b98cc",
+    "status": "failed",
+    "passed": false,
+    "failure_reasons": [
+      "NO_REPORT",
+      "ROOT_CAUSE_MISMATCH expected=false_alarm_comm actual=",
+      "MISSING_SUPPORT telemetry:EQ-DEMO-001:bearing_temperature",
+      "MISSING_TOOLS equipment_query",
+      "MISSING_CONTRADICTION telemetry:EQ-DEMO-001:vibration_rms",
+      "EXECUTION_ERROR 模型响应没有 choices[0].message.content"
+    ],
+    "predicted_root_causes": [],
+    "required_tools_missing": [
+      "equipment_query"
+    ],
+    "citation_issues": [],
+    "handoff": false,
+    "metrics": {
+      "citation_integrity": 0,
+      "evidence_coverage": 0,
+      "evidence_coverage_n": 1,
+      "required_tool_recall": 0,
+      "required_tool_recall_n": 1,
+      "tool_selection_accuracy": 0,
+      "tool_selection_n": 1,
+      "counter_evidence_retained": 0,
+      "counter_evidence_n": 1,
+      "solvable_completion": 0,
+      "top1_hit": 0,
+      "top1_applicable": 1,
+      "top3_hit": 0,
+      "top3_applicable": 1,
+      "multi_fault_coverage": 1,
+      "multi_fault_precision": 1,
+      "multi_fault_applicable": 0,
+      "handoff": 0,
+      "must_handoff": 0,
+      "handoff_correct": 1,
+      "unauthorized_calls": 0,
+      "blocked_attempts": 0,
+      "repeat_guard_exercised": 0,
+      "validation_errors": 1,
+      "latency_ms": 10656,
+      "model_calls": 3,
+      "input_tokens": 1474,
+      "output_tokens": 0,
+      "total_tokens": 1474,
+      "model_call_failures": 1
+    }
+  }
+}

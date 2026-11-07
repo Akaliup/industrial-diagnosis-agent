@@ -579,15 +579,16 @@ export function validateReport(input: {
       );
     }
   }
-  if (
-    supported.some((hypothesis) => hypothesis.code === 'insufficient_evidence')
-  ) {
+  const hasInsufficient = report.hypotheses.some(
+    (hypothesis) => hypothesis.code === 'insufficient_evidence',
+  );
+  if (definitive.length === 0 && hasInsufficient) {
     if (!report.handoff_reason) {
       errors.push(
         issue(
           'error',
           'HANDOFF_REASON_MISSING',
-          '存在 insufficient_evidence 假设时必须写明转人工原因',
+          '没有确定性根因且存在 insufficient_evidence 假设时必须写明转人工原因',
         ),
       );
     }
@@ -596,10 +597,22 @@ export function validateReport(input: {
         issue(
           'error',
           'CONCLUSION_NOT_INSUFFICIENT',
-          '证据不足时 conclusion_status 必须是 insufficient_evidence',
+          '没有确定性根因且存在 insufficient_evidence 假设时 conclusion_status 必须是 insufficient_evidence',
         ),
       );
     }
+  }
+  if (
+    report.conclusion_status === 'insufficient_evidence' &&
+    definitive.length > 0
+  ) {
+    errors.push(
+      issue(
+        'error',
+        'CONCLUSION_SUPPORTED_CONFLICT',
+        'conclusion_status 为 insufficient_evidence 时不能同时存在 supported 的确定性根因',
+      ),
+    );
   }
   if (
     report.handoff_reason &&

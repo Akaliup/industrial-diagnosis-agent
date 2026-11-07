@@ -28,7 +28,14 @@ describe('Docker image distribution contract', () => {
     expect(workflow).toContain(
       '[[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]',
     );
-    expect(workflow).toContain('needs: build-and-smoke');
+    expect(workflow).toContain('Check Docker Hub credentials');
+    expect(workflow).toContain(
+      'Docker Hub credentials are not configured; skipping image publish.',
+    );
+    expect(workflow).toContain('needs: [credentials, build-and-smoke]');
+    expect(workflow).toContain(
+      "if: needs.credentials.outputs.configured == 'true'",
+    );
     expect(workflow).toContain(
       'docker buildx imagetools create --tag "$commit_tag"',
     );
@@ -110,15 +117,25 @@ describe('Docker image distribution contract', () => {
 
     expect(smoke).toContain('docker run --detach --interactive');
     expect(smoke).not.toContain('--entrypoint');
-    expect(smoke).toContain('--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=host-root');
-    expect(smoke).toContain('--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=direct');
-    expect(smoke).toContain('--env "INDUSTRIAL_DIAGNOSIS_HOST_UID=$smoke_host_uid"');
-    expect(smoke).toContain('--env "INDUSTRIAL_DIAGNOSIS_HOST_GID=$smoke_host_gid"');
+    expect(smoke).toContain(
+      '--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=host-root',
+    );
+    expect(smoke).toContain(
+      '--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=direct',
+    );
+    expect(smoke).toContain(
+      '--env "INDUSTRIAL_DIAGNOSIS_HOST_UID=$smoke_host_uid"',
+    );
+    expect(smoke).toContain(
+      '--env "INDUSTRIAL_DIAGNOSIS_HOST_GID=$smoke_host_gid"',
+    );
     expect(smoke).toContain('"${smoke_identity_args[@]}"');
     expect(smoke).not.toContain(
       '--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=virtualized',
     );
-    expect(smoke).not.toContain('--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=rootless');
+    expect(smoke).not.toContain(
+      '--env INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=rootless',
+    );
     expect(smoke).toContain(
       '--tmpfs /home/node/.claude:rw,nosuid,nodev,noexec',
     );

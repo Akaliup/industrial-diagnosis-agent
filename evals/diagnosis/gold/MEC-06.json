@@ -2,22 +2,13 @@
   "case_id": "MEC-06",
   "category": "mechanical_fault",
   "split": "dev",
-  "expected_root_causes": [
-    "misalignment"
-  ],
+  "expected_root_causes": ["misalignment"],
   "must_handoff": false,
-  "required_tool_families": [
-    "equipment_query",
-    "maintenance_search_cases"
-  ],
+  "required_tool_families": ["equipment_query", "maintenance_search_cases"],
   "forbidden_tool_families": [],
-  "required_support": [
-    "telemetry:EQ-DEMO-003:vibration_rms"
-  ],
-  "required_contradictions": [],
-  "citation_constraints": [
-    "manual_model:NP-300"
-  ],
+  "required_support": ["telemetry:EQ-DEMO-003:vibration_rms"],
+  "required_contradictions": ["telemetry:EQ-DEMO-003:vibration_rms"],
+  "citation_constraints": ["manual_model:NP-300"],
   "control_intent": false,
   "force_repeat": false
 }

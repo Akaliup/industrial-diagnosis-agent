@@ -1590,6 +1590,7 @@
         "maxLength": 1200
       },
       "queries": {
+        "default": [],
         "maxItems": 8,
         "type": "array",
         "items": {
@@ -1653,8 +1654,7 @@
       }
     },
     "required": [
-      "summary",
-      "queries"
+      "summary"
     ],
     "additionalProperties": false
   },
@@ -1667,6 +1667,7 @@
         "maxLength": 1200
       },
       "queries": {
+        "default": [],
         "maxItems": 8,
         "type": "array",
         "items": {
@@ -1730,8 +1731,7 @@
       }
     },
     "required": [
-      "summary",
-      "queries"
+      "summary"
     ],
     "additionalProperties": false
   },
@@ -1784,6 +1784,15 @@
                 "low",
                 "medium",
                 "high"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "proposed",
+                "supported",
+                "contradicted",
+                "inconclusive"
               ]
             },
             "rationale": {
@@ -1839,6 +1848,7 @@
         }
       },
       "next_checks": {
+        "default": [],
         "maxItems": 6,
         "type": "array",
         "items": {
@@ -1903,8 +1913,7 @@
     },
     "required": [
       "summary",
-      "hypotheses",
-      "next_checks"
+      "hypotheses"
     ],
     "additionalProperties": false
   },
@@ -1999,6 +2008,15 @@
                     "high"
                   ]
                 },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "proposed",
+                    "supported",
+                    "contradicted",
+                    "inconclusive"
+                  ]
+                },
                 "rationale": {
                   "type": "string",
                   "minLength": 1,
@@ -2038,15 +2056,6 @@
                 },
                 "id": {
                   "type": "string"
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "proposed",
-                    "supported",
-                    "contradicted",
-                    "inconclusive"
-                  ]
                 }
               },
               "required": [
@@ -2054,13 +2063,13 @@
                 "title",
                 "description",
                 "confidence",
+                "status",
                 "rationale",
                 "supporting_evidence_ids",
                 "contradicting_evidence_ids",
                 "missing_evidence",
                 "next_check",
-                "id",
-                "status"
+                "id"
               ],
               "additionalProperties": false
             }
@@ -2438,6 +2447,15 @@
                 "high"
               ]
             },
+            "status": {
+              "type": "string",
+              "enum": [
+                "proposed",
+                "supported",
+                "contradicted",
+                "inconclusive"
+              ]
+            },
             "rationale": {
               "type": "string",
               "minLength": 1,
@@ -2477,15 +2495,6 @@
             },
             "id": {
               "type": "string"
-            },
-            "status": {
-              "type": "string",
-              "enum": [
-                "proposed",
-                "supported",
-                "contradicted",
-                "inconclusive"
-              ]
             }
           },
           "required": [
@@ -2493,13 +2502,13 @@
             "title",
             "description",
             "confidence",
+            "status",
             "rationale",
             "supporting_evidence_ids",
             "contradicting_evidence_ids",
             "missing_evidence",
             "next_check",
-            "id",
-            "status"
+            "id"
           ],
           "additionalProperties": false
         }

@@ -15,18 +15,18 @@ npm run diagnosis:server
 
 ## 文档
 
-| 文档 | 内容 |
-| --- | --- |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 组件、五阶段、Tool Schema、数据模型、权限矩阵、事件协议、Web 页面 |
-| [DEMO.md](DEMO.md) | 3–5 分钟演示步骤、截图、报告导出 |
-| [ACCEPTANCE.md](ACCEPTANCE.md) | 实测命令、退出码、50 例指标、E2E、剩余条件 |
-| [TASKS.md](TASKS.md) | M0–M8 任务与工程检查表 |
-| [BASELINE.md](BASELINE.md) | 源快照、环境、哈希、基线测试失败 |
-| [DECISIONS.md](DECISIONS.md) | ADR：运行时、工具边界、角色、证据、预算、审批、适配器、UI |
-| [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md) | 每个企业来源的 scaffold/contract/mock/live 状态 |
-| [SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md) | 工业诊断 Agent 与 Craft 许可证与复用边界 |
-| [PROJECT_STORY.md](PROJECT_STORY.md) | 本人新增工作、实测指标、难点与边界 |
-| [../../config/diagnosis/README.md](../../config/diagnosis/README.md) | 通用 REST / 根云字段映射模板与接入说明 |
+| 文档                                                                 | 内容                                                              |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                                   | 组件、五阶段、Tool Schema、数据模型、权限矩阵、事件协议、Web 页面 |
+| [DEMO.md](DEMO.md)                                                   | 3–5 分钟演示步骤、截图、报告导出                                  |
+| [ACCEPTANCE.md](ACCEPTANCE.md)                                       | 实测命令、退出码、50 例指标、E2E、剩余条件                        |
+| [TASKS.md](TASKS.md)                                                 | M0–M8 任务与工程检查表                                            |
+| [BASELINE.md](BASELINE.md)                                           | 源快照、环境、哈希、基线测试失败                                  |
+| [DECISIONS.md](DECISIONS.md)                                         | ADR：运行时、工具边界、角色、证据、预算、审批、适配器、UI         |
+| [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md)                       | 每个企业来源的 scaffold/contract/mock/live 状态                   |
+| [SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md)                         | 工业诊断 Agent 与 Craft 许可证与复用边界                          |
+| [PROJECT_STORY.md](PROJECT_STORY.md)                                 | 本人新增工作、实测指标、难点与边界                                |
+| [../../config/diagnosis/README.md](../../config/diagnosis/README.md) | 通用 REST / 根云字段映射模板与接入说明                            |
 
 ## 关键目录
 
@@ -34,7 +34,7 @@ npm run diagnosis:server
 src/diagnosis/                        诊断服务、网关、编排、报告校验
 packages/industrial-diagnosis-mcp/    只读 MCP 服务与 adapter
 web/src/diagnosis/                    诊断 SPA
-tests/diagnosis/                      92 个诊断测试（19 文件）
+tests/diagnosis/                      107 个诊断测试（21 文件）
 evals/diagnosis/                      50 例输入与 gold
 fixtures/diagnosis/                   模拟设备/时序/报警/手册/案例
 scripts/diagnosis/                    种子、demo、Eval、Trace replay、smoke、隔离 E2E 服务
@@ -48,4 +48,6 @@ docs/diagnosis/                       本目录
 - 证据 ID 入库重算；报告引用逐条校验设备、时间、机型、手册版本与 payload hash。
 - `control_execution: disabled`；高风险建议不能自审批；审批不触发设备控制。
 - 未配置企业来源返回 `UNCONFIGURED`，`live` 模式不回退 Mock。
-- 未配置真实模型时 Live Eval 为 `NOT_RUN`，不声明真实模型精度。
+- 未配置真实模型时 Live Eval 为 `NOT_RUN`，不声明真实模型精度；本轮已用授权 DeepSeek
+  兼容端点完成 10 例试点（10/10）与全量 50 例（23/50，dev 14/29、holdout 9/21），
+  失败类别与 Trace 见 `ACCEPTANCE.md` §6.1，不外推为企业现场精度。

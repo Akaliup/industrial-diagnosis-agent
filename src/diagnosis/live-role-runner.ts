@@ -77,6 +77,12 @@ function contentOf(payload: unknown): string | null {
   return null;
 }
 
+function modelOf(payload: unknown): string | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const model = (payload as { model?: unknown }).model;
+  return typeof model === 'string' && model.length > 0 ? model : null;
+}
+
 function usageOf(payload: unknown): { input: number; output: number } | null {
   if (!payload || typeof payload !== 'object') return null;
   const usage = (payload as { usage?: unknown }).usage;
@@ -106,7 +112,7 @@ export class LiveRoleRunner implements RoleRunner {
   private async post(
     body: unknown,
     signal: AbortSignal,
-  ): Promise<{ payload: unknown; status: number }> {
+  ): Promise<{ payload: unknown; status: number; text: string }> {
     const response = await fetch(this.endpoint, {
       method: 'POST',
       headers: {
@@ -116,13 +122,15 @@ export class LiveRoleRunner implements RoleRunner {
       body: JSON.stringify(body),
       signal,
     });
+    let text = '';
     let payload: unknown = null;
     try {
-      payload = await response.json();
+      text = await response.text();
+      payload = JSON.parse(text);
     } catch {
       payload = null;
     }
-    return { payload, status: response.status };
+    return { payload, status: response.status, text };
   }
 
   async run(input: RoleCallInput): Promise<RoleCallResult> {
@@ -156,7 +164,7 @@ export class LiveRoleRunner implements RoleRunner {
     const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0];
 
     let lastError: RoleRunnerError | null = null;
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
       if (input.signal?.aborted) {
         throw new RoleRunnerError('模型调用已取消', 'CANCELLED');
       }
@@ -165,7 +173,7 @@ export class LiveRoleRunner implements RoleRunner {
         input.limits?.onRequest?.();
       }
       try {
-        const { payload, status } = await this.post(body, signal);
+        const { payload, status, text } = await this.post(body, signal);
         if (status === 401 || status === 403) {
           throw new RoleRunnerError(
             `模型鉴权失败（HTTP ${status}），请检查 DIAGNOSIS_LLM_API_KEY`,
@@ -179,7 +187,7 @@ export class LiveRoleRunner implements RoleRunner {
             'MODEL_ERROR',
             true,
           );
-          if (attempt < 2) {
+          if (attempt < 3) {
             await sleep(800, input.signal);
             continue;
           }
@@ -197,7 +205,7 @@ export class LiveRoleRunner implements RoleRunner {
           const error = new RoleRunnerError(
             '模型响应没有 choices[0].message.content',
             'MODEL_ERROR',
-            false,
+            true,
           );
           error.usage = {
             inputTokens: estimateTokens(
@@ -206,6 +214,10 @@ export class LiveRoleRunner implements RoleRunner {
             outputTokens: 0,
           };
           error.attempts = attempt;
+          error.rawOutput = JSON.stringify({
+            status,
+            body: text.slice(0, 7_000),
+          });
           throw error;
         }
         const usage = usageOf(payload) ?? {
@@ -224,13 +236,14 @@ export class LiveRoleRunner implements RoleRunner {
               outputTokens: usage.output,
             };
             error.attempts = attempt;
+            error.rawOutput = raw;
           }
           throw error;
         }
         return {
           output,
           mode: this.mode,
-          model: this.options.model,
+          model: modelOf(payload) ?? this.options.model,
           inputTokens: usage.input,
           outputTokens: usage.output,
           latencyMs: Date.now() - started,
@@ -251,7 +264,7 @@ export class LiveRoleRunner implements RoleRunner {
               outputTokens: 0,
             };
           }
-          if (!error.retryable || attempt >= 2) throw error;
+          if (!error.retryable || attempt >= 3) throw error;
           lastError = error;
         } else if (input.signal?.aborted) {
           throw new RoleRunnerError('模型调用已取消', 'CANCELLED');
@@ -270,7 +283,7 @@ export class LiveRoleRunner implements RoleRunner {
             outputTokens: 0,
           };
           lastError.attempts = attempt;
-          if (attempt >= 2) throw lastError;
+          if (attempt >= 3) throw lastError;
         }
         await sleep(800, input.signal);
       }

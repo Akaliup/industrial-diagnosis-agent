@@ -69,6 +69,31 @@ class WithdrawCitedManualOnReportRunner implements RoleRunner {
   }
 }
 
+class ModelHandoffReasonRunner implements RoleRunner {
+  constructor(private readonly inner: FixtureRoleRunner) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    const result = await this.inner.run(input);
+    if (input.role === 'report_reviewer') {
+      const output = result.output as {
+        report?: { handoff_reason?: string | null };
+      };
+      if (output.report) {
+        output.report.handoff_reason = '模型建议人工复核';
+      }
+    }
+    return result;
+  }
+}
+
 describe('diagnosis orchestrator', () => {
   test('runs all five demo scenarios with valid cited reports', async () => {
     for (const demo of DEMO_SCENARIOS) {
@@ -148,6 +173,32 @@ describe('diagnosis orchestrator', () => {
         .map((event) => event.payload.to);
       expect(new Set(stages).size, demo.id).toBeGreaterThanOrEqual(2);
     }
+  }, 120_000);
+
+  test('records every model call with role, model, tokens, latency and tool requests', async () => {
+    const run = await runDemo(context, DEMO_SCENARIOS[0]);
+    const calls = context.repo.listModelCalls(run.id);
+    expect(calls.length).toBe(run.model_calls);
+    expect(calls.length).toBeGreaterThan(0);
+    for (const call of calls) {
+      expect(String(call.role)).not.toBe('');
+      expect(String(call.stage)).not.toBe('');
+      expect(String(call.model)).toContain('fixture');
+      expect(String(call.mode)).toBe('fixture');
+      expect(String(call.status)).toBe('success');
+      expect(Number(call.input_tokens)).toBeGreaterThan(0);
+      expect(Number(call.output_tokens)).toBeGreaterThan(0);
+      expect(Number(call.latency_ms)).toBeGreaterThanOrEqual(0);
+      expect(Array.isArray(JSON.parse(String(call.tool_requests_json)))).toBe(
+        true,
+      );
+      expect(String(call.raw_output)).not.toBe('');
+    }
+    const withRequests = calls.filter(
+      (call) => JSON.parse(String(call.tool_requests_json)).length > 0,
+    );
+    expect(withRequests.length).toBeGreaterThan(0);
+    expect(context.repo.countModelCallFailures(run.id)).toBe(0);
   }, 120_000);
 
   test('replaying the same scenario keeps the reasoning outcome stable', async () => {
@@ -262,6 +313,51 @@ describe('diagnosis orchestrator', () => {
         );
       }
     }
+  }, 120_000);
+
+  test('a supported diagnosis does not inherit the model handoff reason', async () => {
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new ModelHandoffReasonRunner(new FixtureRoleRunner()),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[0];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const finished = await orchestrator.execute(run.id, {
+      owner: 'test-worker',
+    });
+    const stored = context.repo.getReport(run.id)!;
+    expect(stored.validation.valid).toBe(true);
+    expect(stored.report.handoff_reason).toBeNull();
+    expect(finished.handoff_reason).toBeNull();
+    expect(stored.report.conclusion_status).toBe('hypothesis');
   }, 120_000);
 
   test('a pre-aborted run ends cancelled and keeps collected evidence', async () => {

@@ -640,6 +640,7 @@ export const HypothesisDraftSchema = z
     title: z.string().min(1).max(120),
     description: z.string().min(1).max(1200),
     confidence: ConfidenceSchema,
+    status: HypothesisStatusSchema.optional(),
     rationale: z.string().min(1).max(1200),
     supporting_evidence_ids: z.array(z.string()).max(30),
     contradicting_evidence_ids: z.array(z.string()).max(30),
@@ -778,7 +779,7 @@ export type QueryRequest = z.infer<typeof QueryRequestSchema>;
 export const DataInvestigatorOutputSchema = z
   .object({
     summary: z.string().max(1200),
-    queries: z.array(QueryRequestSchema).max(8),
+    queries: z.array(QueryRequestSchema).max(8).default([]),
   })
   .strict();
 export type DataInvestigatorOutput = z.infer<
@@ -788,7 +789,7 @@ export type DataInvestigatorOutput = z.infer<
 export const KnowledgeRetrieverOutputSchema = z
   .object({
     summary: z.string().max(1200),
-    queries: z.array(QueryRequestSchema).max(8),
+    queries: z.array(QueryRequestSchema).max(8).default([]),
   })
   .strict();
 export type KnowledgeRetrieverOutput = z.infer<
@@ -799,7 +800,7 @@ export const HypothesisVerifierOutputSchema = z
   .object({
     summary: z.string().max(2000),
     hypotheses: z.array(HypothesisDraftSchema).max(5),
-    next_checks: z.array(QueryRequestSchema).max(6),
+    next_checks: z.array(QueryRequestSchema).max(6).default([]),
   })
   .strict();
 export type HypothesisVerifierOutput = z.infer<
@@ -845,8 +846,8 @@ export const DEFAULT_BUDGET: BudgetSnapshot = {
   source_timeout_ms: 10_000,
   run_wall_clock_ms: 300_000,
   max_model_calls: 16,
-  max_input_tokens: 64_000,
-  max_output_tokens: 8_000,
+  max_input_tokens: 128_000,
+  max_output_tokens: 12_000,
   max_rounds_without_new_evidence: 3,
 };
 
@@ -1080,15 +1081,31 @@ export const EvalMetricsSchema = z
     required_tool_recall: z.number(),
     solvable_completion: z.number(),
     unnecessary_handoff: z.number(),
+    top1_hit: z.number().nullable(),
     top3_hit: z.number().nullable(),
     multi_fault_coverage: z.number().nullable(),
     multi_fault_precision: z.number().nullable(),
+    tool_selection_accuracy: z.number(),
+    handoff_accuracy: z.number(),
+    task_success_rate: z.number(),
+    mean_latency_ms: z.number(),
+    p95_latency_ms: z.number(),
+    total_latency_ms: z.number(),
+    model_calls: z.number().int(),
+    input_tokens: z.number().int(),
+    output_tokens: z.number().int(),
+    total_tokens: z.number().int(),
+    model_call_failures: z.number().int(),
+    /** 仅当配置了输入/输出每百万 token 单价且为 live 模式时计算。 */
+    estimated_cost_usd: z.number().nullable(),
     /** 各比例指标的分母；0 表示该指标在本批用例中为 N/A。 */
     evidence_coverage_n: z.number().int(),
     required_tool_recall_n: z.number().int(),
     counter_evidence_n: z.number().int(),
+    top1_cases: z.number().int(),
     top3_cases: z.number().int(),
     multi_fault_cases: z.number().int(),
+    tool_selection_n: z.number().int(),
   })
   .strict();
 export type EvalMetrics = z.infer<typeof EvalMetricsSchema>;

@@ -10,7 +10,7 @@ import type BetterSqlite3 from 'better-sqlite3';
 
 export type DiagnosisDb = InstanceType<typeof BetterSqlite3>;
 
-export const DIAGNOSIS_SCHEMA_VERSION = 2;
+export const DIAGNOSIS_SCHEMA_VERSION = 3;
 
 export interface DiagnosisMigrationOptions {
   /** 文件数据库升级前备份目录；内存库跳过。 */
@@ -343,6 +343,28 @@ CREATE TABLE IF NOT EXISTS diagnosis_context_manifests (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS diagnosis_model_calls (
+  id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL REFERENCES diagnosis_runs(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  round INTEGER NOT NULL,
+  attempt INTEGER NOT NULL,
+  model TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  status TEXT NOT NULL,
+  error_code TEXT,
+  failure_reason TEXT,
+  input_tokens INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  latency_ms INTEGER NOT NULL DEFAULT 0,
+  tool_requests_json TEXT NOT NULL DEFAULT '[]',
+  raw_output TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_diag_model_calls_run
+  ON diagnosis_model_calls (run_id, created_at);
+
 CREATE TABLE IF NOT EXISTS diagnosis_eval_runs (
   id TEXT PRIMARY KEY,
   mode TEXT NOT NULL,
@@ -406,6 +428,7 @@ export function migrateDiagnosis(
   let tokenizer: string | null = null;
   db.transaction(() => {
     db.exec(DDL_V1);
+    // v2→v3：新增逐次模型调用审计表；DDL 使用 IF NOT EXISTS，旧库直接补表。
     // v1→v2：租约写入栅栏。旧库通过 ALTER 补齐；新库已在建表语句中。
     const runColumns = db
       .prepare('PRAGMA table_info(diagnosis_runs)')

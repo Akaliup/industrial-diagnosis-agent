@@ -95,6 +95,17 @@ describe('report validator', () => {
     );
   });
 
+  test('rejects an insufficient conclusion that still has a supported root cause', () => {
+    const conflicting = clone(report);
+    conflicting.conclusion_status = 'insufficient_evidence';
+    conflicting.handoff_reason = '证据不足，转人工';
+    const result = validate({ report: conflicting });
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((item) => item.code)).toContain(
+      'CONCLUSION_SUPPORTED_CONFLICT',
+    );
+  });
+
   test('rejects supported hypotheses without support or with contradiction', () => {
     const noSupport = clone(report);
     const supported = noSupport.hypotheses.find(

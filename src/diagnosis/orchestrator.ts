@@ -52,6 +52,40 @@ const STAGES: Stage[] = [
   'produce_report',
 ];
 
+function toolRequestsFromOutput(output: unknown): unknown[] {
+  if (!output || typeof output !== 'object') return [];
+  const value = output as { queries?: unknown; next_checks?: unknown };
+  if (Array.isArray(value.queries)) return value.queries;
+  if (Array.isArray(value.next_checks)) return value.next_checks;
+  return [];
+}
+
+function failureText(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error)).slice(
+    0,
+    2_000,
+  );
+}
+
+const REPORT_OUTPUT_RESERVE = 4_500;
+
+function outputAllowance(stage: Stage, role: Role, remaining: number): number {
+  const reserve = stage === 'produce_report' ? 0 : REPORT_OUTPUT_RESERVE;
+  const available = remaining - reserve;
+  if (available < 400) {
+    throw new BudgetExceededError(
+      '模型输出预算不足：为报告生成保留额度后无法继续当前阶段',
+    );
+  }
+  const cap =
+    stage === 'produce_report'
+      ? 4_500
+      : role === 'hypothesis_verifier'
+        ? 2_200
+        : 1_200;
+  return Math.min(cap, available);
+}
+
 export {
   AlreadyFinishedError,
   BudgetExceededError,
@@ -359,6 +393,13 @@ export class DiagnosisOrchestrator {
     const alarm = this.alarmContext(state);
     const evidence = this.options.repo.listEvidence(state.run.id);
     const hypotheses = this.options.repo.listHypotheses(state.run.id);
+    const manualWithdrawn = Boolean(
+      equipment.manual_document_id &&
+      this.withdrawnDocuments(
+        state.run.workspace_id,
+        this.options.repo.getRunScenario(state.run.id),
+      ).includes(equipment.manual_document_id),
+    );
     const context = buildRoleContext({
       run: this.currentRun(state),
       role,
@@ -371,6 +412,7 @@ export class DiagnosisOrchestrator {
       newEvidenceIds: state.newEvidenceIds,
       modelWindow: this.options.modelWindow ?? null,
       symptom: state.run.symptom,
+      manualWithdrawn,
     });
     if (
       state.inputTokens + context.manifest.estimated_tokens >
@@ -404,7 +446,9 @@ export class DiagnosisOrchestrator {
       if (remainingOutput <= 0) {
         throw new BudgetExceededError('累计模型输出 token 预算已耗尽');
       }
+      const maxOutputTokens = outputAllowance(stage, role, remainingOutput);
       this.reserveModelCall(state);
+      const attemptStarted = Date.now();
       let retryReserved = 0;
       try {
         result = await this.options.runner.run({
@@ -419,7 +463,7 @@ export class DiagnosisOrchestrator {
                     : '输出不符合角色 Schema，请严格按 Schema 返回 JSON。',
                 ],
           limits: {
-            maxOutputTokens: remainingOutput,
+            maxOutputTokens,
             deadlineAt,
             onRequest: () => {
               // 传输层重试同样占用 Run 的模型调用与时间预算。
@@ -429,6 +473,24 @@ export class DiagnosisOrchestrator {
           },
         });
         this.settleUsage(state, result.inputTokens, result.outputTokens);
+        this.options.repo.recordModelCall({
+          id: newId('mc'),
+          runId: state.run.id,
+          role,
+          stage,
+          round: nextRound,
+          attempt: attempt + 1,
+          model: result.model,
+          mode: result.mode,
+          status: 'success',
+          errorCode: null,
+          failureReason: null,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          latencyMs: result.latencyMs,
+          toolRequests: toolRequestsFromOutput(result.output),
+          rawOutput: result.raw ?? null,
+        });
         // 自定义 runner 若自行重试但没有回调，按报告的实际请求数补记账。
         const unreportedRetries = Math.max(
           0,
@@ -440,27 +502,46 @@ export class DiagnosisOrchestrator {
         break;
       } catch (error) {
         if (error instanceof BudgetExceededError) throw error;
-        if (error instanceof RoleRunnerError) {
-          if (error.usage) {
+        const runnerError = error instanceof RoleRunnerError ? error : null;
+        this.options.repo.recordModelCall({
+          id: newId('mc'),
+          runId: state.run.id,
+          role,
+          stage,
+          round: nextRound,
+          attempt: attempt + 1,
+          model: this.options.runner.model,
+          mode: this.options.runner.mode,
+          status: 'error',
+          errorCode: runnerError?.code ?? 'MODEL_ERROR',
+          failureReason: failureText(error),
+          inputTokens: runnerError?.usage?.inputTokens ?? 0,
+          outputTokens: runnerError?.usage?.outputTokens ?? 0,
+          latencyMs: Date.now() - attemptStarted,
+          toolRequests: [],
+          rawOutput: runnerError?.rawOutput ?? null,
+        });
+        if (runnerError) {
+          if (runnerError.usage) {
             this.settleUsage(
               state,
-              error.usage.inputTokens,
-              error.usage.outputTokens,
+              runnerError.usage.inputTokens,
+              runnerError.usage.outputTokens,
             );
           }
           const unreportedRetries = Math.max(
             0,
-            (error.attempts ?? 1) - 1 - retryReserved,
+            (runnerError.attempts ?? 1) - 1 - retryReserved,
           );
           for (let index = 0; index < unreportedRetries; index += 1) {
             this.reserveModelCall(state);
           }
-          if (error.code === 'INVALID_OUTPUT' && attempt === 0) {
-            lastError = error;
+          if (runnerError.code === 'INVALID_OUTPUT' && attempt === 0) {
+            lastError = runnerError;
             this.persist(state);
             this.log(
               state.run.id,
-              `角色 ${role} 输出无效，进行 1 次修复调用：${error.message}`,
+              `角色 ${role} 输出无效，进行 1 次修复调用：${runnerError.message}`,
             );
             continue;
           }
@@ -599,12 +680,18 @@ export class DiagnosisOrchestrator {
   private deriveStatus(
     hypothesis: Hypothesis,
     handoff: boolean,
+    declared?: Hypothesis['status'],
   ): Hypothesis['status'] {
-    if (
-      hypothesis.code === 'insufficient_evidence' &&
-      (handoff || hypothesis.missing_evidence.length > 0)
-    ) {
-      return 'supported';
+    if (declared) return declared;
+    if (hypothesis.code === 'insufficient_evidence') {
+      // 有反证时不能声称“证据不足”已成立；保留为不确定，
+      // 但仍作为残余风险进入报告。
+      if (hypothesis.contradicting_evidence_ids.length > 0) {
+        return 'inconclusive';
+      }
+      if (handoff || hypothesis.missing_evidence.length > 0) {
+        return 'supported';
+      }
     }
     if (
       hypothesis.supporting_evidence_ids.length > 0 &&
@@ -632,9 +719,15 @@ export class DiagnosisOrchestrator {
     drafts: HypothesisDraft[],
     handoff: boolean,
   ): Hypothesis[] {
+    const declared = new Map(
+      drafts
+        .filter((draft) => draft.status)
+        .map((draft) => [draft.code, draft.status as Hypothesis['status']]),
+    );
     const stored = this.options.repo.replaceHypotheses(state.run.id, drafts, {
       leaseToken: state.leaseToken,
-      statusFor: (hypothesis) => this.deriveStatus(hypothesis, handoff),
+      statusFor: (hypothesis) =>
+        this.deriveStatus(hypothesis, handoff, declared.get(hypothesis.code)),
     });
     if (!stored) throw new LeaseLostError();
     const updated = stored;
@@ -675,6 +768,7 @@ export class DiagnosisOrchestrator {
       title: hypothesis.title,
       description: hypothesis.description,
       confidence: hypothesis.confidence,
+      status: hypothesis.status,
       rationale: hypothesis.rationale,
       supporting_evidence_ids: hypothesis.supporting_evidence_ids,
       contradicting_evidence_ids: hypothesis.contradicting_evidence_ids,
@@ -701,11 +795,17 @@ export class DiagnosisOrchestrator {
       message: '人工发起诊断，无绑定报警',
     };
     const hypotheses = draft.hypotheses;
-    const insufficient = hypotheses.some(
+    const supportedDiagnostic = hypotheses.some(
       (hypothesis) =>
-        hypothesis.code === 'insufficient_evidence' &&
-        hypothesis.status === 'supported',
+        hypothesis.status === 'supported' &&
+        hypothesis.code !== 'insufficient_evidence' &&
+        hypothesis.code !== 'unknown',
     );
+    const insufficient =
+      !supportedDiagnostic &&
+      hypotheses.some(
+        (hypothesis) => hypothesis.code === 'insufficient_evidence',
+      );
     const limitations = [...draft.limitations];
     if (
       state.run.data_mode === 'mock' &&
@@ -735,7 +835,10 @@ export class DiagnosisOrchestrator {
       checks: draft.checks,
       recommendations: draft.recommendations,
       unresolved_questions: draft.unresolved_questions,
-      handoff_reason: handoffReason ?? draft.handoff_reason,
+      // 有可支持的确定性结论时，报告仍进入人工复核，但不属于“证据不足转人工”。
+      // 模型自拟的 handoff_reason 只能作为 next_check/limitations，不能把正常结论标成 handoff。
+      handoff_reason:
+        handoffReason ?? (supportedDiagnostic ? null : draft.handoff_reason),
       review_status: 'pending',
       conclusion_status: insufficient ? 'insufficient_evidence' : 'hypothesis',
     };
@@ -1163,7 +1266,7 @@ export class DiagnosisOrchestrator {
     );
     const control = detectControlIntent(state.run.symptom);
     let handoffReason: string | null = null;
-    if (insufficient) {
+    if (diagnostic.length === 0 && insufficient) {
       handoffReason =
         '存在未解决的关键证据缺口，当前不能形成可核查的确定结论。';
     } else if (control) {
@@ -1174,9 +1277,10 @@ export class DiagnosisOrchestrator {
     }
     state.checkpoint.handoff_reason = handoffReason;
     this.persist(state);
-    // 控制意图需要转人工，但仍应生成带证据的完整报告；
-    // 只有证据不足或没有任何可支持假设时才走兜底报告。
-    if (insufficient || diagnostic.length === 0) return 'handoff';
+    // 有可支持的诊断假设时继续生成报告；模型同时列出低置信度
+    // insufficient_evidence 只作为残余不确定性，不覆盖已支持的根因。
+    // 只有没有任何可支持诊断假设时才走兜底转人工报告。
+    if (diagnostic.length === 0) return 'handoff';
     return 'advance';
   }
 

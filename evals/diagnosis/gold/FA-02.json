@@ -2,21 +2,13 @@
   "case_id": "FA-02",
   "category": "false_alarm",
   "split": "dev",
-  "expected_root_causes": [
-    "false_alarm_comm"
-  ],
+  "expected_root_causes": ["false_alarm_comm"],
   "must_handoff": false,
-  "required_tool_families": [
-    "equipment_query"
-  ],
+  "required_tool_families": ["equipment_query"],
   "forbidden_tool_families": [],
-  "required_support": [
-    "telemetry:EQ-DEMO-001:bearing_temperature"
-  ],
-  "required_contradictions": [],
-  "citation_constraints": [
-    "manual_model:NP-200"
-  ],
+  "required_support": ["telemetry:EQ-DEMO-001:bearing_temperature"],
+  "required_contradictions": ["telemetry:EQ-DEMO-001:vibration_rms"],
+  "citation_constraints": ["manual_model:NP-200"],
   "control_intent": false,
   "force_repeat": false
 }

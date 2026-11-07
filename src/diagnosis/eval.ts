@@ -4,6 +4,7 @@ import {
   type EvalMetrics,
   type Evidence,
   type Hypothesis,
+  type ModelMode,
   type Report,
   type RootCauseCode,
   type Role,
@@ -107,6 +108,7 @@ export interface CaseEvaluationInput {
   validation: unknown;
   evidence: Evidence[];
   toolCalls: ToolCallView[];
+  modelCallFailures?: number;
 }
 
 export interface CaseEvaluation {
@@ -331,6 +333,8 @@ export function evaluateCase(input: CaseEvaluationInput): CaseEvaluation {
     failureReasons.push(`CITATION_CONSTRAINT ${citationIssues.join('|')}`);
   }
 
+  const top1Applicable = expected.length === 1;
+  const top1Hit = top1Applicable && predicted[0] === expected[0];
   const top3 = predicted.slice(0, 3);
   const top3Applicable = expected.length === 1;
   const top3Hit = top3Applicable && top3.includes(expected[0]);
@@ -360,6 +364,21 @@ export function evaluateCase(input: CaseEvaluationInput): CaseEvaluation {
       ? 1
       : (gold.required_contradictions.length - contradictionMissing.length) /
         gold.required_contradictions.length;
+  const selectionDenominator =
+    gold.required_tool_families.length + gold.forbidden_tool_families.length;
+  const selectionCorrect =
+    gold.required_tool_families.length -
+    missingTools.length +
+    (gold.forbidden_tool_families.length - forbiddenUsed.length);
+  const toolSelectionAccuracy =
+    selectionDenominator === 0 ? 1 : selectionCorrect / selectionDenominator;
+  const latencyMs =
+    run.started_at && run.finished_at
+      ? Math.max(0, Date.parse(run.finished_at) - Date.parse(run.started_at))
+      : 0;
+  const modelCalls = Number(run.model_calls ?? 0);
+  const inputTokens = Number(run.input_tokens ?? 0);
+  const outputTokens = Number(run.output_tokens ?? 0);
   const solvable = !gold.must_handoff && valid && setEqual(expected, predicted);
   const metrics: Record<string, number | boolean | string> = {
     citation_integrity: valid ? 1 : 0,
@@ -367,9 +386,13 @@ export function evaluateCase(input: CaseEvaluationInput): CaseEvaluation {
     evidence_coverage_n: gold.required_support.length,
     required_tool_recall: toolRecall,
     required_tool_recall_n: gold.required_tool_families.length,
+    tool_selection_accuracy: toolSelectionAccuracy,
+    tool_selection_n: selectionDenominator,
     counter_evidence_retained: counterRetained,
     counter_evidence_n: gold.required_contradictions.length,
     solvable_completion: solvable ? 1 : 0,
+    top1_hit: top1Applicable ? (top1Hit ? 1 : 0) : 1,
+    top1_applicable: top1Applicable ? 1 : 0,
     top3_hit: top3Applicable ? (top3Hit ? 1 : 0) : 1,
     top3_applicable: top3Applicable ? 1 : 0,
     multi_fault_coverage: multiRecall,
@@ -377,10 +400,17 @@ export function evaluateCase(input: CaseEvaluationInput): CaseEvaluation {
     multi_fault_applicable: multiFault ? 1 : 0,
     handoff: handoff ? 1 : 0,
     must_handoff: gold.must_handoff ? 1 : 0,
+    handoff_correct: handoff === gold.must_handoff ? 1 : 0,
     unauthorized_calls: unauthorized,
     blocked_attempts: blockedAttempts,
     repeat_guard_exercised: repeated ? 1 : 0,
     validation_errors: report && valid ? 0 : 1,
+    latency_ms: latencyMs,
+    model_calls: modelCalls,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: inputTokens + outputTokens,
+    model_call_failures: input.modelCallFailures ?? 0,
   };
   const passed = failureReasons.length === 0;
   return {
@@ -416,7 +446,27 @@ function meanOrNull(values: number[]): number | null {
   return values.length === 0 ? null : mean(values);
 }
 
-export function aggregateMetrics(results: EvalCaseResult[]): EvalMetrics {
+function percentile(values: number[], percent: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.ceil((percent / 100) * sorted.length) - 1),
+  );
+  return Math.round(sorted[index]);
+}
+
+function pricePerMillion(envName: string): number | null {
+  const raw = process.env[envName];
+  if (!raw) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+export function aggregateMetrics(
+  results: EvalCaseResult[],
+  options: { mode?: ModelMode } = {},
+): EvalMetrics {
   const total = results.length;
   const passed = results.filter((result) => result.passed).length;
   const metricNumber = (result: EvalCaseResult, key: string): number => {
@@ -439,12 +489,38 @@ export function aggregateMetrics(results: EvalCaseResult[]): EvalMetrics {
   const nonHandoff = results.filter(
     (result) => metricNumber(result, 'must_handoff') === 0,
   );
+  const top1Cases = results.filter(
+    (result) => metricNumber(result, 'top1_applicable') === 1,
+  );
   const top3Cases = results.filter(
     (result) => metricNumber(result, 'top3_applicable') === 1,
   );
   const multiCases = results.filter(
     (result) => metricNumber(result, 'multi_fault_applicable') === 1,
   );
+  const latencies = results.map((result) => metricNumber(result, 'latency_ms'));
+  const totalLatencyMs = latencies.reduce((sum, value) => sum + value, 0);
+  const meanLatencyMs =
+    latencies.length === 0 ? 0 : Math.round(totalLatencyMs / latencies.length);
+  const inputTokens = results.reduce(
+    (sum, result) => sum + metricNumber(result, 'input_tokens'),
+    0,
+  );
+  const outputTokens = results.reduce(
+    (sum, result) => sum + metricNumber(result, 'output_tokens'),
+    0,
+  );
+  const inputPrice = pricePerMillion('DIAGNOSIS_LLM_INPUT_PRICE_PER_MTOK');
+  const outputPrice = pricePerMillion('DIAGNOSIS_LLM_OUTPUT_PRICE_PER_MTOK');
+  const estimatedCostUsd =
+    options.mode === 'live' && inputPrice !== null && outputPrice !== null
+      ? Number(
+          (
+            (inputTokens / 1_000_000) * inputPrice +
+            (outputTokens / 1_000_000) * outputPrice
+          ).toFixed(6),
+        )
+      : null;
   return {
     total,
     passed,
@@ -481,6 +557,9 @@ export function aggregateMetrics(results: EvalCaseResult[]): EvalMetrics {
         metricNumber(result, 'must_handoff') === 0 &&
         metricNumber(result, 'handoff') === 1,
     ).length,
+    top1_hit: meanOrNull(
+      top1Cases.map((result) => metricNumber(result, 'top1_hit')),
+    ),
     top3_hit: meanOrNull(
       top3Cases.map((result) => metricNumber(result, 'top3_hit')),
     ),
@@ -490,6 +569,29 @@ export function aggregateMetrics(results: EvalCaseResult[]): EvalMetrics {
     multi_fault_precision: meanOrNull(
       multiCases.map((result) => metricNumber(result, 'multi_fault_precision')),
     ),
+    tool_selection_accuracy: microAverage(
+      'tool_selection_accuracy',
+      'tool_selection_n',
+    ),
+    handoff_accuracy: mean(
+      results.map((result) => metricNumber(result, 'handoff_correct')),
+    ),
+    task_success_rate: total === 0 ? 0 : Number((passed / total).toFixed(3)),
+    mean_latency_ms: meanLatencyMs,
+    p95_latency_ms: percentile(latencies, 95),
+    total_latency_ms: totalLatencyMs,
+    model_calls: results.reduce(
+      (sum, result) => sum + metricNumber(result, 'model_calls'),
+      0,
+    ),
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: inputTokens + outputTokens,
+    model_call_failures: results.reduce(
+      (sum, result) => sum + metricNumber(result, 'model_call_failures'),
+      0,
+    ),
+    estimated_cost_usd: estimatedCostUsd,
     evidence_coverage_n: results.reduce(
       (sum, result) => sum + metricNumber(result, 'evidence_coverage_n'),
       0,
@@ -502,8 +604,13 @@ export function aggregateMetrics(results: EvalCaseResult[]): EvalMetrics {
       (sum, result) => sum + metricNumber(result, 'counter_evidence_n'),
       0,
     ),
+    top1_cases: top1Cases.length,
     top3_cases: top3Cases.length,
     multi_fault_cases: multiCases.length,
+    tool_selection_n: results.reduce(
+      (sum, result) => sum + metricNumber(result, 'tool_selection_n'),
+      0,
+    ),
   };
 }
 
