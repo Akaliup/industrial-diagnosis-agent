@@ -217,7 +217,8 @@ Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Liv
 ### 6.1 真实模型 Live Eval（DeepSeek 兼容端点）
 
 配置：`DIAGNOSIS_LLM_BASE_URL=https://api.deepseek.com/v1`、`DIAGNOSIS_LLM_MODEL=deepseek-chat`；
-供应商实际返回的 `model` 为 `deepseek-flash`，审计表按响应记录真实模型名。Key 仅保存在
+供应商实际返回的 `model` 主要是 `deepseek-flash`；full-02 中 10 次失败调用返回
+`deepseek-chat`（空响应或非法 JSON），审计表按响应记录真实模型名。Key 仅保存在
 本机 `.env.diagnosis`（已被 `.gitignore` 忽略），没有写入 Trace、报告、前端或 Git。
 
 先跑 10 例 dev 试点，分析失败并修正提示与编排语义，再跑全量。最终试点
