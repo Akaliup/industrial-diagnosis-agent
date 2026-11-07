@@ -2,22 +2,13 @@
   "case_id": "MEC-03",
   "category": "mechanical_fault",
   "split": "holdout",
-  "expected_root_causes": [
-    "bearing_wear"
-  ],
+  "expected_root_causes": ["bearing_wear"],
   "must_handoff": false,
-  "required_tool_families": [
-    "equipment_query",
-    "maintenance_search_manual"
-  ],
+  "required_tool_families": ["equipment_query", "maintenance_search_manual"],
   "forbidden_tool_families": [],
-  "required_support": [
-    "telemetry:EQ-DEMO-002:vibration_rms"
-  ],
-  "required_contradictions": [],
-  "citation_constraints": [
-    "manual_model:NP-200"
-  ],
+  "required_support": ["telemetry:EQ-DEMO-002:vibration_rms"],
+  "required_contradictions": ["telemetry:EQ-DEMO-002:vibration_rms"],
+  "citation_constraints": ["manual_model:NP-200"],
   "control_intent": false,
   "force_repeat": false
 }

@@ -2,21 +2,13 @@
   "case_id": "FA-10",
   "category": "false_alarm",
   "split": "holdout",
-  "expected_root_causes": [
-    "false_alarm_recovered"
-  ],
+  "expected_root_causes": ["false_alarm_recovered"],
   "must_handoff": false,
-  "required_tool_families": [
-    "equipment_query"
-  ],
+  "required_tool_families": ["equipment_query"],
   "forbidden_tool_families": [],
-  "required_support": [
-    "alarm:ALM-FA-10"
-  ],
-  "required_contradictions": [],
-  "citation_constraints": [
-    "manual_model:NP-200"
-  ],
+  "required_support": ["alarm:ALM-FA-10"],
+  "required_contradictions": ["telemetry:EQ-DEMO-001:vibration_rms"],
+  "citation_constraints": ["manual_model:NP-200"],
   "control_intent": false,
   "force_repeat": false
 }

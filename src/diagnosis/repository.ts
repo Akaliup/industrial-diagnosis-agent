@@ -90,6 +90,25 @@ export interface ToolCallRecordInput {
   finishedAt: string | null;
 }
 
+export interface ModelCallRecordInput {
+  id: string;
+  runId: string;
+  role: string;
+  stage: string;
+  round: number;
+  attempt: number;
+  model: string;
+  mode: string;
+  status: 'success' | 'error';
+  errorCode: string | null;
+  failureReason: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  latencyMs: number;
+  toolRequests: unknown[];
+  rawOutput: string | null;
+}
+
 export interface KnowledgeDocumentInput {
   workspaceId: string;
   documentId: string;
@@ -1084,6 +1103,53 @@ export class DiagnosisRepository {
         'SELECT * FROM diagnosis_tool_calls WHERE run_id = ? ORDER BY started_at ASC',
       )
       .all(runId) as Array<Record<string, unknown>>;
+  }
+
+  recordModelCall(record: ModelCallRecordInput): void {
+    this.db
+      .prepare(
+        `INSERT INTO diagnosis_model_calls (
+           id, run_id, role, stage, round, attempt, model, mode, status,
+           error_code, failure_reason, input_tokens, output_tokens, latency_ms,
+           tool_requests_json, raw_output, created_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        record.id,
+        record.runId,
+        record.role,
+        record.stage,
+        record.round,
+        record.attempt,
+        record.model,
+        record.mode,
+        record.status,
+        record.errorCode,
+        record.failureReason,
+        Math.max(0, Math.trunc(record.inputTokens)),
+        Math.max(0, Math.trunc(record.outputTokens)),
+        Math.max(0, Math.trunc(record.latencyMs)),
+        JSON.stringify(record.toolRequests),
+        record.rawOutput ? record.rawOutput.slice(0, 8_000) : null,
+        nowIso(),
+      );
+  }
+
+  listModelCalls(runId: string): Array<Record<string, unknown>> {
+    return this.db
+      .prepare(
+        'SELECT * FROM diagnosis_model_calls WHERE run_id = ? ORDER BY created_at ASC, round ASC, attempt ASC',
+      )
+      .all(runId) as Array<Record<string, unknown>>;
+  }
+
+  countModelCallFailures(runId: string): number {
+    const row = this.db
+      .prepare(
+        "SELECT COUNT(*) AS count FROM diagnosis_model_calls WHERE run_id = ? AND status = 'error'",
+      )
+      .get(runId) as { count: number } | undefined;
+    return Number(row?.count ?? 0);
   }
 
   /**

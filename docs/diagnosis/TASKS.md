@@ -69,12 +69,13 @@
 - [x] Fixture 重跑作为独立回归（`eval-fixture-regression.test.ts`），不再冒称 replay
 - [x] Fixture Eval 50/50，门禁通过；执行/阻断与分母分离（`eval-scorer.test.ts`）
 - [x] `LiveRoleRunner` 真实调用路径、配置模板、错误处理
-- [ ] Live Eval — `NOT_RUN`（无已授权模型 Provider）
-- [ ] 真实模型准确率 — 不作声明
+- [x] Live Eval 10 例 dev 试点 — 10/10，指标见 `ACCEPTANCE.md` §6.1
+- [ ] Live Eval 全量 50 例 — `NOT_RUN`（外部端点延迟约 4 分钟/例；已完成的 5 例保留 Trace）
+- [ ] 企业现场模型准确率 — 不作声明（无企业数据与现场基线）
 
 ## M8 总体验收与交接 — PARTIAL（外部条件待补）
 
-- [x] 全量诊断测试 19 文件 / 92 测试、类型检查、构建、smoke、Eval、Trace replay、fresh data 演示
+- [x] 全量诊断测试 20 文件 / 101 测试、类型检查、构建、smoke、Eval、Trace replay、fresh data 演示
 - [x] 诊断 E2E 6/6、移动端 E2E 9/9，均使用隔离数据目录
 - [x] R1–R6 审计补修与四项残余风险检查（见 `ACCEPTANCE.md`）
 - [x] 本地 Git 提交准备与差异检查
@@ -84,34 +85,34 @@
 
 ## 工程检查表（对应方案 12.3）
 
-| 检查项 | 状态 | 证据 |
-| --- | --- | --- |
-| 来源快照、基线、许可证、移植记录 | PASS | `BASELINE.md`、`SOURCE_PROVENANCE.md`、commit `fec1d5a` |
-| 新旧数据库安装/迁移/备份恢复 | PARTIAL | 诊断迁移与临时库测试通过；工业诊断 Agent 备份恢复用例在 Windows 因 symlink `EPERM` 失败，属基线平台问题 |
-| 统一 Tool 输入/输出/MCP/错误协议 | PASS | `contracts.test.ts`、`mcp-smoke.ts`、`diagnosis:smoke` |
-| 五阶段真实持久化、按假设补查 | PASS | `orchestrator.test.ts`、`diagnosis:demo`、Eval traces |
-| 引用可打开、错误版本/设备/作用域拒绝 | PASS | `report-validator.test.ts`、E2E 证据抽屉、`knowledge.test.ts` |
-| 单来源宕机/缺失/陈旧/单位/时间错位 | PASS | INS 10 例、`knowledge.test.ts`、来源超时 demo |
-| 重试/重复检测/预算 | PASS | `repeat-guard.test.ts`、`policy.test.ts`、`tool-gateway.test.ts` |
-| 取消/刷新/WS 重连/重启/重复 webhook/迟到回执 | PASS | `worker.test.ts`、`crash-consistency.test.ts`、WS 本机回放、`webhook.test.ts`、live webhook 实测 |
-| 工具集合与 ACL 不可绕过；控制执行零次 | PASS | `policy.test.ts`、`approval-policy.ts`、E2E 安全提示 |
-| 人工复核与建议审批可用；审批不启用控制 | PASS | E2E 复核、`approvals.test.ts`、live 自审批 403 |
-| 手册导入/中文检索/页码/版本/Case | PASS | `knowledge.test.ts`、文档预览 live 检查 |
-| 50 例回归、真实 Trace replay、gold 不进 Agent context | PASS | `eval-fixture-regression.test.ts`、`trace-replay.test.ts`、`diagnosis:replay`、`eval-gate` 50/50 |
-| 核心 E2E：成功/缺证据/重复/取消/跨工作区/错误版本/live 来源 | PASS | Playwright 6 项（隔离库）；移动端 9 项单独运行 |
-| R1 报告引用/手册版本/撤回校验 | PASS | `report-validator.test.ts`、`orchestrator.test.ts`、诊断 E2E |
-| R2 累计预算（模型/重试/墙钟） | PASS | `budget.test.ts`、`worker.test.ts` |
-| R3 Eval 执行/阻断与分母 | PASS | `eval-scorer.test.ts`、50 例门禁 |
-| R4 多 Workspace 种子/文档 ID | PASS | `workspace-scope.test.ts` |
-| R5 CI/E2E 隔离 | PASS | `e2e-server.ts`、`playwright.diagnosis.config.ts`、CI 工作流 |
-| R6 `.env.diagnosis` 加载与校验 | PASS | `config-loader.test.ts` |
-| 租约围栏（长模型调用/接管） | PASS | `worker.test.ts` 双 Worker、围栏写入 |
-| 崩溃一致性（请求已发/回执未落库） | PASS | `crash-consistency.test.ts`、`tool.finished` 恢复事件 |
-| 取消后迟到结果丢弃 | PASS | `crash-consistency.test.ts` 两项取消场景 |
-| 三尺寸/键盘触屏/动效/reduced-motion | PASS | E2E 截图 1440/1024/390，`styles.css` |
-| Web 构建与 smoke；Electron 状态 | PASS | 构建 exit 0；Electron typecheck/build exit 0；无签名安装包 |
-| fresh data 演示可复现、报告导出可打开 | PASS | `work/diagnosis/logs/fresh-*.log`、`docs/diagnosis/artifacts/` |
-| 验收报告分工程/真实模型/企业接入 | PASS | `ACCEPTANCE.md` |
+| 检查项                                                      | 状态    | 证据                                                                                                    |
+| ----------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| 来源快照、基线、许可证、移植记录                            | PASS    | `BASELINE.md`、`SOURCE_PROVENANCE.md`、commit `fec1d5a`                                                 |
+| 新旧数据库安装/迁移/备份恢复                                | PARTIAL | 诊断迁移与临时库测试通过；工业诊断 Agent 备份恢复用例在 Windows 因 symlink `EPERM` 失败，属基线平台问题 |
+| 统一 Tool 输入/输出/MCP/错误协议                            | PASS    | `contracts.test.ts`、`mcp-smoke.ts`、`diagnosis:smoke`                                                  |
+| 五阶段真实持久化、按假设补查                                | PASS    | `orchestrator.test.ts`、`diagnosis:demo`、Eval traces                                                   |
+| 引用可打开、错误版本/设备/作用域拒绝                        | PASS    | `report-validator.test.ts`、E2E 证据抽屉、`knowledge.test.ts`                                           |
+| 单来源宕机/缺失/陈旧/单位/时间错位                          | PASS    | INS 10 例、`knowledge.test.ts`、来源超时 demo                                                           |
+| 重试/重复检测/预算                                          | PASS    | `repeat-guard.test.ts`、`policy.test.ts`、`tool-gateway.test.ts`                                        |
+| 取消/刷新/WS 重连/重启/重复 webhook/迟到回执                | PASS    | `worker.test.ts`、`crash-consistency.test.ts`、WS 本机回放、`webhook.test.ts`、live webhook 实测        |
+| 工具集合与 ACL 不可绕过；控制执行零次                       | PASS    | `policy.test.ts`、`approval-policy.ts`、E2E 安全提示                                                    |
+| 人工复核与建议审批可用；审批不启用控制                      | PASS    | E2E 复核、`approvals.test.ts`、live 自审批 403                                                          |
+| 手册导入/中文检索/页码/版本/Case                            | PASS    | `knowledge.test.ts`、文档预览 live 检查                                                                 |
+| 50 例回归、真实 Trace replay、gold 不进 Agent context       | PASS    | `eval-fixture-regression.test.ts`、`trace-replay.test.ts`、`diagnosis:replay`、`eval-gate` 50/50        |
+| 核心 E2E：成功/缺证据/重复/取消/跨工作区/错误版本/live 来源 | PASS    | Playwright 6 项（隔离库）；移动端 9 项单独运行                                                          |
+| R1 报告引用/手册版本/撤回校验                               | PASS    | `report-validator.test.ts`、`orchestrator.test.ts`、诊断 E2E                                            |
+| R2 累计预算（模型/重试/墙钟）                               | PASS    | `budget.test.ts`、`worker.test.ts`                                                                      |
+| R3 Eval 执行/阻断与分母                                     | PASS    | `eval-scorer.test.ts`、50 例门禁                                                                        |
+| R4 多 Workspace 种子/文档 ID                                | PASS    | `workspace-scope.test.ts`                                                                               |
+| R5 CI/E2E 隔离                                              | PASS    | `e2e-server.ts`、`playwright.diagnosis.config.ts`、CI 工作流                                            |
+| R6 `.env.diagnosis` 加载与校验                              | PASS    | `config-loader.test.ts`                                                                                 |
+| 租约围栏（长模型调用/接管）                                 | PASS    | `worker.test.ts` 双 Worker、围栏写入                                                                    |
+| 崩溃一致性（请求已发/回执未落库）                           | PASS    | `crash-consistency.test.ts`、`tool.finished` 恢复事件                                                   |
+| 取消后迟到结果丢弃                                          | PASS    | `crash-consistency.test.ts` 两项取消场景                                                                |
+| 三尺寸/键盘触屏/动效/reduced-motion                         | PASS    | E2E 截图 1440/1024/390，`styles.css`                                                                    |
+| Web 构建与 smoke；Electron 状态                             | PASS    | 构建 exit 0；Electron typecheck/build exit 0；无签名安装包                                              |
+| fresh data 演示可复现、报告导出可打开                       | PASS    | `work/diagnosis/logs/fresh-*.log`、`docs/diagnosis/artifacts/`                                          |
+| 验收报告分工程/真实模型/企业接入                            | PASS    | `ACCEPTANCE.md`                                                                                         |
 
 ## 已知限制
 

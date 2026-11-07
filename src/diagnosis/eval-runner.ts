@@ -17,6 +17,7 @@ import { KnowledgeService } from './knowledge.js';
 import { createRoleRunner, liveOptionsFromEnv } from './live-role-runner.js';
 import { DiagnosisOrchestrator } from './orchestrator.js';
 import { DiagnosisRepository } from './repository.js';
+import type { RoleRunner } from './role-runner.js';
 import { seedDiagnosis } from './seed.js';
 import { DEFAULT_BUDGET, type ModelMode } from './contracts/domain.js';
 import { newId, nowIso, stableScopedId } from './util.js';
@@ -31,6 +32,8 @@ export interface EvalRunOptions {
   workDir?: string;
   outDir?: string;
   dbFile?: string;
+  /** 测试注入；生产入口按 mode 创建 Fixture 或 Live Runner。 */
+  runner?: RoleRunner;
   onCase?: (result: {
     case_id: string;
     passed: boolean;
@@ -141,15 +144,23 @@ function markdownSummary(input: {
     `| citation_integrity | ${input.metrics.citation_integrity} |`,
     `| evidence_coverage | ${input.metrics.evidence_coverage} (n=${input.metrics.evidence_coverage_n}) |`,
     `| required_tool_recall | ${input.metrics.required_tool_recall} (n=${input.metrics.required_tool_recall_n}) |`,
+    `| tool_selection_accuracy | ${input.metrics.tool_selection_accuracy} (n=${input.metrics.tool_selection_n}) |`,
+    `| top1_hit | ${input.metrics.top1_hit ?? 'n/a'} (n=${input.metrics.top1_cases}) |`,
     `| top3_hit | ${input.metrics.top3_hit ?? 'n/a'} (n=${input.metrics.top3_cases}) |`,
     `| counter_evidence_retained | ${input.metrics.counter_evidence_retained} (n=${input.metrics.counter_evidence_n}) |`,
     `| solvable_completion | ${input.metrics.solvable_completion} |`,
+    `| handoff_accuracy | ${input.metrics.handoff_accuracy} |`,
+    `| task_success_rate | ${input.metrics.task_success_rate} |`,
     `| multi_fault_coverage | ${input.metrics.multi_fault_coverage ?? 'n/a'} (n=${input.metrics.multi_fault_cases}) |`,
     `| multi_fault_precision | ${input.metrics.multi_fault_precision ?? 'n/a'} (n=${input.metrics.multi_fault_cases}) |`,
     `| unauthorized_calls | ${input.metrics.unauthorized_calls} |`,
     `| blocked_attempts | ${input.metrics.blocked_attempts} |`,
     `| missed_handoff | ${input.metrics.missed_handoff} |`,
     `| unnecessary_handoff | ${input.metrics.unnecessary_handoff} |`,
+    `| model_calls | ${input.metrics.model_calls} (failures=${input.metrics.model_call_failures}) |`,
+    `| tokens | ${input.metrics.input_tokens} in / ${input.metrics.output_tokens} out / ${input.metrics.total_tokens} total |`,
+    `| latency_ms | mean=${input.metrics.mean_latency_ms} p95=${input.metrics.p95_latency_ms} total=${input.metrics.total_latency_ms} |`,
+    `| estimated_cost_usd | ${input.metrics.estimated_cost_usd ?? 'n/a'} |`,
     '',
   ];
   const failures = input.results.filter((result) => !result.passed);
@@ -226,9 +237,10 @@ export async function runEvalSuite(
       split: options.split,
     });
     const runner =
-      options.mode === 'fixture'
+      options.runner ??
+      (options.mode === 'fixture'
         ? new FixtureRoleRunner()
-        : createRoleRunner('live');
+        : createRoleRunner('live'));
     const orchestrator = new DiagnosisOrchestrator({
       repo,
       knowledge,
@@ -277,9 +289,23 @@ export async function runEvalSuite(
         budget: DEFAULT_BUDGET,
         scenarioId: caseFile.source_snapshot,
       });
-      const finished = await orchestrator.execute(run.id, {
-        owner: `eval-${caseFile.case_id}`,
-      });
+      let finished = run;
+      let executionError: string | null = null;
+      try {
+        finished = await orchestrator.execute(run.id, {
+          owner: `eval-${caseFile.case_id}`,
+        });
+      } catch (error) {
+        // 单例失败不能吞掉整批评测；保留已落库状态和 Trace，继续下一例。
+        executionError = (
+          error instanceof Error ? error.message : String(error)
+        ).slice(0, 2_000);
+        finished = repo.getRun(run.id) ?? run;
+      }
+      if (finished.status === 'failed') {
+        executionError =
+          finished.error ?? executionError ?? 'Run failed without error text';
+      }
       const reportRecord = repo.getReport(run.id);
       const toolCalls = repo.listToolCalls(run.id).map((row) => ({
         tool: String(row.tool),
@@ -296,7 +322,13 @@ export async function runEvalSuite(
         validation: reportRecord?.validation ?? null,
         evidence: repo.listEvidence(run.id),
         toolCalls,
+        modelCallFailures: repo.countModelCallFailures(run.id),
       });
+      if (executionError) {
+        evaluation.passed = false;
+        evaluation.result.passed = false;
+        evaluation.failureReasons.push(`EXECUTION_ERROR ${executionError}`);
+      }
       caseResults.push(evaluation.result);
       results.push({
         case_id: gold.case_id,
@@ -310,10 +342,12 @@ export async function runEvalSuite(
         run: finished,
         events: repo.listEvents(run.id),
         tool_calls: repo.listToolCalls(run.id),
+        model_calls: repo.listModelCalls(run.id),
         evidence: repo.listEvidence(run.id),
         hypotheses: repo.listHypotheses(run.id),
         context_manifests: repo.listManifests(run.id),
         report: reportRecord,
+        execution_error: executionError,
         evaluation: evaluation.result,
       };
       fs.writeFileSync(
@@ -322,7 +356,7 @@ export async function runEvalSuite(
         'utf8',
       );
     }
-    const metrics = aggregateMetrics(caseResults);
+    const metrics = aggregateMetrics(caseResults, { mode: options.mode });
     const thresholdsFile = path.join(evalDir, 'thresholds.json');
     const thresholds = fs.existsSync(thresholdsFile)
       ? readJson<EvalThresholds>(thresholdsFile)

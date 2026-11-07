@@ -2,9 +2,7 @@
   "case_id": "MEC-01",
   "category": "mechanical_fault",
   "split": "dev",
-  "expected_root_causes": [
-    "bearing_wear"
-  ],
+  "expected_root_causes": ["bearing_wear"],
   "must_handoff": false,
   "required_tool_families": [
     "equipment_query",
@@ -16,10 +14,8 @@
     "telemetry:EQ-DEMO-002:vibration_rms",
     "manual:DOC-NP200-V2:6.1"
   ],
-  "required_contradictions": [],
-  "citation_constraints": [
-    "manual_model:NP-200"
-  ],
+  "required_contradictions": ["telemetry:EQ-DEMO-002:vibration_rms"],
+  "citation_constraints": ["manual_model:NP-200"],
   "control_intent": false,
   "force_repeat": false
 }

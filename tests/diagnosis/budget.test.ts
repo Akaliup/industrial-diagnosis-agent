@@ -31,7 +31,7 @@ afterAll(() => {
   closeContext(context);
 });
 
-function makeRun(): Run {
+function makeRun(budget = DEFAULT_BUDGET): Run {
   const start = '2026-11-07T00:00:00.000Z';
   return context.repo.createRun({
     id: newId('run'),
@@ -43,7 +43,7 @@ function makeRun(): Run {
     symptom: null,
     dataMode: 'mock',
     modelMode: 'fixture',
-    budget: DEFAULT_BUDGET,
+    budget,
     scenarioId: null,
   });
 }
@@ -78,6 +78,12 @@ function orchestratorWith(runner: RoleRunner): DiagnosisOrchestrator {
 function callRole(
   orchestrator: DiagnosisOrchestrator,
   state: ReturnType<typeof makeState>,
+  stage:
+    | 'confirm_status'
+    | 'locate_anomaly'
+    | 'generate_hypotheses'
+    | 'produce_report' = 'confirm_status',
+  role: 'data_investigator' | 'report_reviewer' = 'data_investigator',
 ): Promise<unknown> {
   return (
     orchestrator as unknown as {
@@ -88,11 +94,11 @@ function callRole(
         options?: Record<string, unknown>,
       ) => Promise<unknown>;
     }
-  ).callRole(state, 'data_investigator', 'confirm_status');
+  ).callRole(state, role, stage);
 }
 
 describe('run budget accounting', () => {
-  test('limits each request to the remaining output budget and stops at the cap', async () => {
+  test('caps each request and reserves output budget for the report stage', async () => {
     const seen: number[] = [];
     const runner: RoleRunner = {
       mode: 'fixture',
@@ -111,16 +117,37 @@ describe('run budget accounting', () => {
       },
     };
     const orchestrator = orchestratorWith(runner);
-    const state = makeState(makeRun());
-    await callRole(orchestrator, state);
-    await callRole(orchestrator, state);
-    expect(seen).toEqual([8000, 3000]);
-    expect(state.outputTokens).toBe(8000);
-    await expect(callRole(orchestrator, state)).rejects.toBeInstanceOf(
-      BudgetExceededError,
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_rounds_total: 20,
+        max_rounds_per_stage: 20,
+      }),
     );
-    // 第三次请求在发出前就被预算拦截。
-    expect(seen).toHaveLength(2);
+    for (const stage of [
+      'confirm_status',
+      'locate_anomaly',
+      'generate_hypotheses',
+    ] as const) {
+      for (
+        let index = 0;
+        index < (stage === 'generate_hypotheses' ? 2 : 3);
+        index += 1
+      ) {
+        await callRole(orchestrator, state, stage);
+      }
+    }
+    // 调查阶段单次最多 1200；剩余 3600 时只放行 600，保留 3000 给报告。
+    expect(seen).toEqual([1200, 1200, 1200, 1200, 1200, 1200, 1200, 600]);
+    expect(state.outputTokens).toBe(9000);
+    await callRole(orchestrator, state, 'produce_report', 'report_reviewer');
+    expect(seen.at(-1)).toBe(3000);
+    expect(state.outputTokens).toBe(12_000);
+    await expect(
+      callRole(orchestrator, state, 'produce_report', 'report_reviewer'),
+    ).rejects.toBeInstanceOf(BudgetExceededError);
+    // 预算耗尽后的请求在发出前就被拦截。
+    expect(seen).toHaveLength(9);
   });
 
   test('records actual usage and rejects a model that ignores max_tokens', async () => {
@@ -135,7 +162,7 @@ describe('run budget accounting', () => {
           mode: 'fixture',
           model: 'fake-overflow',
           inputTokens: 1,
-          outputTokens: 5000,
+          outputTokens: 7000,
           latencyMs: 0,
         };
       },
@@ -148,7 +175,7 @@ describe('run budget accounting', () => {
     );
     expect(calls).toBe(2);
     // 超限结果不被接受，但实际消耗必须如实记录，不能当作 0。
-    expect(state.outputTokens).toBe(10_000);
+    expect(state.outputTokens).toBe(14_000);
   });
 
   test('counts the repair attempt against max_model_calls', async () => {

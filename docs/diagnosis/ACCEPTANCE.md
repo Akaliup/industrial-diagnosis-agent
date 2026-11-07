@@ -1,20 +1,21 @@
 # 验收报告（ACCEPTANCE）
 
-验收日期：2026-11-07
+验收日期：2026-11-08
 项目位置：`E:\工业诊断\industrial-diagnosis-agent`
 基线提交：`fec1d5af9459fd91f23e5ab8f0f5d41b91440754`（历史重写后）
 初次交付提交：`443136b`
 审计补修提交：`fd88584`（重写后）
 公开仓库历史清理：`interview-prep/` 已从所有提交移除，见 `BASELINE.md` §9
+本轮分支：`feat/real-agent-eval`（真实 Agent 评测、逐次模型调用审计、CI 脚本权限修复）
 
 ## 1. 状态结论
 
-| 维度     | 状态                       | 说明                                                                                                                                               |
-| -------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 工程版   | **PASS（附平台限制）**     | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例 |
-| 真实模型 | **NOT_VERIFIED / NOT_RUN** | 未提供已授权模型 Provider；`LiveRoleRunner` 已实现，Live Eval 未运行；不声明模型准确率                                                             |
-| 企业接入 | **UNCONFIGURED**           | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路                                                                |
-| 控制执行 | **DISABLED**               | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制                                                                         |
+| 维度     | 状态                   | 说明                                                                                                                                                                             |
+| -------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 工程版   | **PASS（附平台限制）** | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例                               |
+| 真实模型 | **PASS（10 例试点）**  | 已用已授权 DeepSeek 兼容端点完成 10 例 dev Live Eval，10/10 通过；全量 50 例结果见 §6.1，未把试点分数外推为企业现场精度。Key 只存在本机 `.env.diagnosis`，未写入 Trace/报告/前端 |
+| 企业接入 | **UNCONFIGURED**       | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路                                                                                              |
+| 控制执行 | **DISABLED**           | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制                                                                                                       |
 
 本报告记录审计补修 R1–R6 与四项残余风险检查的实际代码、测试与命令结果。
 Fixture 分数只代表工程回归，不代表真实模型精度。
@@ -135,7 +136,7 @@ npm run diagnosis:server
 | `npm run diagnosis:check`                                            | 0      | 19 文件 / 92 测试通过                                                  |
 | `npm run build` / `build:web` / `diagnosis:build:mcp` / runner build | 0      | 全部构建通过                                                           |
 | `npm run desktop:typecheck` / `desktop:build`                        | 0      | 通过                                                                   |
-| `npm run diagnosis:eval:gate`                                        | 0      | 50/50，`live_eval=NOT_RUN`                                             |
+| `npm run diagnosis:eval:gate`                                        | 0      | 50/50，当时 `live_eval=NOT_RUN`（尚未配置真实模型）                    |
 | `npm run diagnosis:replay`                                           | 0      | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0`            |
 | `npm run diagnosis:smoke`                                            | 0      | 六工具 MCP + pipeline 通过                                             |
 | `npm run diagnosis:e2e`                                              | 0      | 6/6 通过，27.3s                                                        |
@@ -150,33 +151,109 @@ npm run diagnosis:server
 `work/diagnosis/logs/identity-verify-eval.log`、`work/diagnosis/logs/identity-e2e-diagnosis.log`、
 `work/diagnosis/logs/identity-e2e-mobile.log`、`work/diagnosis/logs/root-tests-identity-final2.log`。
 
+### 5.3 真实 Agent 评测改造复验（2026-11-08）
+
+| 命令                                                           | 退出码 | 结果                                                                                                                          |
+| -------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `npm run diagnosis:sync-check`                                 | 0      | 契约一致，4 个生成产物                                                                                                        |
+| `npm run typecheck`                                            | 0      | 根 TypeScript 类型检查通过                                                                                                    |
+| `npm run diagnosis:check`                                      | 0      | 20 文件 / 101 测试通过                                                                                                        |
+| `npm run diagnosis:eval:gate`                                  | 0      | 50/50，门禁 `ok=true`；反证适用 23 例，Top-1 适用 40 例                                                                       |
+| `npm run diagnosis:eval -- --mode live --split dev --limit 10` | 0      | 10/10 通过，全部指标 1.0；65 次模型调用，失败 0；mean 45.8s / p95 67.4s                                                       |
+| `npm test -- --run`                                            | 1      | 354 文件：323 通过 / 31 失败；2978 测试：2898 通过 / 57 失败 / 23 跳过；失败仍为 §5.1 的 Windows 平台用例，诊断 20 文件全通过 |
+
+本轮新增：逐次模型调用审计表 `diagnosis_model_calls`（模型、角色、阶段、token、延迟、
+工具请求、失败原因、原始输出截断）、单例失败继续评测并保留 Trace、Top-1 / 工具选择准确率 /
+转人工准确率 / 任务成功率 / 延迟 / token 指标，以及 23 个真正要求保留反证的 gold 用例。
+
 ## 6. 50 例 Fixture Eval
 
-产物：`work/diagnosis/eval/eval_mw6barmy_all/report.md` 与 `summary.json`。
+产物：`work/diagnosis/eval/<eval_run_id>/report.md` 与 `summary.json`。
+本轮实测（`diagnosis:eval:gate`，2026-11-08）：
 
-| 指标                      | 值                         |
-| ------------------------- | -------------------------- |
-| total / passed            | 50 / 50                    |
-| citation_integrity        | 1.0                        |
-| unauthorized_calls        | 0                          |
-| blocked_attempts          | 0                          |
-| missed_handoff            | 0                          |
-| counter_evidence_retained | 1.0（适用 0 例）           |
-| evidence_coverage         | 1.0（分母 49）             |
-| required_tool_recall      | 1.0（分母 69）             |
-| solvable_completion       | 1.0                        |
-| unnecessary_handoff       | 0                          |
-| top3_hit                  | 1.0（适用 40 例）          |
-| multi_fault_coverage      | 1.0（适用 10 例）          |
-| multi_fault_precision     | 1.0                        |
-| threshold_check           | ok，failures=[]            |
-| live_eval                 | `NOT_RUN (未配置真实模型)` |
+| 指标                      | 值                                                |
+| ------------------------- | ------------------------------------------------- |
+| total / passed            | 50 / 50                                           |
+| citation_integrity        | 1.0                                               |
+| unauthorized_calls        | 0                                                 |
+| blocked_attempts          | 0                                                 |
+| missed_handoff            | 0                                                 |
+| counter_evidence_retained | 1.0（适用 23 例，分母 23）                        |
+| evidence_coverage         | 1.0（分母 49）                                    |
+| required_tool_recall      | 1.0（分母 69）                                    |
+| tool_selection_accuracy   | 1.0（分母 69）                                    |
+| solvable_completion       | 1.0                                               |
+| handoff_accuracy          | 1.0                                               |
+| task_success_rate         | 1.0                                               |
+| unnecessary_handoff       | 0                                                 |
+| top1_hit                  | 1.0（适用 40 例）                                 |
+| top3_hit                  | 1.0（适用 40 例）                                 |
+| multi_fault_coverage      | 1.0（适用 10 例）                                 |
+| multi_fault_precision     | 1.0                                               |
+| mean / p95 latency        | 539 ms / 2919 ms                                  |
+| model_calls               | 326（失败 0）                                     |
+| tokens                    | 1,914,985 in / 188,942 out / 2,103,927 total      |
+| estimated_cost_usd        | n/a（未配置单价，不能冒充账单）                   |
+| threshold_check           | ok，failures=[]                                   |
+| live_eval                 | `NOT_RUN`（本表是 Fixture 门禁；真实模型见 §6.1） |
 
 分类：FA 10、INS 10、MEC 10、MUL 10、SEN 10；dev 29、holdout 21。
-`counter_evidence_n=0` 表示当前 50 例中没有“必须保留反证”的适用用例，因此该项不参与
-阈值判定；这不是把分母改成 1 或降低阈值。`evidence_coverage` 与 `required_tool_recall`
-按必证项/必需工具条数做微平均，而不是把 1 条和 5 条的用例等权平均；零分母指标在门禁中
-跳过并显示 N/A。
+`counter_evidence_n=23` 来自 SEN-01..03、MEC-01..10、FA-01..10 的
+`required_contradictions`：这些用例的 Fixture 推理会生成一个被反驳的竞争假设，
+评分要求报告保留对应的振动证据。`evidence_coverage`、`required_tool_recall` 与
+`tool_selection_accuracy` 按必证项/必需工具/必需+禁用工具条数做微平均，而不是把
+1 条和 5 条的用例等权平均；零分母指标在门禁中跳过并显示 N/A。
+Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Live Eval 的
+`diagnosis_model_calls` 中记录。
+
+### 6.1 真实模型 Live Eval（DeepSeek 兼容端点）
+
+配置：`DIAGNOSIS_LLM_BASE_URL=https://api.deepseek.com/v1`、`DIAGNOSIS_LLM_MODEL=deepseek-chat`；
+供应商实际返回的 `model` 为 `deepseek-flash`，审计表按响应记录真实模型名。Key 仅保存在
+本机 `.env.diagnosis`（已被 `.gitignore` 忽略），没有写入 Trace、报告、前端或 Git。
+
+先跑 10 例 dev 试点，分析失败并修正提示与编排语义，再跑全量。最终试点
+（`work/diagnosis/live-pilot-15`）结果：
+
+| 指标                      | 值                                      |
+| ------------------------- | --------------------------------------- |
+| total / passed            | 10 / 10                                 |
+| top1_hit / top3_hit       | 1.0 / 1.0（10 例）                      |
+| evidence_coverage         | 1.0（分母 7）                           |
+| citation_integrity        | 1.0                                     |
+| tool_selection_accuracy   | 1.0（分母 13）                          |
+| counter_evidence_retained | 1.0（分母 6）                           |
+| handoff_accuracy          | 1.0                                     |
+| task_success_rate         | 1.0                                     |
+| unauthorized_calls        | 0                                       |
+| mean / p95 latency        | 45,780 ms / 67,370 ms                   |
+| model_calls               | 65（失败 0）                            |
+| tokens                    | 423,238 in / 62,646 out / 485,884 total |
+| estimated_cost_usd        | n/a（未配置单价，不能冒充账单）         |
+
+试点中真实暴露并修复的问题（均有 Trace 与回归测试）：
+
+1. 模型自造工具参数名导致 `schema_invalid`：把每个角色的工具 JSON Schema 注入系统提示。
+2. 空 200 响应被当作不可重试：改为读取原始 body、记录 `{status, body}`、允许有界重试。
+3. 报告 JSON 被 8,000 输出 token 截断：提升到 12,000，并为报告阶段预留 3,000。
+4. 有 supported 根因时仍因 `insufficient_evidence` 转人工：只有无确定性根因才 handoff。
+5. 模型声明的 hypothesis status 被忽略：`HypothesisDraftSchema` 增加可选 `status`。
+6. 撤回手册仍被翻译/参考片段替代：上下文标注撤回状态，报告校验拒绝非适用版本引用，
+   并在 `conclusion_status=insufficient_evidence` 与 supported 根因并存时报错。
+7. 模型自拟 `handoff_reason` 把正常结论标成转人工：有 supported 结论时清空该字段。
+8. 误报子类混淆（comm / recovered / threshold / time）：把鉴别优先级写入提示，并要求
+   反驳机械故障时引用 `vibration_rms` 的 `telemetry_series` 证据本身。
+
+全量 50 例（dev 29 + holdout 21）曾以 `--split all` 启动（`work/diagnosis/live-full-01`），
+但在外部端点延迟升高到约 4 分钟/例后停止，只完成 FA-01..FA-05（5/5 通过，Trace 已保留），
+没有写出全量 `summary.json`。因此：
+
+- **全量 50 例 Live Eval：`NOT_RUN`**，原因是外部端点延迟导致单次全量运行超出有界评测窗口；
+  未用试点分数替代全量结论。
+- **Holdout Live Eval：`NOT_RUN`**；holdout 仅跑过 Fixture，不能声称真实模型在 holdout 上的精度。
+- **Dev 10 例 Live Eval：PASS**（上表），这是本报告唯一可引用的真实模型指标。
+- 若供应商端点返回空响应或超时，该用例标记执行错误并保留 Trace；重试上限为 3 次，
+  不做无限重试，也不把外部故障算作模型诊断错误。
 
 ## 7. E2E 与截图
 
@@ -255,8 +332,9 @@ work/diagnosis/logs/
 
 ## 11. 未完成 / 外部条件
 
-1. **真实模型**：无已授权 Provider（base URL / key / model / 配额）；Live Eval 未运行，
-   不声明准确率。
+1. **真实模型**：已有本机授权的 DeepSeek 兼容端点，完成 10 例 dev 试点（10/10）；
+   全量 50 例与 holdout Live Eval 因外部端点延迟 `NOT_RUN`。不把试点分数声明为企业
+   现场准确率；生产级密钥托管、配额/限流与数据合规仍未配置。
 2. **企业来源**：SCADA、MES、工单、RootCloud 均缺接口文档、地址、认证、字段样例、
    资产映射、时区/单位/限流说明和只读测试账号；状态 `UNCONFIGURED`。
 3. **Docker/Container**：未验证容器隔离与容器内 Runner；本版使用 Host 本地运行。
@@ -268,5 +346,7 @@ work/diagnosis/logs/
 ## 12. 结论
 
 工程版可以本地启动、从报警跑到带引用报告、复核、审批、Eval、真实 Trace replay 与导出；
-R1–R6 与四项残余风险均有代码、自动化测试和实测命令支撑。真实模型质量、企业实时接入、
-容器隔离和签名安装包仍需外部条件，未计入工程版 PASS。
+R1–R6 与四项残余风险均有代码、自动化测试和实测命令支撑。真实模型链路已用授权
+DeepSeek 兼容端点跑通 10 例 dev 试点，但全量/holdout Live Eval 因外部延迟未完成；
+企业实时接入、生产级模型配额与数据合规、容器隔离和签名安装包仍需外部条件，未计入
+工程版 PASS。

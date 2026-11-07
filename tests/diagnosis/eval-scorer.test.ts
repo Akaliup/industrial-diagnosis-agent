@@ -154,11 +154,12 @@ function evaluate(
     report?: Report;
     gold?: EvalGoldFile;
     toolCalls?: ToolCallView[];
+    run?: Run;
   } = {},
 ) {
   return evaluateCase({
     gold: options.gold ?? gold(),
-    run,
+    run: options.run ?? run,
     report: options.report ?? reportWith(['sensor_drift']),
     validation: { valid: true },
     evidence,
@@ -232,6 +233,78 @@ describe('eval scorer', () => {
       }),
     });
     expect(multi.result.metrics.top3_applicable).toBe(0);
+  });
+
+  test('computes top-1 separately from top-3', () => {
+    const top1Wrong = evaluate({
+      report: reportWith(['bearing_wear', 'sensor_drift']),
+      gold: gold({ expected_root_causes: ['sensor_drift'] }),
+    });
+    expect(top1Wrong.result.metrics.top1_hit).toBe(0);
+    expect(top1Wrong.result.metrics.top3_hit).toBe(1);
+
+    const top1Right = evaluate({
+      report: reportWith(['sensor_drift', 'bearing_wear']),
+      gold: gold({ expected_root_causes: ['sensor_drift'] }),
+    });
+    expect(top1Right.result.metrics.top1_hit).toBe(1);
+  });
+
+  test('scores tool selection against required and forbidden families', () => {
+    const correct = evaluate({
+      gold: gold({
+        required_tool_families: ['equipment_query'],
+        forbidden_tool_families: ['maintenance_search_cases'],
+      }),
+    });
+    expect(correct.result.metrics.tool_selection_accuracy).toBe(1);
+    expect(correct.result.metrics.tool_selection_n).toBe(2);
+
+    const forbidden = evaluate({
+      gold: gold({
+        required_tool_families: ['equipment_query'],
+        forbidden_tool_families: ['maintenance_search_cases'],
+      }),
+      toolCalls: [
+        {
+          tool: 'equipment_query',
+          status: 'success',
+          policy_decision: 'allowed',
+          error_code: null,
+          role: 'data_investigator',
+          args_json: JSON.stringify({ equipment_id: 'EQ-1' }),
+        },
+        {
+          tool: 'maintenance_search_cases',
+          status: 'success',
+          policy_decision: 'allowed',
+          error_code: null,
+          role: 'knowledge_retriever',
+        },
+      ],
+    });
+    expect(forbidden.result.metrics.tool_selection_accuracy).toBe(0.5);
+  });
+
+  test('aggregates handoff accuracy, latency and token usage', () => {
+    const timed = evaluate({
+      run: {
+        ...run,
+        started_at: '2026-11-07T00:00:00.000Z',
+        finished_at: '2026-11-07T00:00:05.000Z',
+        model_calls: 2,
+        input_tokens: 100,
+        output_tokens: 20,
+      },
+    });
+    const metrics = aggregateMetrics([timed.result]);
+    expect(metrics.handoff_accuracy).toBe(1);
+    expect(metrics.mean_latency_ms).toBe(5_000);
+    expect(metrics.p95_latency_ms).toBe(5_000);
+    expect(metrics.total_latency_ms).toBe(5_000);
+    expect(metrics.model_calls).toBe(2);
+    expect(metrics.total_tokens).toBe(120);
+    expect(metrics.estimated_cost_usd).toBeNull();
   });
 
   test('computes multi-fault recall and precision separately', () => {

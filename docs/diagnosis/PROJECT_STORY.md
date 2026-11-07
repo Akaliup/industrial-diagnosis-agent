@@ -21,7 +21,7 @@
    单独实现网关：角色白名单、严格 Zod Schema、设备作用域、风险、预算、重复调用守卫、
    证据入库。四个逻辑角色由结构化 RoleRunner 执行，不依赖 Subagent 结果 RPC。
 4. **五阶段 Harness**：实现 `confirm_status → locate_anomaly → generate_hypotheses →
-   verify_evidence → produce_report`，带轮次/工具/模型/墙钟预算、证据缺口转人工、
+verify_evidence → produce_report`，带轮次/工具/模型/墙钟预算、证据缺口转人工、
    checkpoint、Worker 租约与崩溃恢复。
 5. **可核查报告**：证据 ID 在入库时按 Workspace/Run/来源/记录/payload hash 确定性重算；
    报告校验器逐条检查引用存在性、设备/时间/机型/手册版本/payload hash、支持与反证关系、
@@ -30,26 +30,34 @@
    证据抽屉、设备台账、来源与知识、复核审批、评测回放；白底/黑字/蓝色强调，Lucide 图标，
    进入/过渡/退出动效，支持 reduced-motion 与三种尺寸。
 7. **Eval 与回归**：构造 50 个独立场景（FA/INS/MEC/MUL/SEN，29 dev + 21 holdout），
-   输出引用完整性、证据覆盖、必需工具召回、可解完成率、不必要转人工、Top-3、多故障覆盖等
-   指标；提供只读 Trace replay、Fixture 回归、CI 门禁和 Playwright E2E。
+   输出引用完整性、证据覆盖、必需工具召回、工具选择准确率、反证保留、可解完成率、
+   转人工准确率、任务成功率、Top-1/Top-3、多故障覆盖、延迟与 token 指标；提供只读
+   Trace replay、Fixture 回归、CI 门禁和 Playwright E2E。
 8. **审计补修**：报告手册版本/撤回校验、累计预算预留结算、Eval 执行/阻断与分母、多
    Workspace 稳定 ID、隔离 E2E、`.env.diagnosis` 统一加载；租约令牌围栏、派发前
    `inflight` 日志、取消后迟到回执丢弃、live 来源健康检查。
+9. **真实模型审计**：每次角色调用写入 `diagnosis_model_calls`，保留模型、角色、阶段、
+   token、延迟、工具请求、失败原因与原始响应（截断）；单例失败继续评测并保留 Trace，
+   不把一次模型故障伪装成整批通过。
 
 ## 2. 实测结果（只写实际跑过的）
 
-| 项目 | 结果 |
-| --- | --- |
-| 诊断测试 | 19 个文件、92 个测试全部通过 |
-| Fixture Eval | 50/50 通过，引用完整性 1.0，未授权调用 0，可解完成率 1.0，不必要转人工 0 |
-| Trace replay | 50 条 Trace，`inconsistent=0`，`inference_calls=0`，`tool_calls=0` |
-| E2E | 诊断 6 项 + 移动端 9 项通过，均使用隔离数据目录 |
-| 构建 | 根 `tsc`、Web Vite、MCP `tsc` 全部 exit 0 |
-| 类型检查 | 根、Web、MCP、Electron 全部 exit 0 |
-| 其他 | MCP/pipeline smoke、demo smoke、fresh data 演示、WebSocket 补拉、Webhook 签名/幂等均实测通过 |
+| 项目              | 结果                                                                                                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 诊断测试          | 20 个文件、101 个测试全部通过                                                                                                                                     |
+| Fixture Eval      | 50/50 通过，引用完整性 1.0，未授权调用 0，Top-1 1.0，反证适用 23 例且保留 1.0，工具选择 1.0，转人工准确率 1.0                                                     |
+| Fixture 延迟/用量 | mean 539 ms / p95 2919 ms；326 次模型调用；2,103,927 估算 token；成本未配置单价                                                                                   |
+| Live Eval 试点    | DeepSeek 兼容端点 10/10 通过；Top-1、证据覆盖、引用完整性、工具选择、反证保留、转人工准确率均为 1.0；65 次模型调用、0 失败；mean 45.8s / p95 67.4s；485,884 token |
+| Trace replay      | 50 条 Trace，`inconsistent=0`，`inference_calls=0`，`tool_calls=0`                                                                                                |
+| E2E               | 诊断 6 项 + 移动端 9 项通过，均使用隔离数据目录                                                                                                                   |
+| 构建              | 根 `tsc`、Web Vite、MCP `tsc` 全部 exit 0                                                                                                                         |
+| 类型检查          | 根、Web、MCP、Electron 全部 exit 0                                                                                                                                |
+| 其他              | MCP/pipeline smoke、demo smoke、fresh data 演示、WebSocket 补拉、Webhook 签名/幂等均实测通过                                                                      |
 
-**不声明**：真实模型准确率、真实企业接入、现场诊断收益、已投产运行。Fixture Eval 只证明
-协议、工具、证据、报告和回放工程链路；Live Eval 在无授权 Provider 时为 `NOT_RUN`。
+**不声明**：企业现场诊断精度、真实企业接入、现场收益、已投产运行。Fixture Eval 只证明
+协议、工具、证据、报告和回放工程链路；Live Eval 的 10 例试点只证明该 DeepSeek 兼容端点
+在该批 dev 用例上的真实模型行为，不外推到全量、holdout 或企业数据分布。全量 50 例与
+holdout Live Eval 因外部端点延迟 `NOT_RUN`，报告中不使用试点分数替代全量结论。
 
 ## 3. 关键难点与处理
 

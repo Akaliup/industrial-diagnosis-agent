@@ -67,6 +67,8 @@ export class RoleRunnerError extends Error {
   usage?: { inputTokens: number; outputTokens: number };
   /** 实际发出的 HTTP 请求数（含重试）。 */
   attempts?: number;
+  /** 模型原始响应；仅在解析失败时保留，用于失败 Trace 审计。 */
+  rawOutput?: string;
 
   constructor(
     message: string,

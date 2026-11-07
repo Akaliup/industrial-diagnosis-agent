@@ -25,8 +25,13 @@
 - **五阶段编排**：状态确认、异常定位、假设生成、证据验证、报告生成，阶段间有预算与检查点。
 - **证据与引用**：确定性证据 ID、手册版本/撤回校验、引用完整性校验、反证保留。
 - **人工复核**：报告进入复核队列；高风险建议需要审批，审批只确认意图，不执行设备控制。
-- **可回归**：50 例 Fixture Eval、Trace replay、CI 门禁；Fixture 分数不代表真实模型精度。
-- **可审计**：工具调用轨迹、租约围栏、预算预留/结算、崩溃后回执未知标记。
+- **可回归**：50 例 Fixture Eval、Trace replay、CI 门禁；指标含 Top-1/Top-3、证据覆盖、
+  工具选择准确率、反证保留、转人工准确率、延迟与 token；Fixture 分数不代表真实模型精度。
+- **真实模型试点**：已用已授权 DeepSeek 兼容端点跑通 10 例 dev Live Eval（10/10），
+  逐次模型调用与失败原因可审计；结果见 [验收报告](docs/diagnosis/ACCEPTANCE.md) §6.1，
+  不外推为企业现场精度。
+- **可审计**：工具调用轨迹、逐次模型调用审计（模型/角色/token/延迟/工具请求/失败原因）、
+  租约围栏、预算预留/结算、崩溃后回执未知标记。
 
 ### 快速开始
 
@@ -228,31 +233,31 @@ npm run desktop:package
 
 ## 常用命令
 
-| 命令 | 说明 |
-| --- | --- |
-| `npm run dev:all` | 启动 Backend 与 Vite Web Client |
-| `npm run build:all` | 构建 Backend、Web Client 与 Agent Runner |
-| `npm run typecheck` | 检查 Backend TypeScript |
-| `make typecheck` | 执行 Backend、Web、Agent Runner 的完整类型与文档检查 |
-| `npm test -- --run` | 运行 Vitest 测试 |
-| `npm run desktop:typecheck` | 检查 Electron Main/Preload 类型 |
-| `npm run desktop:build` | 构建 Electron Main/Preload bundle |
-| `npm run desktop:package:dir` | 构建并生成目录形式的桌面应用 |
-| `npm run desktop:package` | 构建并打包桌面应用 |
-| `make backup` | 创建运行时数据备份 |
-| `make restore FILE=...` | 恢复指定备份 |
-| `make status` | 查看 Backend、日志和 Docker 状态 |
-| `make stop` | 停止当前端口上的工业诊断 Agent 服务 |
+| 命令                          | 说明                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| `npm run dev:all`             | 启动 Backend 与 Vite Web Client                      |
+| `npm run build:all`           | 构建 Backend、Web Client 与 Agent Runner             |
+| `npm run typecheck`           | 检查 Backend TypeScript                              |
+| `make typecheck`              | 执行 Backend、Web、Agent Runner 的完整类型与文档检查 |
+| `npm test -- --run`           | 运行 Vitest 测试                                     |
+| `npm run desktop:typecheck`   | 检查 Electron Main/Preload 类型                      |
+| `npm run desktop:build`       | 构建 Electron Main/Preload bundle                    |
+| `npm run desktop:package:dir` | 构建并生成目录形式的桌面应用                         |
+| `npm run desktop:package`     | 构建并打包桌面应用                                   |
+| `make backup`                 | 创建运行时数据备份                                   |
+| `make restore FILE=...`       | 恢复指定备份                                         |
+| `make status`                 | 查看 Backend、日志和 Docker 状态                     |
+| `make stop`                   | 停止当前端口上的工业诊断 Agent 服务                  |
 
 ## 配置入口
 
-| 环境变量 | 用途 | 默认值 |
-| --- | --- | --- |
-| `INDUSTRIAL_DIAGNOSIS_SERVER_URL` | Electron 要连接的 Backend 地址 | `http://127.0.0.1:3000` |
-| `INDUSTRIAL_DIAGNOSIS_RENDERER_URL` | Electron 要加载的 Renderer 地址，适合本地 Vite 开发 | 与 Server URL 相同 |
-| `INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE` | Agent Runner 使用的容器镜像 | `industrial-diagnosis-agent:latest` |
-| `CONTAINER_IMAGE` | 容器镜像的兼容覆盖项 | 同上 |
-| `WEB_PORT` | Makefile 启动 Backend 使用的端口 | `3000` |
+| 环境变量                               | 用途                                                | 默认值                              |
+| -------------------------------------- | --------------------------------------------------- | ----------------------------------- |
+| `INDUSTRIAL_DIAGNOSIS_SERVER_URL`      | Electron 要连接的 Backend 地址                      | `http://127.0.0.1:3000`             |
+| `INDUSTRIAL_DIAGNOSIS_RENDERER_URL`    | Electron 要加载的 Renderer 地址，适合本地 Vite 开发 | 与 Server URL 相同                  |
+| `INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE` | Agent Runner 使用的容器镜像                         | `industrial-diagnosis-agent:latest` |
+| `CONTAINER_IMAGE`                      | 容器镜像的兼容覆盖项                                | 同上                                |
+| `WEB_PORT`                             | Makefile 启动 Backend 使用的端口                    | `3000`                              |
 
 不要把 API Key、Session Cookie 或其他凭证写入命令行历史、截图或提交到仓库。远程部署时使用 HTTPS/WSS，并为反向代理、Cookie 和访问控制配置独立的安全边界。
 

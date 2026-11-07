@@ -165,6 +165,7 @@ function runDetail(
     hypotheses: runtime.repo.listHypotheses(run.id),
     evidence: runtime.repo.listEvidence(run.id),
     tool_calls: runtime.repo.listToolCalls(run.id),
+    model_calls: runtime.repo.listModelCalls(run.id),
     events: runtime.repo.listEvents(run.id, 0, 500),
     reviews: runtime.repo.listReviews(run.id),
     context_manifests: runtime.repo.listManifests(run.id),
