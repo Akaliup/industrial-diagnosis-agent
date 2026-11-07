@@ -16,8 +16,30 @@ env:
   IMAGE_NAME: industrial-diagnosis-agent
 
 jobs:
+  credentials:
+    name: Check Docker Hub credentials
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Check publish credentials
+        id: check
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Docker Hub credentials are not configured; skipping image publish." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   build-and-smoke:
     name: Build and smoke (${{ matrix.platform }})
+    needs: credentials
+    if: needs.credentials.outputs.configured == 'true'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     strategy:
@@ -91,7 +113,8 @@ jobs:
 
   promote:
     name: Promote verified multi-platform image
-    needs: build-and-smoke
+    needs: [credentials, build-and-smoke]
+    if: needs.credentials.outputs.configured == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

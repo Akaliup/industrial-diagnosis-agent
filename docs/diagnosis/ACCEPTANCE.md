@@ -9,12 +9,12 @@
 
 ## 1. 状态结论
 
-| 维度 | 状态 | 说明 |
-| --- | --- | --- |
-| 工程版 | **PASS（附平台限制）** | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例 |
-| 真实模型 | **NOT_VERIFIED / NOT_RUN** | 未提供已授权模型 Provider；`LiveRoleRunner` 已实现，Live Eval 未运行；不声明模型准确率 |
-| 企业接入 | **UNCONFIGURED** | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路 |
-| 控制执行 | **DISABLED** | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制 |
+| 维度     | 状态                       | 说明                                                                                                                                               |
+| -------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 工程版   | **PASS（附平台限制）**     | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例 |
+| 真实模型 | **NOT_VERIFIED / NOT_RUN** | 未提供已授权模型 Provider；`LiveRoleRunner` 已实现，Live Eval 未运行；不声明模型准确率                                                             |
+| 企业接入 | **UNCONFIGURED**           | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路                                                                |
+| 控制执行 | **DISABLED**               | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制                                                                         |
 
 本报告记录审计补修 R1–R6 与四项残余风险检查的实际代码、测试与命令结果。
 Fixture 分数只代表工程回归，不代表真实模型精度。
@@ -34,14 +34,14 @@ npm run diagnosis:server
 
 ## 3. 审计补修（R1–R6）
 
-| 编号 | 问题 | 修复 | 回归测试 | 结果 |
-| --- | --- | --- | --- | --- |
-| R1 | 报告引用未校验手册版本/撤回状态；错误版本可能污染结论 | 报告校验器接收文档视图，校验文档登记、版本、撤回、生效日期；证据快照记录 `manual_document_id`/`manual_version`；检索排除数据库中已撤回文档；假设状态/支持/反证漂移校验；兜底报告标记 `kind: safety` | `report-validator.test.ts`、`orchestrator.test.ts`（撤回主手册）、`diagnosis-api.spec.ts`（错误版本不污染有效 Run） | PASS |
-| R2 | 重试与模型调用可能绕过累计预算 | 模型调用改为预留/结算式额度；重试与多角色共享 `model_calls`、输入/输出 token、墙钟截止时间；工具超时取剩余墙钟与单次超时的较小值 | `budget.test.ts`、`worker.test.ts`、50 例 Eval 预算断言 | PASS |
-| R3 | Eval 把被策略拒绝的尝试计为已执行，分母不一致 | 区分“已执行”与“被阻止”：只有真正到达来源的调用进入执行指标；按适用用例计算分母并提供 `*_n`；阻断用例必须同时包含一次成功必需查询 | `eval-scorer.test.ts`、`eval-fixture-regression.test.ts`、`diagnosis:eval:gate` | PASS |
-| R4 | 多 Workspace 种子/文档主键冲突 | 报警、文档、chunk 使用 Workspace 作用域的稳定 ID；重复种子幂等；旧全局报警 ID 在同 Workspace 幂等键下复用 | `workspace-scope.test.ts` | PASS |
-| R5 | CI/E2E 复用本地库或已启动服务，测试互相污染 | 新增 `diagnosis:e2e:server`：每次清空并重建 `work/diagnosis/e2e-data`，使用 `INDUSTRIAL_DIAGNOSIS_DATA_DIR`、独立端口 3199、本地假 REST 与固定测试密钥；诊断 Playwright 配置 `reuseExistingServer: false`；移动端配置忽略 `diagnosis/**`；CI 增加契约同步、类型检查、MCP 构建、诊断测试、50 例门禁、Trace replay、Web 构建与隔离 E2E | 诊断 E2E 6/6、移动端 E2E 9/9、CI 工作流 | PASS |
-| R6 | `.env.diagnosis` 未加载或错误配置静默生效 | 新增统一配置入口 `loadDiagnosisEnv`：shell 环境变量 > `.env.diagnosis` > 代码默认值；校验端口、模式、JSON、映射文件、模型 URL；`DIAGNOSIS_MODEL_MODE=live` 缺字段直接失败，不回退 Fixture | `config-loader.test.ts` | PASS |
+| 编号 | 问题                                                  | 修复                                                                                                                                                                                                                                                                                                                                 | 回归测试                                                                                                            | 结果 |
+| ---- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ---- |
+| R1   | 报告引用未校验手册版本/撤回状态；错误版本可能污染结论 | 报告校验器接收文档视图，校验文档登记、版本、撤回、生效日期；证据快照记录 `manual_document_id`/`manual_version`；检索排除数据库中已撤回文档；假设状态/支持/反证漂移校验；兜底报告标记 `kind: safety`                                                                                                                                  | `report-validator.test.ts`、`orchestrator.test.ts`（撤回主手册）、`diagnosis-api.spec.ts`（错误版本不污染有效 Run） | PASS |
+| R2   | 重试与模型调用可能绕过累计预算                        | 模型调用改为预留/结算式额度；重试与多角色共享 `model_calls`、输入/输出 token、墙钟截止时间；工具超时取剩余墙钟与单次超时的较小值                                                                                                                                                                                                     | `budget.test.ts`、`worker.test.ts`、50 例 Eval 预算断言                                                             | PASS |
+| R3   | Eval 把被策略拒绝的尝试计为已执行，分母不一致         | 区分“已执行”与“被阻止”：只有真正到达来源的调用进入执行指标；按适用用例计算分母并提供 `*_n`；阻断用例必须同时包含一次成功必需查询                                                                                                                                                                                                     | `eval-scorer.test.ts`、`eval-fixture-regression.test.ts`、`diagnosis:eval:gate`                                     | PASS |
+| R4   | 多 Workspace 种子/文档主键冲突                        | 报警、文档、chunk 使用 Workspace 作用域的稳定 ID；重复种子幂等；旧全局报警 ID 在同 Workspace 幂等键下复用                                                                                                                                                                                                                            | `workspace-scope.test.ts`                                                                                           | PASS |
+| R5   | CI/E2E 复用本地库或已启动服务，测试互相污染           | 新增 `diagnosis:e2e:server`：每次清空并重建 `work/diagnosis/e2e-data`，使用 `INDUSTRIAL_DIAGNOSIS_DATA_DIR`、独立端口 3199、本地假 REST 与固定测试密钥；诊断 Playwright 配置 `reuseExistingServer: false`；移动端配置忽略 `diagnosis/**`；CI 增加契约同步、类型检查、MCP 构建、诊断测试、50 例门禁、Trace replay、Web 构建与隔离 E2E | 诊断 E2E 6/6、移动端 E2E 9/9、CI 工作流                                                                             | PASS |
+| R6   | `.env.diagnosis` 未加载或错误配置静默生效             | 新增统一配置入口 `loadDiagnosisEnv`：shell 环境变量 > `.env.diagnosis` > 代码默认值；校验端口、模式、JSON、映射文件、模型 URL；`DIAGNOSIS_MODEL_MODE=live` 缺字段直接失败，不回退 Fixture                                                                                                                                            | `config-loader.test.ts`                                                                                             | PASS |
 
 ## 4. 四项残余风险
 
@@ -84,34 +84,34 @@ npm run diagnosis:server
 
 ## 5. 实测命令与结果
 
-| 命令 | 时间 | 退出码 | 结果 / 产物 |
-| --- | --- | --- | --- |
-| `npm run diagnosis:check` | 19:20 | 0 | 19 文件 / 92 测试通过（`check-final-fix.log`） |
-| `npm run diagnosis:eval:gate` | 19:20 | 0 | 50/50，门禁 `ok=true`（`eval-gate-final-fix.log`） |
-| `npm run diagnosis:replay` | 19:21 | 0 | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0`（`replay-final-fix.log`） |
-| `npm run diagnosis:smoke` | 19:21 | 0 | 六工具 MCP + pipeline 通过（`smoke-final-fix.log`） |
-| `npm run diagnosis:demo` | 19:21 | 0 | 5 场景 `failures=0`（`demo-final-fix.log`） |
-| `npm run build` | 19:21 | 0 | 根 TypeScript 构建（`build-root-final-fix.log`） |
-| `npm run build:web` | 19:22 | 0 | `web/dist`（含 `diagnosis.html`，`build-web-final-fix.log`） |
-| `npm run diagnosis:build:mcp` | 19:22 | 0 | MCP `dist/server.js`（`build-mcp-final-fix.log`） |
-| Web `npx tsc --noEmit` | 19:22 | 0 | Web 类型检查（`web-typecheck-final-fix.log`） |
-| MCP `npm run typecheck` | 19:22 | 0 | MCP 类型检查（`mcp-typecheck-final-fix.log`） |
-| `npm run diagnosis:e2e` | 19:23 | 0 | 6/6 通过，31.4s，隔离库 + 本地假 REST（`e2e-diagnosis-final-fix.log`） |
-| `npm --prefix web run test:e2e` | 19:24 | 0 | 9/9 通过，39.0s（`e2e-mobile-final-fix.log`） |
-| `npm run docs:check` | 19:06 | 0 | Markdown 链接/格式检查 |
-| `git diff --check` | 19:06 | 0 | 无空白错误 |
-| `npm test -- --run` | 19:24 | 1 | 353 文件：321 通过 / 32 失败；2968 测试：2887 通过 / 58 失败 / 23 跳过（`root-tests-final-fix.log`） |
+| 命令                            | 时间  | 退出码 | 结果 / 产物                                                                                          |
+| ------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------- |
+| `npm run diagnosis:check`       | 19:20 | 0      | 19 文件 / 92 测试通过（`check-final-fix.log`）                                                       |
+| `npm run diagnosis:eval:gate`   | 19:20 | 0      | 50/50，门禁 `ok=true`（`eval-gate-final-fix.log`）                                                   |
+| `npm run diagnosis:replay`      | 19:21 | 0      | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0`（`replay-final-fix.log`）                |
+| `npm run diagnosis:smoke`       | 19:21 | 0      | 六工具 MCP + pipeline 通过（`smoke-final-fix.log`）                                                  |
+| `npm run diagnosis:demo`        | 19:21 | 0      | 5 场景 `failures=0`（`demo-final-fix.log`）                                                          |
+| `npm run build`                 | 19:21 | 0      | 根 TypeScript 构建（`build-root-final-fix.log`）                                                     |
+| `npm run build:web`             | 19:22 | 0      | `web/dist`（含 `diagnosis.html`，`build-web-final-fix.log`）                                         |
+| `npm run diagnosis:build:mcp`   | 19:22 | 0      | MCP `dist/server.js`（`build-mcp-final-fix.log`）                                                    |
+| Web `npx tsc --noEmit`          | 19:22 | 0      | Web 类型检查（`web-typecheck-final-fix.log`）                                                        |
+| MCP `npm run typecheck`         | 19:22 | 0      | MCP 类型检查（`mcp-typecheck-final-fix.log`）                                                        |
+| `npm run diagnosis:e2e`         | 19:23 | 0      | 6/6 通过，31.4s，隔离库 + 本地假 REST（`e2e-diagnosis-final-fix.log`）                               |
+| `npm --prefix web run test:e2e` | 19:24 | 0      | 9/9 通过，39.0s（`e2e-mobile-final-fix.log`）                                                        |
+| `npm run docs:check`            | 19:06 | 0      | Markdown 链接/格式检查                                                                               |
+| `git diff --check`              | 19:06 | 0      | 无空白错误                                                                                           |
+| `npm test -- --run`             | 19:24 | 1      | 353 文件：321 通过 / 32 失败；2968 测试：2887 通过 / 58 失败 / 23 跳过（`root-tests-final-fix.log`） |
 
 ### 5.1 根测试失败对照
 
 同一台 Windows 11、Node 24.16.0、npm 11.13.0 环境下：
 
-| 运行 | 测试文件 | 测试 | 失败文件 | 失败测试 | 跳过 |
-| --- | --- | --- | --- | --- | --- |
-| 基线 `fec1d5a` | 334 | 2744 | 54 | 71 | 23 |
-| 初次交付 `443136b` | 346 | 2931 | 32 | 58 | 23 |
-| 本次补修 | 353 | 2968 | 32 | 58 | 23 |
-| 产品标识统一后 | 353 | 2969 | 31 | 57 | 23 |
+| 运行               | 测试文件 | 测试 | 失败文件 | 失败测试 | 跳过 |
+| ------------------ | -------- | ---- | -------- | -------- | ---- |
+| 基线 `fec1d5a`     | 334      | 2744 | 54       | 71       | 23   |
+| 初次交付 `443136b` | 346      | 2931 | 32       | 58       | 23   |
+| 本次补修           | 353      | 2968 | 32       | 58       | 23   |
+| 产品标识统一后     | 353      | 2969 | 31       | 57       | 23   |
 
 - 本次比初次交付多 7 个文件 / 37 个测试，正好对应诊断测试从 12 文件 / 55 测试增加到
   19 文件 / 92 测试。
@@ -128,19 +128,19 @@ npm run diagnosis:server
 
 产品标识统一为“工业诊断 Agent”后，按同一命令集复验；`LICENSE` 保留上游 MIT 版权声明。
 
-| 命令 | 退出码 | 结果 |
-| --- | --- | --- |
-| `npm run docs:check` | 0 | Markdown 链接/格式检查通过 |
-| `git diff --check` | 0 | 无空白错误 |
-| `npm run diagnosis:check` | 0 | 19 文件 / 92 测试通过 |
-| `npm run build` / `build:web` / `diagnosis:build:mcp` / runner build | 0 | 全部构建通过 |
-| `npm run desktop:typecheck` / `desktop:build` | 0 | 通过 |
-| `npm run diagnosis:eval:gate` | 0 | 50/50，`live_eval=NOT_RUN` |
-| `npm run diagnosis:replay` | 0 | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0` |
-| `npm run diagnosis:smoke` | 0 | 六工具 MCP + pipeline 通过 |
-| `npm run diagnosis:e2e` | 0 | 6/6 通过，27.3s |
-| `npm --prefix web run test:e2e` | 0 | 9/9 通过，34.8s |
-| `npm test -- --run` | 1 | 353 文件：322 通过 / 31 失败；2969 测试：2889 通过 / 57 失败 / 23 跳过 |
+| 命令                                                                 | 退出码 | 结果                                                                   |
+| -------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| `npm run docs:check`                                                 | 0      | Markdown 链接/格式检查通过                                             |
+| `git diff --check`                                                   | 0      | 无空白错误                                                             |
+| `npm run diagnosis:check`                                            | 0      | 19 文件 / 92 测试通过                                                  |
+| `npm run build` / `build:web` / `diagnosis:build:mcp` / runner build | 0      | 全部构建通过                                                           |
+| `npm run desktop:typecheck` / `desktop:build`                        | 0      | 通过                                                                   |
+| `npm run diagnosis:eval:gate`                                        | 0      | 50/50，`live_eval=NOT_RUN`                                             |
+| `npm run diagnosis:replay`                                           | 0      | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0`            |
+| `npm run diagnosis:smoke`                                            | 0      | 六工具 MCP + pipeline 通过                                             |
+| `npm run diagnosis:e2e`                                              | 0      | 6/6 通过，27.3s                                                        |
+| `npm --prefix web run test:e2e`                                      | 0      | 9/9 通过，34.8s                                                        |
+| `npm test -- --run`                                                  | 1      | 353 文件：322 通过 / 31 失败；2969 测试：2889 通过 / 57 失败 / 23 跳过 |
 
 与 §5.1 基线逐条比较，失败名称集合没有新增；`frontend-product-terminology` 的旧失败已随
 文档更新消失。失败仍集中在 Windows 符号链接 `EPERM`、POSIX 路径假设、`tar`/含冒号路径、
@@ -154,23 +154,23 @@ npm run diagnosis:server
 
 产物：`work/diagnosis/eval/eval_mw6barmy_all/report.md` 与 `summary.json`。
 
-| 指标 | 值 |
-| --- | --- |
-| total / passed | 50 / 50 |
-| citation_integrity | 1.0 |
-| unauthorized_calls | 0 |
-| blocked_attempts | 0 |
-| missed_handoff | 0 |
-| counter_evidence_retained | 1.0（适用 0 例） |
-| evidence_coverage | 1.0（分母 49） |
-| required_tool_recall | 1.0（分母 69） |
-| solvable_completion | 1.0 |
-| unnecessary_handoff | 0 |
-| top3_hit | 1.0（适用 40 例） |
-| multi_fault_coverage | 1.0（适用 10 例） |
-| multi_fault_precision | 1.0 |
-| threshold_check | ok，failures=[] |
-| live_eval | `NOT_RUN (未配置真实模型)` |
+| 指标                      | 值                         |
+| ------------------------- | -------------------------- |
+| total / passed            | 50 / 50                    |
+| citation_integrity        | 1.0                        |
+| unauthorized_calls        | 0                          |
+| blocked_attempts          | 0                          |
+| missed_handoff            | 0                          |
+| counter_evidence_retained | 1.0（适用 0 例）           |
+| evidence_coverage         | 1.0（分母 49）             |
+| required_tool_recall      | 1.0（分母 69）             |
+| solvable_completion       | 1.0                        |
+| unnecessary_handoff       | 0                          |
+| top3_hit                  | 1.0（适用 40 例）          |
+| multi_fault_coverage      | 1.0（适用 10 例）          |
+| multi_fault_precision     | 1.0                        |
+| threshold_check           | ok，failures=[]            |
+| live_eval                 | `NOT_RUN (未配置真实模型)` |
 
 分类：FA 10、INS 10、MEC 10、MUL 10、SEN 10；dev 29、holdout 21。
 `counter_evidence_n=0` 表示当前 50 例中没有“必须保留反证”的适用用例，因此该项不参与
@@ -231,16 +231,16 @@ docs/diagnosis/screenshots/review-submitted-1440x900.png
 
 ## 9. 本机 live 检查
 
-| 检查 | 结果 |
-| --- | --- |
-| 登录 / 会话 Cookie | demo 用户登录成功 |
-| 取消 Run | `202 cancelled=true`，事件 `run.created,tool.started,run.cancelled` |
-| 续诊 | 从拒绝复核的 Run 创建新 Run，进入 `awaiting_human` |
-| WebSocket | 52 个事件 seq 单调；`after_seq` 补拉无缺口 |
-| Webhook | 合法签名 201、重复 200 同 ID、错误签名 401、未配置来源 503 |
-| 自审批 | 高风险控制建议申请人自批 → 403 `SELF_APPROVAL_FORBIDDEN` |
-| 文档预览 | Markdown `text/markdown` 200；PDF `application/pdf` 200 |
-| 报告导出 | Markdown/HTML 可打开；复核后显示 `accepted` / `engineer_confirmed` |
+| 检查               | 结果                                                                |
+| ------------------ | ------------------------------------------------------------------- |
+| 登录 / 会话 Cookie | demo 用户登录成功                                                   |
+| 取消 Run           | `202 cancelled=true`，事件 `run.created,tool.started,run.cancelled` |
+| 续诊               | 从拒绝复核的 Run 创建新 Run，进入 `awaiting_human`                  |
+| WebSocket          | 52 个事件 seq 单调；`after_seq` 补拉无缺口                          |
+| Webhook            | 合法签名 201、重复 200 同 ID、错误签名 401、未配置来源 503          |
+| 自审批             | 高风险控制建议申请人自批 → 403 `SELF_APPROVAL_FORBIDDEN`            |
+| 文档预览           | Markdown `text/markdown` 200；PDF `application/pdf` 200             |
+| 报告导出           | Markdown/HTML 可打开；复核后显示 `accepted` / `engineer_confirmed`  |
 
 ## 10. 报告与产物
 

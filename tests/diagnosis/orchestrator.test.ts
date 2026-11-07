@@ -3,10 +3,19 @@ import {
   closeContext,
   createSeededContext,
   DEMO_SCENARIOS,
+  FIXTURES,
   isoPlus,
   runDemo,
   type TestContext,
 } from './helpers.js';
+import { DiagnosisEventBus } from '../../src/diagnosis/events.js';
+import { FixtureRoleRunner } from '../../src/diagnosis/fixture-role-runner.js';
+import { DiagnosisOrchestrator } from '../../src/diagnosis/orchestrator.js';
+import type {
+  RoleCallInput,
+  RoleCallResult,
+  RoleRunner,
+} from '../../src/diagnosis/role-runner.js';
 import { newId } from '../../src/diagnosis/util.js';
 import { DEFAULT_BUDGET } from '../../src/diagnosis/contracts/domain.js';
 
@@ -19,6 +28,46 @@ beforeAll(async () => {
 afterAll(() => {
   closeContext(context);
 });
+
+class WithdrawCitedManualOnReportRunner implements RoleRunner {
+  private handled = false;
+  private citedDocumentId: string | null = null;
+
+  constructor(
+    private readonly inner: FixtureRoleRunner,
+    private readonly repo: TestContext['repo'],
+  ) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  get documentId(): string | null {
+    return this.citedDocumentId;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    if (input.role === 'report_reviewer' && !this.handled) {
+      this.handled = true;
+      const manual = input.evidence.find(
+        (item) => item.payload.kind === 'manual_chunk',
+      );
+      if (manual?.payload.kind === 'manual_chunk') {
+        this.citedDocumentId = manual.payload.document_id;
+        this.repo.setDocumentWithdrawn(
+          input.run.workspace_id,
+          manual.payload.document_id,
+          true,
+        );
+      }
+    }
+    return this.inner.run(input);
+  }
+}
 
 describe('diagnosis orchestrator', () => {
   test('runs all five demo scenarios with valid cited reports', async () => {
@@ -149,6 +198,71 @@ describe('diagnosis orchestrator', () => {
       );
     }
   }, 60_000);
+
+  test('a manual withdrawn before report repair cannot pass the repaired validation', async () => {
+    const runner = new WithdrawCitedManualOnReportRunner(
+      new FixtureRoleRunner(),
+      context.repo,
+    );
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner,
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[0];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: {
+        start: demo.start,
+        end: isoPlus(demo.start, 30),
+      },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    try {
+      const finished = await orchestrator.execute(run.id, {
+        owner: 'test-worker',
+      });
+      const stored = context.repo.getReport(run.id)!;
+      expect(runner.documentId).toBeTruthy();
+      expect(stored.validation.valid).toBe(false);
+      expect(stored.validation.issues.map((item) => item.code)).toContain(
+        'MANUAL_DOCUMENT_WITHDRAWN',
+      );
+      expect(finished.conclusion_status).toBe('insufficient_evidence');
+      expect(finished.handoff_reason).toBeTruthy();
+    } finally {
+      if (runner.documentId) {
+        context.repo.setDocumentWithdrawn(
+          context.workspaceId,
+          runner.documentId,
+          false,
+        );
+      }
+    }
+  }, 120_000);
 
   test('a pre-aborted run ends cancelled and keeps collected evidence', async () => {
     const alarm = context.repo

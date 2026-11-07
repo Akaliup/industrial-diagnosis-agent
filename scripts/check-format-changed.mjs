@@ -69,10 +69,18 @@ if (candidates.length === 0) {
   process.exit(0);
 }
 
-const prettier = path.join(root, 'node_modules', '.bin', 'prettier');
+// Invoke the CLI through Node instead of the platform-specific .bin shim so
+// the check also works on Windows.
+const prettier = path.join(
+  root,
+  'node_modules',
+  'prettier',
+  'bin',
+  'prettier.cjs',
+);
 const result = spawnSync(
-  prettier,
-  [write ? '--write' : '--check', ...candidates],
+  process.execPath,
+  [prettier, write ? '--write' : '--check', ...candidates],
   {
     cwd: root,
     stdio: 'inherit',

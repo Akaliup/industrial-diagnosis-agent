@@ -1258,6 +1258,7 @@ export class DiagnosisOrchestrator {
         alarm: this.alarmContext(state),
         evidence: this.options.repo.listEvidence(state.run.id),
         hypotheses: this.options.repo.listHypotheses(state.run.id),
+        documents: this.options.repo.listDocuments(state.run.workspace_id),
         toolCalls: this.options.repo.listToolCalls(state.run.id).map((row) => ({
           tool: String(row.tool),
           status: String(row.status),

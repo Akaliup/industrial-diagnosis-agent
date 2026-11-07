@@ -1,10 +1,10 @@
 {
   "source": "src/diagnosis/contracts/domain.ts",
-  "source_sha256": "bdacf84b46c137a1ff127eb7b6437c527955ec7aaf990d6835e0e8256bdd178c",
+  "source_sha256": "d4f316b6d3d4d866c3c107597f91c2b3600410efe3c2e3ffce9303d0ed7e3677",
   "generated": {
-    "shared/diagnosis/contracts.ts": "7b52fa3e2494864d9bd1502608d03daf9b3a5df54e086f4c64a8f7973e121efb",
-    "packages/industrial-diagnosis-mcp/src/contracts/domain.ts": "7b52fa3e2494864d9bd1502608d03daf9b3a5df54e086f4c64a8f7973e121efb",
-    "web/src/diagnosis/contracts.generated.ts": "7b52fa3e2494864d9bd1502608d03daf9b3a5df54e086f4c64a8f7973e121efb",
+    "shared/diagnosis/contracts.ts": "ab8d57be6dace4cf193db8da80568a3c09627e22bd431aeba09df46200e67407",
+    "packages/industrial-diagnosis-mcp/src/contracts/domain.ts": "ab8d57be6dace4cf193db8da80568a3c09627e22bd431aeba09df46200e67407",
+    "web/src/diagnosis/contracts.generated.ts": "ab8d57be6dace4cf193db8da80568a3c09627e22bd431aeba09df46200e67407",
     "packages/industrial-diagnosis-mcp/src/contracts/generated/schemas.json": "49edf36e48ebd3a5504d0820206bbf28fb3697e072095db87880b481349773b2"
   },
   "generator": "scripts/diagnosis/sync-contracts.ts"

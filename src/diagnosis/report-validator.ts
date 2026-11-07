@@ -69,7 +69,7 @@ export function validateReport(input: {
   evidence: Evidence[];
   hypotheses: Hypothesis[];
   /** 当前 Workspace 的手册目录；用于校验版本、适用期与撤版状态。 */
-  documents?: ManualDocumentView[];
+  documents: ManualDocumentView[];
   toolCalls: Array<{
     tool: string;
     status: string;
@@ -236,10 +236,10 @@ export function validateReport(input: {
           );
         }
       }
-      const document = input.documents?.find(
+      const document = input.documents.find(
         (item) => item.document_id === p.document_id,
       );
-      if (input.documents && !document) {
+      if (!document) {
         errors.push(
           issue(
             'error',

@@ -66,6 +66,12 @@ const SCHEMAS_PATH =
   'packages/industrial-diagnosis-mcp/src/contracts/generated/schemas.json';
 const MANIFEST_PATH = 'shared/diagnosis/contracts.manifest.json';
 
+function canonical(text: string): string {
+  // Git may check out CRLF on Windows. Hash and compare canonical LF content so
+  // the manifest is identical on Windows, Linux, and CI.
+  return text.replace(/\r\n/g, '\n');
+}
+
 function sha256(text: string): string {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
@@ -115,12 +121,12 @@ function write(rel: string, content: string): void {
 }
 
 function read(rel: string): string {
-  return fs.readFileSync(path.join(ROOT, rel), 'utf8');
+  return canonical(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
 }
 
 function main(): void {
   const check = process.argv.includes('--check');
-  const source = fs.readFileSync(SOURCE, 'utf8');
+  const source = canonical(fs.readFileSync(SOURCE, 'utf8'));
   const sourceHash = sha256(source);
   const copies: Record<string, string> = {};
   for (const rel of COPIES) copies[rel] = sha256(HEADER + source);
@@ -152,6 +158,11 @@ function main(): void {
       const current = JSON.parse(read(MANIFEST_PATH)) as typeof manifest;
       if (current.source_sha256 !== sourceHash) {
         problems.push('manifest source hash mismatch');
+      }
+      for (const [rel, expectedHash] of Object.entries(copies)) {
+        if (current.generated?.[rel] !== expectedHash) {
+          problems.push(`manifest generated hash mismatch: ${rel}`);
+        }
       }
     }
     if (problems.length > 0) {

@@ -17,6 +17,12 @@ function sha256(value: string | Buffer): string {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
 
+// Git may check out CRLF on Windows; the manifest records canonical LF content.
+function fileSha256(file: string): string {
+  const content = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  return sha256(content);
+}
+
 describe('diagnosis contracts', () => {
   test('generated contract copies match the single source', () => {
     const result = spawnSync(
@@ -42,10 +48,11 @@ describe('diagnosis contracts', () => {
       source_sha256: string;
       generated: Record<string, string>;
     };
-    const source = fs.readFileSync(path.join(ROOT, manifest.source));
-    expect(sha256(source)).toBe(manifest.source_sha256);
+    expect(fileSha256(path.join(ROOT, manifest.source))).toBe(
+      manifest.source_sha256,
+    );
     for (const [file, expected] of Object.entries(manifest.generated)) {
-      const actual = sha256(fs.readFileSync(path.join(ROOT, file)));
+      const actual = fileSha256(path.join(ROOT, file));
       expect(actual, file).toBe(expected);
     }
   });
