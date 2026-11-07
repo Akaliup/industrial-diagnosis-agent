@@ -240,6 +240,11 @@ Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Liv
 | tokens                    | 423,238 in / 62,646 out / 485,884 total |
 | estimated_cost_usd        | n/a（未配置单价，不能冒充账单）         |
 
+动态补查证据：MEC-05 的 `generate_hypotheses` 先检索手册；`hypothesis_verifier` 基于
+手册结果请求 MES 事件与历史案例；`verify_evidence` 第二轮又更换 telemetry 时间窗并检索
+振动频谱。查询由模型在上一轮工具结果之后生成，不是固定脚本；完整工具序列见
+`docs/diagnosis/artifacts/live-samples/MEC-05.json`。
+
 试点中真实暴露并修复的问题（均有 Trace 与回归测试）：
 
 1. 模型自造工具参数名导致 `schema_invalid`：把每个角色的工具 JSON Schema 注入系统提示。
