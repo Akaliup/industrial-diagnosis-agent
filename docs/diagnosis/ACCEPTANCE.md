@@ -111,7 +111,7 @@ npm run diagnosis:server
 | 基线 `fec1d5a` | 334 | 2744 | 54 | 71 | 23 |
 | 初次交付 `443136b` | 346 | 2931 | 32 | 58 | 23 |
 | 本次补修 | 353 | 2968 | 32 | 58 | 23 |
-| 产品标识统一后 | 353 | 2969 | 34 | 60 | 23 |
+| 产品标识统一后 | 353 | 2969 | 31 | 57 | 23 |
 
 - 本次比初次交付多 7 个文件 / 37 个测试，正好对应诊断测试从 12 文件 / 55 测试增加到
   19 文件 / 92 测试。
@@ -140,15 +140,15 @@ npm run diagnosis:server
 | `npm run diagnosis:smoke` | 0 | 六工具 MCP + pipeline 通过 |
 | `npm run diagnosis:e2e` | 0 | 6/6 通过，27.3s |
 | `npm --prefix web run test:e2e` | 0 | 9/9 通过，34.8s |
-| `npm test -- --run` | 1 | 353 文件：319 通过 / 34 失败；2969 测试：2886 通过 / 60 失败 / 23 跳过 |
+| `npm test -- --run` | 1 | 353 文件：322 通过 / 31 失败；2969 测试：2889 通过 / 57 失败 / 23 跳过 |
 
-全量根测试新增的 4 条失败为并发负载下的 5s 超时（`db-upgrade-safety`、
-`schema-v49-channel-accounts`、`schema-v51-usage`）及 `backup-restore-safety` 套件级错误，
-单独运行均通过；其余失败与 §5.1 的 Windows 平台类别一致。未修改断言、阈值或测试集。
+与 §5.1 基线逐条比较，失败名称集合没有新增；`frontend-product-terminology` 的旧失败已随
+文档更新消失。失败仍集中在 Windows 符号链接 `EPERM`、POSIX 路径假设、`tar`/含冒号路径、
+进程树终止和 CardKit/streaming 环境差异。未修改断言、阈值或测试集。
 
 日志：`work/diagnosis/logs/identity-verify-build.log`、
 `work/diagnosis/logs/identity-verify-eval.log`、`work/diagnosis/logs/identity-e2e-diagnosis.log`、
-`work/diagnosis/logs/identity-e2e-mobile.log`、`work/diagnosis/logs/root-tests-identity-final.log`。
+`work/diagnosis/logs/identity-e2e-mobile.log`、`work/diagnosis/logs/root-tests-identity-final2.log`。
 
 ## 6. 50 例 Fixture Eval
 
