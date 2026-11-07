@@ -14,7 +14,7 @@ import {
 } from 'vitest';
 
 const root = fs.mkdtempSync(
-  path.join(os.tmpdir(), 'miniclaw-workspace-rebuild-memory-'),
+  path.join(os.tmpdir(), 'industrial-diagnosis-workspace-rebuild-memory-'),
 );
 const storeDir = path.join(root, 'store');
 const groupsDir = path.join(root, 'groups');
@@ -142,7 +142,7 @@ describe('POST /:jid/clear-history workspace rebuild', () => {
       reason: 'Prepare a tombstone for the regression test',
       context,
     });
-    ownerProfile.setMiniclawOwnerPreferredAddress({
+    ownerProfile.setIndustrialDiagnosisOwnerPreferredAddress({
       workspaceJid: JID,
       preferredAddress: '小何',
       expectedRevision: 0,
@@ -151,7 +151,7 @@ describe('POST /:jid/clear-history workspace rebuild', () => {
 
     const oldStore = memoryStore.getWorkspaceMemoryStore(JID);
     expect(oldStore?.revision).toBeGreaterThan(0);
-    expect(ownerProfile.getMiniclawOwnerProfileProjection(JID)).toMatchObject({
+    expect(ownerProfile.getIndustrialDiagnosisOwnerProfileProjection(JID)).toMatchObject({
       preferredAddress: '小何',
       onboarding: { state: 'completed' },
     });
@@ -248,7 +248,7 @@ describe('POST /:jid/clear-history workspace rebuild', () => {
         code: 'item_not_found',
       }),
     );
-    expect(ownerProfile.getMiniclawOwnerProfileProjection(JID)).toMatchObject({
+    expect(ownerProfile.getIndustrialDiagnosisOwnerProfileProjection(JID)).toMatchObject({
       preferredAddress: null,
       revision: null,
       onboarding: {

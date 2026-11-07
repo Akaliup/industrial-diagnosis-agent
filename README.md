@@ -1,40 +1,34 @@
-# Miniclaw
+# 工业诊断 Agent
 
 <p align="center">
-  <img src="web/public/icons/logo-1024.png" alt="Miniclaw logo" width="96" />
+  <img src="web/public/icons/logo-1024.png" alt="工业诊断 Agent logo" width="96" />
 </p>
 
 <p align="center">
-  <strong>自托管、Pi Agent 驱动的多渠道智能体工作台</strong><br />
-  把 Agent、工作区、记忆、工具、渠道与自动化任务组织在同一个可控的运行环境中。
+  <strong>面向工业设备报警的自托管诊断 Agent</strong><br />
+  统一设备查询 → 状态确认 → 异常定位 → 假设生成 → 证据验证 → 引用报告 → 人工复核。
 </p>
 
 <p align="center">
-  <a href="https://github.com/helsome/miniclaw">GitHub</a> ·
+  <a href="https://github.com/Akaliup/industrial-diagnosis-agent">GitHub</a> ·
+  <a href="docs/diagnosis/README.md">诊断文档</a> ·
+  <a href="docs/diagnosis/ACCEPTANCE.md">验收报告</a> ·
   <a href="docs/API.md">API</a> ·
-  <a href="docs/ACL-MATRIX.md">权限模型</a> ·
-  <a href="SECURITY.md">安全策略</a>
+  <a href="docs/ACL-MATRIX.md">权限模型</a>
 </p>
 
-> 一句话：聊天界面让你向 Agent 提问；Miniclaw 让 Agent 拥有长期运行的工作区、可审计的能力边界，以及能够被 Web、桌面端和消息渠道共同使用的运行时。
+> 一句话：从一条设备报警开始，Agent 用只读工具收集证据、验证假设，输出每一条结论都可追溯到证据与手册版本的诊断报告，并把最终判断交给人。
 
-## 产品定位
+## 诊断链路
 
-Miniclaw 是一个面向个人与团队的自托管 AI Agent 工作台。它不是一个只保存聊天记录的对话框，而是把以下对象放在同一个产品模型中：
+- **统一设备查询**：设备解析、遥测/报警/MES/工单/手册/案例六类只读 MCP 工具。
+- **五阶段编排**：状态确认、异常定位、假设生成、证据验证、报告生成，阶段间有预算与检查点。
+- **证据与引用**：确定性证据 ID、手册版本/撤回校验、引用完整性校验、反证保留。
+- **人工复核**：报告进入复核队列；高风险建议需要审批，审批只确认意图，不执行设备控制。
+- **可回归**：50 例 Fixture Eval、Trace replay、CI 门禁；Fixture 分数不代表真实模型精度。
+- **可审计**：工具调用轨迹、租约围栏、预算预留/结算、崩溃后回执未知标记。
 
-- Agent 身份、模型策略与能力配置。
-- Workspace 文件、执行环境、权限和渠道绑定。
-- 持久化 Session、流式输出、取消、恢复和后台运行。
-- Workspace 级 Memory、Skills、MCP、Plugins 与 Subagents。
-- Web、Electron Desktop、飞书、Telegram、QQ、钉钉、微信、Discord、WhatsApp 等入口。
-- Cron、间隔和一次性任务，以及任务运行历史、通知与恢复。
-
-Miniclaw 采用本地优先和显式集成的思路：数据库、工作区元数据、会话状态和配置由自己的服务管理；模型、消息渠道、Docker 与外部工具都作为可配置边界接入。
-
-## 设备智诊（Industrial Diagnosis）
-
-本仓库同时包含一条独立的“设备报警 → 统一查询 → 五阶段诊断 → 引用报告 → 人工复核”链路，
-入口为 `/diagnosis`，与原有 Miniclaw 聊天/渠道入口并行：
+### 快速开始
 
 ```bash
 npm run diagnosis:setup
@@ -42,15 +36,17 @@ npm run diagnosis:server
 # http://127.0.0.1:3100/diagnosis
 ```
 
-- 六个只读 MCP 工具，独立 PolicyGateway；不恢复通用 Agent 工具权限。
-- 五阶段编排、预算、证据缺口转人工、报告引用校验、人工复核与建议审批。
-- 默认 `fixture` 模型 + `mock` 数据；真实模型与企业来源未配置时明确标记
-  `NOT_RUN` / `UNCONFIGURED`，不静默回退。
-- 控制执行始终禁用；审批只确认建议意图。
+空库首次打开会进入 setup 向导创建管理员。默认使用 `fixture` 模型 + `mock` 数据；
+真实模型未配置时显示 `NOT_RUN`，企业来源未配置时显示 `UNCONFIGURED`，控制执行始终为 `DISABLED`。
 
-详见 [docs/diagnosis/README.md](docs/diagnosis/README.md)、
-[架构](docs/diagnosis/ARCHITECTURE.md)、[演示步骤](docs/diagnosis/DEMO.md) 与
-[验收报告](docs/diagnosis/ACCEPTANCE.md)。
+详见 [诊断文档索引](docs/diagnosis/README.md)、[架构](docs/diagnosis/ARCHITECTURE.md)、
+[演示步骤](docs/diagnosis/DEMO.md) 与 [验收报告](docs/diagnosis/ACCEPTANCE.md)。
+
+## 底层工作台
+
+诊断链路运行在同一个自托管 Agent 工作台上，采用智能体优先工作模型，复用其登录、
+Workspace、Session、Memory、Skills/MCP/Plugins、渠道与定时任务能力；诊断页面是独立入口，
+不恢复通用 Agent 的工具权限。
 
 ## 界面与体验
 
@@ -59,7 +55,7 @@ npm run diagnosis:server
 下面是当前桌面端工作台的实际界面：
 
 <p align="center">
-  <img src="docs/screenshots/workbench.png" alt="Miniclaw 智能体工作台" width="900" />
+  <img src="docs/screenshots/workbench.png" alt="工业诊断 Agent 智能体工作台" width="900" />
 </p>
 
 <p align="center">
@@ -67,18 +63,18 @@ npm run diagnosis:server
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/capabilities.png" alt="Miniclaw 能力库" width="49%" />
-  <img src="docs/screenshots/settings-models.png" alt="Miniclaw 模型配置" width="49%" />
+  <img src="docs/screenshots/capabilities.png" alt="工业诊断 Agent 能力库" width="49%" />
+  <img src="docs/screenshots/settings-models.png" alt="工业诊断 Agent 模型配置" width="49%" />
 </p>
 
 <p align="center">
   <em>能力库与模型配置：把 Skills、MCP、Plugins 和 Provider 配置放在清晰的管理边界内。</em>
 </p>
 
-新的 Miniclaw 图标同时用于 Web/PWA、Electron 窗口和安装包资源：
+工业诊断 Agent 图标同时用于 Web/PWA、Electron 窗口和安装包资源：
 
 <p align="center">
-  <img src="web/public/icons/logo-1024.png" alt="Miniclaw application icon" width="160" />
+  <img src="web/public/icons/logo-1024.png" alt="工业诊断 Agent application icon" width="160" />
 </p>
 
 ## 核心功能
@@ -94,7 +90,7 @@ npm run diagnosis:server
 
 - 基于 Pi Agent Runtime 提供 prompt、流式输出、工具调用、Session 持久化与恢复。
 - 支持 abort、follow-up、原生 compaction 和持久化 JSONL Session。
-- 复用 Miniclaw 已有的 MCP capability handler，并映射为稳定的 `mcp__miniclaw__*` 工具。
+- 复用现有 MCP capability handler，并映射为稳定的 `mcp__industrial_diagnosis__*` 工具。
 - Subagents 通过 Pi extension 与显式的 spawn/stop 生命周期桥接。
 - Runtime 不会静默假装拥有缺失能力；尚未接入 Pi 的 Web Search/Web Fetch 能力会保持明确不可用。
 
@@ -126,7 +122,7 @@ npm run diagnosis:server
 - Electron 只是 Desktop Shell，复用现有 Web Client，不在 Renderer 中承载数据库、文件系统、凭证、Docker 或 shell/process 权限。
 - Main Process 负责窗口生命周期、外部链接、菜单和受限 IPC；Preload 只暴露白名单 API。
 - 默认提供 macOS arm64 打包配置，并保留 Windows、Linux 目标配置。
-- 同一套 Renderer 可以连接本地 Backend，也可以通过 `MINICLAW_SERVER_URL` 连接远程 Miniclaw 服务。
+- 同一套 Renderer 可以连接本地 Backend，也可以通过 `INDUSTRIAL_DIAGNOSIS_SERVER_URL` 连接远程工业诊断 Agent 服务。
 
 ## 工作原理
 
@@ -134,7 +130,7 @@ npm run diagnosis:server
 Web Client / Electron Desktop / Message Channels
                          │ HTTP + WebSocket / Channel Adapters
                          ▼
-                Miniclaw Backend
+                工业诊断 Agent Backend
         Auth · API · Queue · Scheduler · ACL
                          │
         ┌────────────────┼─────────────────┐
@@ -166,8 +162,8 @@ Web Client / Electron Desktop / Message Channels
 ### 启动 Backend 与 Web Client
 
 ```bash
-git clone https://github.com/helsome/miniclaw.git
-cd miniclaw
+git clone https://github.com/Akaliup/industrial-diagnosis-agent.git
+cd industrial-diagnosis
 
 npm install
 npm --prefix web install
@@ -190,7 +186,7 @@ npm run dev:all
 
 首次进入时完成管理员初始化和 Provider 配置即可。Provider/渠道接入步骤现在可以选择“稍后设置”，跳过后仍可进入工作台，之后在设置中补齐模型和渠道配置。
 
-Agent 容器镜像默认使用 `helsome/miniclaw-agent:latest`，可以通过 `MINICLAW_CONTAINER_IMAGE` 或 `CONTAINER_IMAGE` 覆盖。
+Agent 容器镜像默认使用 `industrial-diagnosis-agent:latest`，可以通过 `INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE` 或 `CONTAINER_IMAGE` 覆盖。
 
 ### 启动 Electron Desktop
 
@@ -203,10 +199,10 @@ npm run dev:all
 再在另一个终端启动桌面端：
 
 ```bash
-MINICLAW_RENDERER_URL=http://127.0.0.1:5173 npm run desktop:dev
+INDUSTRIAL_DIAGNOSIS_RENDERER_URL=http://127.0.0.1:5173 npm run desktop:dev
 ```
 
-如果直接使用 Backend 提供的构建后页面，可以省略 `MINICLAW_RENDERER_URL`：
+如果直接使用 Backend 提供的构建后页面，可以省略 `INDUSTRIAL_DIAGNOSIS_RENDERER_URL`：
 
 ```bash
 npm run desktop:dev
@@ -215,7 +211,7 @@ npm run desktop:dev
 连接远程 Backend 时：
 
 ```bash
-MINICLAW_SERVER_URL=https://your-miniclaw.example.com npm run desktop:dev
+INDUSTRIAL_DIAGNOSIS_SERVER_URL=https://your-industrial-diagnosis.example.com npm run desktop:dev
 ```
 
 打包命令：
@@ -246,15 +242,15 @@ npm run desktop:package
 | `make backup` | 创建运行时数据备份 |
 | `make restore FILE=...` | 恢复指定备份 |
 | `make status` | 查看 Backend、日志和 Docker 状态 |
-| `make stop` | 停止当前端口上的 Miniclaw 服务 |
+| `make stop` | 停止当前端口上的工业诊断 Agent 服务 |
 
 ## 配置入口
 
 | 环境变量 | 用途 | 默认值 |
 | --- | --- | --- |
-| `MINICLAW_SERVER_URL` | Electron 要连接的 Backend 地址 | `http://127.0.0.1:3000` |
-| `MINICLAW_RENDERER_URL` | Electron 要加载的 Renderer 地址，适合本地 Vite 开发 | 与 Server URL 相同 |
-| `MINICLAW_CONTAINER_IMAGE` | Agent Runner 使用的容器镜像 | `helsome/miniclaw-agent:latest` |
+| `INDUSTRIAL_DIAGNOSIS_SERVER_URL` | Electron 要连接的 Backend 地址 | `http://127.0.0.1:3000` |
+| `INDUSTRIAL_DIAGNOSIS_RENDERER_URL` | Electron 要加载的 Renderer 地址，适合本地 Vite 开发 | 与 Server URL 相同 |
+| `INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE` | Agent Runner 使用的容器镜像 | `industrial-diagnosis-agent:latest` |
 | `CONTAINER_IMAGE` | 容器镜像的兼容覆盖项 | 同上 |
 | `WEB_PORT` | Makefile 启动 Backend 使用的端口 | `3000` |
 
@@ -274,7 +270,7 @@ npm run desktop:package
 
 ## 项目状态
 
-Miniclaw 当前处于持续开发阶段。仓库已经包含：
+工业诊断 Agent 当前处于持续开发阶段。仓库已经包含：
 
 - Pi Agent Runtime 生产执行路径与 runtime-neutral contract。
 - Web Client 与 Electron Desktop Shell。
@@ -307,7 +303,6 @@ Miniclaw 当前处于持续开发阶段。仓库已经包含：
 - [`docs/workspace-memory-v2.md`](docs/workspace-memory-v2.md) — Workspace Memory 的数据模型、版本与交互边界
 - [`docs/runtime-migration.md`](docs/runtime-migration.md) — 从旧运行时到 Pi Agent Runtime 的迁移记录
 - [`docs/PROMPT-SKILL-RUNTIME-TEST-PLAN.md`](docs/PROMPT-SKILL-RUNTIME-TEST-PLAN.md) — Prompt、Skill、Runtime 与 Agent Builder 验证计划
-- [`docs/miniclaw-migration-cleanup.md`](docs/miniclaw-migration-cleanup.md) — 品牌和运行时命名迁移记录
 - [`SECURITY.md`](SECURITY.md) — 安全问题报告与处理策略
 
 ## 参与贡献
@@ -326,4 +321,4 @@ npm run desktop:build
 
 ## License
 
-Miniclaw 使用 MIT License，详见 [`LICENSE`](LICENSE)。
+工业诊断 Agent 使用 MIT License，详见 [`LICENSE`](LICENSE)。

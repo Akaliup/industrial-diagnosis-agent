@@ -1,5 +1,5 @@
 /**
- * MCP Tool Definitions for Miniclaw Agent Runner.
+ * MCP Tool Definitions for IndustrialDiagnosis Agent Runner.
  *
  * Uses SDK's `tool()` helper to define in-process MCP tools.
  * These tools communicate with the host process via IPC files.
@@ -31,9 +31,9 @@ export interface McpContext {
   groupFolder: string;
   isHome: boolean;
   isAdminHome: boolean;
-  /** Whether this runtime is an interactive session of the main Miniclaw. */
+  /** Whether this runtime is an interactive session of the main IndustrialDiagnosis. */
   agentBuilderEnabled: boolean;
-  /** Host admitted Owner Profile capability for built-in Miniclaw in Home. */
+  /** Host admitted Owner Profile capability for built-in IndustrialDiagnosis in Home. */
   ownerProfileEnabled: boolean;
   /** Public reply contract selected by the workspace. */
   interactionMode?: 'assistant' | 'proactive';
@@ -136,7 +136,7 @@ export interface WorkspaceMemorySnapshot {
   };
 }
 
-export interface MiniclawOwnerProfileProjection {
+export interface IndustrialDiagnosisOwnerProfileProjection {
   workspaceJid: string;
   preferredAddress: string | null;
   revision: number | null;
@@ -150,8 +150,8 @@ export interface MiniclawOwnerProfileProjection {
   };
 }
 
-export interface MiniclawOwnerProfileTurnResult {
-  projection: MiniclawOwnerProfileProjection;
+export interface IndustrialDiagnosisOwnerProfileTurnResult {
+  projection: IndustrialDiagnosisOwnerProfileProjection;
   onboardingStatus:
     | 'awaiting'
     | 'known'
@@ -214,7 +214,7 @@ export function parseWorkspaceMemorySnapshot(
 }
 
 const WORKSPACE_MEMORY_RESULT_PREFIX = 'workspace_memory_result';
-const OWNER_PROFILE_RESULT_PREFIX = 'miniclaw_owner_profile_result';
+const OWNER_PROFILE_RESULT_PREFIX = 'industrial_diagnosis_owner_profile_result';
 
 async function callWorkspaceMemory(
   ctx: McpContext,
@@ -268,7 +268,7 @@ async function callWorkspaceMemory(
   return result;
 }
 
-async function callMiniclawOwnerProfile(
+async function callIndustrialDiagnosisOwnerProfile(
   ctx: McpContext,
   operation: 'get' | 'set' | 'clear' | 'skip' | 'ack_first_wake',
   payload: Record<string, unknown>,
@@ -279,7 +279,7 @@ async function callMiniclawOwnerProfile(
   const requestId = newRequestId();
   const request: Record<string, unknown> & { requestId: string } = {
     ...payload,
-    type: 'miniclaw_owner_profile',
+    type: 'industrial_diagnosis_owner_profile',
     operation,
     requestId,
     inputTurnId: inputTurnId || undefined,
@@ -320,7 +320,7 @@ async function callMiniclawOwnerProfile(
  * nor invoke it, and the host additionally requires the exact active owner
  * turn plus the signed runner capability.
  */
-export async function acknowledgeMiniclawOwnerProfileFirstWake(
+export async function acknowledgeIndustrialDiagnosisOwnerProfileFirstWake(
   ctx: McpContext,
   leaseToken: number,
   inputTurnId: string,
@@ -335,7 +335,7 @@ export async function acknowledgeMiniclawOwnerProfileFirstWake(
     return false;
   }
   try {
-    const result = await callMiniclawOwnerProfile(
+    const result = await callIndustrialDiagnosisOwnerProfile(
       ctx,
       'ack_first_wake',
       { leaseToken },
@@ -348,14 +348,14 @@ export async function acknowledgeMiniclawOwnerProfileFirstWake(
   }
 }
 
-export async function fetchMiniclawOwnerProfileTurn(
+export async function fetchIndustrialDiagnosisOwnerProfileTurn(
   ctx: McpContext,
   timeoutMs: number = 5_000,
   inputTurnId: string | null | undefined = ctx.currentInputTurnId,
-): Promise<MiniclawOwnerProfileTurnResult | null> {
+): Promise<IndustrialDiagnosisOwnerProfileTurnResult | null> {
   if (!ctx.ownerProfileEnabled || !inputTurnId) return null;
   try {
-    const result = await callMiniclawOwnerProfile(
+    const result = await callIndustrialDiagnosisOwnerProfile(
       ctx,
       'get',
       {},
@@ -364,7 +364,7 @@ export async function fetchMiniclawOwnerProfileTurn(
     );
     if (!isRecord(result.projection)) return null;
     const projection =
-      result.projection as unknown as MiniclawOwnerProfileProjection;
+      result.projection as unknown as IndustrialDiagnosisOwnerProfileProjection;
     const onboardingStatus = result.onboardingStatus;
     if (
       typeof projection.workspaceJid !== 'string' ||
@@ -378,7 +378,7 @@ export async function fetchMiniclawOwnerProfileTurn(
     return {
       projection,
       onboardingStatus:
-        onboardingStatus as MiniclawOwnerProfileTurnResult['onboardingStatus'],
+        onboardingStatus as IndustrialDiagnosisOwnerProfileTurnResult['onboardingStatus'],
       firstWake:
         result.firstWake === true ||
         (result.firstWake === undefined && result.newlyClaimed === true),
@@ -475,7 +475,7 @@ export function buildSendMessageData(
 }
 
 /**
- * Create all Miniclaw MCP tool definitions for in-process SDK MCP server.
+ * Create all IndustrialDiagnosis MCP tool definitions for in-process SDK MCP server.
  */
 export function createMcpTools(ctx: McpContext): McpToolDefinition<any>[] {
   const MESSAGES_DIR = path.join(ctx.workspaceIpc, 'messages');
@@ -746,7 +746,7 @@ export function createMcpTools(ctx: McpContext): McpToolDefinition<any>[] {
       'send_message',
       usesProactiveInteractiveContract
         ? 'Send one user-visible message now. The Workspace uses Proactive reply mode: every call creates an independent native chat message immediately, and your normal SDK final text is not published. Set delivery_role=progress for acknowledgements or updates and delivery_role=final for the last substantive answer. You may call this tool zero, one, or many times and continue working after each successful progress send. A delivery error is authoritative: do not sleep and retry, switch to a card, or call a raw channel API as a fallback.'
-        : "Publish text through Miniclaw's turn-owned delivery coordinator. In an interactive user turn, delivery_role=progress updates the existing reply status and delivery_role=final stages the primary answer on the existing card; neither creates a second text reply. Use delivery_role=separate only when the user explicitly requested another message. Scheduled/background tasks always deliver separately because their normal SDK final is not published.",
+        : "Publish text through IndustrialDiagnosis's turn-owned delivery coordinator. In an interactive user turn, delivery_role=progress updates the existing reply status and delivery_role=final stages the primary answer on the existing card; neither creates a second text reply. Use delivery_role=separate only when the user explicitly requested another message. Scheduled/background tasks always deliver separately because their normal SDK final is not published.",
       {
         // Trim/min-length at the schema layer: the host guard is `!data.text`,
         // which a whitespace-only string passes, so it reached the chat as an
@@ -2308,7 +2308,7 @@ Returns null if the current chat is a DM (DMs do not belong to a server). Only w
     tools.push(
       tool(
         'agent_profile_list',
-        "List the current user's top-level Agents and resumable ready drafts. Use this before editing or resuming work so you can identify the target, current version, draft ID, and draft revision. The main Miniclaw is returned for context but cannot edit itself with Agent Builder.",
+        "List the current user's top-level Agents and resumable ready drafts. Use this before editing or resuming work so you can identify the target, current version, draft ID, and draft revision. The main IndustrialDiagnosis is returned for context but cannot edit itself with Agent Builder.",
         {},
         async () => {
           const result = await callAgentBuilder('agent_profile_list', {});
@@ -2596,8 +2596,8 @@ Use the skills panel in the UI to find the skill ID (directory name, e.g. "memor
   if (ctx.ownerProfileEnabled && !ctx.isScheduledTask && !ctx.currentTaskId) {
     tools.push(
       tool(
-        'miniclaw_owner_profile',
-        'Read or update the actual owner’s preferred form of address in the built-in Miniclaw Home Workspace. This is a dedicated profile field, not generic Workspace Memory. Call get before changing an existing value; set and clear use optimistic concurrency and host-managed idempotency. Use skip only when the owner explicitly declines first-wake onboarding.',
+        'industrial_diagnosis_owner_profile',
+        'Read or update the actual owner’s preferred form of address in the built-in IndustrialDiagnosis Home Workspace. This is a dedicated profile field, not generic Workspace Memory. Call get before changing an existing value; set and clear use optimistic concurrency and host-managed idempotency. Use skip only when the owner explicitly declines first-wake onboarding.',
         {
           action: z.enum(['get', 'set', 'clear', 'skip']),
           preferred_address: z.string().min(1).max(200).optional(),
@@ -2629,7 +2629,7 @@ Use the skills panel in the UI to find the skill ID (directory name, e.g. "memor
                 `${ctx.currentInputTurnId ?? 'turn'}:owner-profile:${args.action}:${args.expected_revision ?? 0}`,
               );
             }
-            const result = await callMiniclawOwnerProfile(
+            const result = await callIndustrialDiagnosisOwnerProfile(
               ctx,
               args.action,
               payload,
@@ -2660,8 +2660,8 @@ Use the skills panel in the UI to find the skill ID (directory name, e.g. "memor
     .min(1)
     .max(300)
     .refine(
-      (value) => value.trim() !== 'miniclaw.owner.preferred_address',
-      'Use miniclaw_owner_profile for the reserved owner address field',
+      (value) => value.trim() !== 'industrial-diagnosis.owner.preferred_address',
+      'Use industrial_diagnosis_owner_profile for the reserved owner address field',
     );
   const callMemoryTool = async (
     operation: 'search' | 'get' | 'create' | 'update' | 'delete',

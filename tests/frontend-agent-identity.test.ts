@@ -25,7 +25,7 @@ describe('frontend identity ownership', () => {
 
   test('uses the branded avatar as the final global fallback', () => {
     expect(resolveAgentDisplayIdentity()).toMatchObject({
-      name: 'Miniclaw',
+      name: '工业诊断 Agent',
       imageUrl: expect.stringContaining('icons/icon-192.png'),
     });
   });

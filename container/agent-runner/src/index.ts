@@ -1,5 +1,5 @@
 /**
- * Miniclaw Agent Runner
+ * IndustrialDiagnosis Agent Runner
  * Runs inside a container, receives config via stdin, outputs result to stdout
  *
  * Input protocol:
@@ -65,19 +65,19 @@ import {
 } from './session-history.js';
 import { StreamEventProcessor } from './stream-processor.js';
 import {
-  acknowledgeMiniclawOwnerProfileFirstWake,
+  acknowledgeIndustrialDiagnosisOwnerProfileFirstWake,
   createMcpTools,
-  fetchMiniclawOwnerProfileTurn,
+  fetchIndustrialDiagnosisOwnerProfileTurn,
   fetchWorkspaceMemorySnapshot,
   type McpContext,
   type WorkspaceMemorySnapshot,
 } from './mcp-tools.js';
-import { MiniclawFirstWakeAcknowledger } from './owner-profile-first-wake.js';
+import { IndustrialDiagnosisFirstWakeAcknowledger } from './owner-profile-first-wake.js';
 import {
   createSerializedAsyncTrigger,
   loadWorkspaceMemoryTurnContext,
 } from './workspace-memory-context.js';
-import { loadMiniclawOwnerProfileTurnContext } from './owner-profile-context.js';
+import { loadIndustrialDiagnosisOwnerProfileTurnContext } from './owner-profile-context.js';
 import { createWorkspaceMemoryWriteGuard } from './workspace-memory-runtime.js';
 import {
   parseAgentMcpPolicyMode,
@@ -129,8 +129,8 @@ import {
   AssistantUsageCollector,
   type AssistantUsageBatch,
 } from './assistant-usage.js';
-import { buildMiniclawPromptPlan, type PromptPlan } from './prompt-plan.js';
-import { withMiniclawSubagentContract } from './sdk-compat.js';
+import { buildIndustrialDiagnosisPromptPlan, type PromptPlan } from './prompt-plan.js';
+import { withIndustrialDiagnosisSubagentContract } from './sdk-compat.js';
 import { assessContextBudget } from './context-budget.js';
 import {
   findClaudeMdExcludeLeaks,
@@ -154,10 +154,10 @@ import { runPiQueryAttempt } from './runtime/pi/pi-runner.js';
 
 // 路径解析：优先读取环境变量，降级到容器内默认路径（保持向后兼容）
 const WORKSPACE_GROUP =
-  process.env.MINICLAW_WORKSPACE_GROUP ||
+  process.env.INDUSTRIAL_DIAGNOSIS_WORKSPACE_GROUP ||
   '/workspace/group';
 const WORKSPACE_IPC =
-  process.env.MINICLAW_WORKSPACE_IPC ||
+  process.env.INDUSTRIAL_DIAGNOSIS_WORKSPACE_IPC ||
   '/workspace/ipc';
 
 // 第三方端点必须显式配置模型，官方 Claude 则允许 SDK/CLI 选择默认模型。
@@ -166,7 +166,7 @@ const CLAUDE_PROVIDER_RUNTIME = resolveClaudeProviderRuntime(process.env);
 const AGENT_RUNTIME = resolveAgentRuntimeKind(process.env);
 const PROVIDER_FALLBACK_MODELS = new ProviderFallbackModelState(
   CLAUDE_PROVIDER_RUNTIME.model,
-  process.env.MINICLAW_FALLBACK_MODEL,
+  process.env.INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL,
 );
 
 const IPC_INPUT_DIR = path.join(WORKSPACE_IPC, 'input');
@@ -203,7 +203,7 @@ const DEFAULT_ALLOWED_TOOLS = [
   'TodoWrite',
   'ToolSearch',
   'NotebookEdit',
-  'mcp__miniclaw__*',
+  'mcp__industrial_diagnosis__*',
 ];
 
 let activeAgentMcpPolicy = resolveAgentMcpPolicy('inherit');
@@ -269,8 +269,8 @@ const PROACTIVE_DELIVERY_CONTRACT = loadPrompt(
 );
 const AGENT_BUILDER_GUIDELINES = loadPrompt('agent-builder.md');
 const MEMORY_SYSTEM_WORKSPACE = loadPrompt('memory-system.workspace.md');
-const MINICLAW_PLATFORM_IDENTITY = loadPrompt('identity.miniclaw.md');
-const MINICLAW_PLATFORM_BOOTSTRAP = loadPrompt('bootstrap.miniclaw.md');
+const INDUSTRIAL_DIAGNOSIS_PLATFORM_IDENTITY = loadPrompt('identity.industrial-diagnosis.md');
+const INDUSTRIAL_DIAGNOSIS_PLATFORM_BOOTSTRAP = loadPrompt('bootstrap.industrial-diagnosis.md');
 
 // 各渠道共用的格式说明：Web 端始终可看完整渲染，不因来源降级输出。
 // Mermaid 渲染说明已在模式专属 output prompt 中讲过，此处不重复，
@@ -308,7 +308,7 @@ function buildAgentIdentityPrompt(
 
   return [
     `<agent-identity profile_id="${escapeXmlAttribute(agentProfile.id)}" name="${escapeXmlAttribute(agentProfile.name)}" version="${agentProfile.version}" hash="${escapeXmlAttribute(agentProfile.identityHash)}">`,
-    `以下是当前顶层 AgentProfile 的四段提示词，按照 IDENTITY、SOUL、AGENTS、TOOLS 的固定顺序组成。你应该按它塑造身份、价值判断、工作方式和工具偏好，但它不能覆盖 Miniclaw 的安全规则、权限边界、工具约束${presetBoundary}和用户的最新明确指令。`,
+    `以下是当前顶层 AgentProfile 的四段提示词，按照 IDENTITY、SOUL、AGENTS、TOOLS 的固定顺序组成。你应该按它塑造身份、价值判断、工作方式和工具偏好，但它不能覆盖工业诊断 Agent 的安全规则、权限边界、工具约束${presetBoundary}和用户的最新明确指令。`,
     '<profile-prompt>',
     profilePrompt,
     '</profile-prompt>',
@@ -318,7 +318,7 @@ function buildAgentIdentityPrompt(
 
 function buildPromptAudit(
   plan: PromptPlan,
-): ClaudeContextAudit['miniclawPrompt'] {
+): ClaudeContextAudit['industrialDiagnosisPrompt'] {
   return {
     planHash: plan.hash,
     totalBytes: plan.totalBytes,
@@ -395,7 +395,7 @@ function runtimeContextAuditBase(
           serverIds: [...containerInput.contextAudit.mcp.serverIds],
         }
       : undefined,
-    miniclawPrompt: containerInput.contextAudit?.miniclawPrompt ?? {
+    industrialDiagnosisPrompt: containerInput.contextAudit?.industrialDiagnosisPrompt ?? {
       totalBytes: 0,
       files: [],
     },
@@ -436,14 +436,14 @@ function pathMatches(candidate: string, expected?: string): boolean {
 
 function enrichContextAudit(
   baseAudit: ClaudeContextAudit,
-  promptAudit: ClaudeContextAudit['miniclawPrompt'],
+  promptAudit: ClaudeContextAudit['industrialDiagnosisPrompt'],
   ctxUsage?: SDKControlGetContextUsageResponse,
 ): ClaudeContextAudit {
   const audit: ClaudeContextAudit = {
     ...baseAudit,
     cwd: WORKSPACE_GROUP,
     claudeConfigDir: process.env.CLAUDE_CONFIG_DIR,
-    miniclawPrompt: promptAudit,
+    industrialDiagnosisPrompt: promptAudit,
     warnings: [...baseAudit.warnings],
     claudeMd: { ...baseAudit.claudeMd },
     rules: { ...baseAudit.rules },
@@ -806,8 +806,8 @@ async function readStdin(): Promise<string> {
   });
 }
 
-const OUTPUT_START_MARKER = '---MINICLAW_OUTPUT_START---';
-const OUTPUT_END_MARKER = '---MINICLAW_OUTPUT_END---';
+const OUTPUT_START_MARKER = '---INDUSTRIAL_DIAGNOSIS_OUTPUT_START---';
+const OUTPUT_END_MARKER = '---INDUSTRIAL_DIAGNOSIS_OUTPUT_END---';
 const SDK_CONTEXT_USAGE_TIMEOUT_MS = 5_000;
 const SDK_FIRST_RESPONSE_TIMEOUT_MS = 60_000;
 const SDK_COMPACTION_RESPONSE_TIMEOUT_MS = 10 * 60_000;
@@ -1274,7 +1274,7 @@ function formatTranscriptMarkdown(
   lines.push('');
 
   for (const msg of messages) {
-    const sender = msg.role === 'user' ? 'User' : 'Miniclaw';
+    const sender = msg.role === 'user' ? 'User' : '工业诊断 Agent';
     const content =
       msg.content.length > 2000
         ? msg.content.slice(0, 2000) + '...'
@@ -1588,9 +1588,9 @@ function waitForIpcMessage(): Promise<
 
 /** 读取用户配置的 MCP servers（stdio/http/sse 类型） */
 function loadUserMcpServers(): Record<string, unknown> {
-  // CLAUDE_CONFIG_DIR may point at an isolated session directory. Miniclaw
+  // CLAUDE_CONFIG_DIR may point at an isolated session directory. IndustrialDiagnosis
   // therefore passes the effective per-user MCP set through env first.
-  const envJson = process.env.MINICLAW_USER_MCP_SERVERS_JSON;
+  const envJson = process.env.INDUSTRIAL_DIAGNOSIS_USER_MCP_SERVERS_JSON;
   if (envJson) {
     try {
       const parsed = JSON.parse(envJson);
@@ -1761,15 +1761,15 @@ async function runQueryAttempt(
         loadWorkspaceMemoryTurnContext(prompt, (query) =>
           fetchWorkspaceMemorySnapshot(mcpToolsContext, query),
         ),
-        loadMiniclawOwnerProfileTurnContext(() =>
-          fetchMiniclawOwnerProfileTurn(mcpToolsContext),
+        loadIndustrialDiagnosisOwnerProfileTurnContext(() =>
+          fetchIndustrialDiagnosisOwnerProfileTurn(mcpToolsContext),
         ),
       ])
     : [
         { snapshot: null, block: '' },
         { result: null, block: '' },
       ];
-  const firstWakeAcknowledger = new MiniclawFirstWakeAcknowledger();
+  const firstWakeAcknowledger = new IndustrialDiagnosisFirstWakeAcknowledger();
   firstWakeAcknowledger.register(
     activeOutputInputTurnId || coldInputTurnId,
     ownerProfileTurn.result,
@@ -2202,8 +2202,8 @@ async function runQueryAttempt(
             loadWorkspaceMemoryTurnContext(msg.text, (query) =>
               fetchWorkspaceMemorySnapshot(mcpToolsContext, query),
             ),
-            loadMiniclawOwnerProfileTurnContext(() =>
-              fetchMiniclawOwnerProfileTurn(
+            loadIndustrialDiagnosisOwnerProfileTurnContext(() =>
+              fetchIndustrialDiagnosisOwnerProfileTurn(
                 mcpToolsContext,
                 5_000,
                 msg.receipt?.deliveryId,
@@ -2293,12 +2293,12 @@ async function runQueryAttempt(
   const memoryPromptName = 'memory-system.workspace' as const;
   const hasMemoryTools = allowedTools.some(
     (tool) =>
-      tool === 'mcp__miniclaw__*' ||
-      tool === 'mcp__miniclaw__workspace_memory_search' ||
-      tool === 'mcp__miniclaw__workspace_memory_get' ||
-      tool === 'mcp__miniclaw__workspace_memory_remember' ||
-      tool === 'mcp__miniclaw__workspace_memory_update' ||
-      tool === 'mcp__miniclaw__workspace_memory_forget',
+      tool === 'mcp__industrial_diagnosis__*' ||
+      tool === 'mcp__industrial_diagnosis__workspace_memory_search' ||
+      tool === 'mcp__industrial_diagnosis__workspace_memory_get' ||
+      tool === 'mcp__industrial_diagnosis__workspace_memory_remember' ||
+      tool === 'mcp__industrial_diagnosis__workspace_memory_update' ||
+      tool === 'mcp__industrial_diagnosis__workspace_memory_forget',
   );
   const hasWebTools = allowedTools.some(
     (tool) => tool === 'WebSearch' || tool === 'WebFetch',
@@ -2413,14 +2413,14 @@ async function runQueryAttempt(
   const includeClaudePreset =
     !proactiveInteractiveContract &&
     (containerInput.agentProfile?.includeClaudePreset ?? true);
-  const promptPlan = buildMiniclawPromptPlan({
+  const promptPlan = buildIndustrialDiagnosisPromptPlan({
     platformIdentity: containerInput.agentProfile?.isDefault
-      ? MINICLAW_PLATFORM_IDENTITY
+      ? INDUSTRIAL_DIAGNOSIS_PLATFORM_IDENTITY
       : undefined,
     platformBootstrap:
       containerInput.agentProfile?.isDefault &&
-      containerInput.miniclawOwnerProfileEnabled
-        ? MINICLAW_PLATFORM_BOOTSTRAP
+      containerInput.industrialDiagnosisOwnerProfileEnabled
+        ? INDUSTRIAL_DIAGNOSIS_PLATFORM_BOOTSTRAP
         : undefined,
     // Agent identity leads platform workspace/context material per the
     // documented Agent-first composition order.
@@ -2485,9 +2485,9 @@ async function runQueryAttempt(
   if (agentTurnAnchor) promptAudit.turnAnchor = agentTurnAnchor.audit;
   const contextAuditBase = runtimeContextAuditBase(containerInput);
 
-  // 调试观察：MINICLAW_DUMP_PROMPT=true 时把最终 system prompt 输出到 stderr
+  // 调试观察：INDUSTRIAL_DIAGNOSIS_DUMP_PROMPT=true 时把最终 system prompt 输出到 stderr
   // host 已通过 logs/ 捕获 stderr，方便对比改 prompts/*.md 前后的差异
-  if (process.env.MINICLAW_DUMP_PROMPT === 'true') {
+  if (process.env.INDUSTRIAL_DIAGNOSIS_DUMP_PROMPT === 'true') {
     log(
       `PROMPT DUMP (${systemPromptAppend.length} chars):\n${systemPromptAppend}\n--- END PROMPT DUMP ---`,
     );
@@ -2507,7 +2507,7 @@ async function runQueryAttempt(
     );
     const piCustomTools = mcpToolsContext
       ? adaptClaudeMcpToolsToPi(createMcpTools(mcpToolsContext), {
-          namespace: 'mcp__miniclaw',
+          namespace: 'mcp__industrial_diagnosis',
         })
       : [];
     const piSkillPaths = [
@@ -2686,7 +2686,7 @@ async function runQueryAttempt(
     }
   }
 
-  // Claude Code plugins injected by Miniclaw main process via ContainerInput.
+  // Claude Code plugins injected by IndustrialDiagnosis main process via ContainerInput.
   // SDK converts this array to `--plugin-dir <path>` args for the spawned
   // claude CLI, which loads each plugin's commands/agents/hooks/skills/mcp.
   // Paths are already runtime-translated upstream (container-internal for
@@ -2724,7 +2724,7 @@ async function runQueryAttempt(
         ? `Agent effort override: ${agentEffort}`
         : 'Agent effort: inherit Provider/SDK default',
     );
-    const sdkCompat = withMiniclawSubagentContract({
+    const sdkCompat = withIndustrialDiagnosisSubagentContract({
       ...(pathToClaudeCodeExecutable && { pathToClaudeCodeExecutable }),
       ...queryModelRuntime.queryModelOptions,
       cwd: WORKSPACE_GROUP,
@@ -2759,7 +2759,7 @@ async function runQueryAttempt(
         : {}),
       mcpServers: {
         ...userMcpServers,
-        miniclaw: mcpServerConfig,
+        industrial_diagnosis: mcpServerConfig,
       },
       hooks: {
         PreToolUse: [
@@ -3180,7 +3180,7 @@ async function runQueryAttempt(
             const acknowledged = await firstWakeAcknowledger.acknowledge(
               inputTurnId,
               (candidate) =>
-                acknowledgeMiniclawOwnerProfileFirstWake(
+                acknowledgeIndustrialDiagnosisOwnerProfileFirstWake(
                   mcpToolsContext,
                   candidate.leaseToken,
                   candidate.inputTurnId,
@@ -3188,7 +3188,7 @@ async function runQueryAttempt(
             );
             if (acknowledged) {
               log(
-                `Acknowledged Miniclaw first-wake after healthy Assistant progress for ${inputTurnId}`,
+                `Acknowledged IndustrialDiagnosis first-wake after healthy Assistant progress for ${inputTurnId}`,
               );
             }
           }
@@ -3994,7 +3994,7 @@ async function main(): Promise<void> {
     isHome,
     isAdminHome,
     agentBuilderEnabled,
-    ownerProfileEnabled: containerInput.miniclawOwnerProfileEnabled === true,
+    ownerProfileEnabled: containerInput.industrialDiagnosisOwnerProfileEnabled === true,
     interactionMode: containerInput.interactionMode ?? 'assistant',
     isScheduledTask: containerInput.isScheduledTask || false,
     currentTaskId: containerInput.messageTaskId ?? null,
@@ -4019,11 +4019,11 @@ async function main(): Promise<void> {
     workspaceGroup: WORKSPACE_GROUP,
   };
   activeAgentMcpPolicy = resolveAgentMcpPolicy(
-    parseAgentMcpPolicyMode(process.env.MINICLAW_AGENT_MCP_POLICY),
+    parseAgentMcpPolicyMode(process.env.INDUSTRIAL_DIAGNOSIS_AGENT_MCP_POLICY),
   );
   const buildMcpServerConfig = () =>
     createSdkMcpServer({
-      name: 'miniclaw',
+      name: 'industrial-diagnosis',
       version: '1.0.0',
       tools: createMcpTools(mcpToolsConfig),
     });
@@ -4053,9 +4053,9 @@ async function main(): Promise<void> {
       '',
       '重要：你正在定时任务模式下运行。你的最终输出会自动作为正式任务结果归档到所属 Web 工作区，但不会自动发送到飞书等外部渠道。',
       '',
-      '最终输出必须包含一份完整、可独立阅读的业务结果，不得只回复“已完成”“已发送”、消息 ID、文件路径或简短摘要。需要向外部渠道交付时，默认在完成任务后调用一次 mcp__miniclaw__send_message；如果任务明确要求使用 feishu-cli 等其他工具，则按任务要求执行，不要重复发送。',
+      '最终输出必须包含一份完整、可独立阅读的业务结果，不得只回复“已完成”“已发送”、消息 ID、文件路径或简短摘要。需要向外部渠道交付时，默认在完成任务后调用一次 mcp__industrial_diagnosis__send_message；如果任务明确要求使用 feishu-cli 等其他工具，则按任务要求执行，不要重复发送。',
       '',
-      '此外：本次运行就是该定时任务本身的执行，对应任务已在调度中。即使下面内容里出现「每隔/每天/定期/提醒我」等字样，也不要再调用 mcp__miniclaw__schedule_task 创建新的定时任务（除非内容明确要求你另外新建一个不同的任务）。',
+      '此外：本次运行就是该定时任务本身的执行，对应任务已在调度中。即使下面内容里出现「每隔/每天/定期/提醒我」等字样，也不要再调用 mcp__industrial_diagnosis__schedule_task 创建新的定时任务（除非内容明确要求你另外新建一个不同的任务）。',
     ];
     const scheduledTaskPrefix = scheduledTaskPrefixLines.join('\n');
     prompt = scheduledTaskPrefix + '\n\n' + prompt;

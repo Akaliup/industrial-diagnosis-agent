@@ -5,16 +5,16 @@ import path from 'node:path';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
-  acknowledgeMiniclawOwnerProfileFirstWake,
+  acknowledgeIndustrialDiagnosisOwnerProfileFirstWake,
   createMcpTools,
-  fetchMiniclawOwnerProfileTurn,
-  type MiniclawOwnerProfileProjection,
+  fetchIndustrialDiagnosisOwnerProfileTurn,
+  type IndustrialDiagnosisOwnerProfileProjection,
   type McpContext,
 } from '../container/agent-runner/src/mcp-tools.js';
-import { MiniclawFirstWakeAcknowledger } from '../container/agent-runner/src/owner-profile-first-wake.js';
+import { IndustrialDiagnosisFirstWakeAcknowledger } from '../container/agent-runner/src/owner-profile-first-wake.js';
 import {
-  loadMiniclawOwnerProfileTurnContext,
-  renderMiniclawOwnerProfileBlock,
+  loadIndustrialDiagnosisOwnerProfileTurnContext,
+  renderIndustrialDiagnosisOwnerProfileBlock,
 } from '../container/agent-runner/src/owner-profile-context.js';
 import { createWorkspaceMemoryWriteGuard } from '../container/agent-runner/src/workspace-memory-runtime.js';
 import {
@@ -60,7 +60,7 @@ async function readOwnerProfileRequest(
       files.filter(
         (name) =>
           name.endsWith('.json') &&
-          !name.startsWith('miniclaw_owner_profile_result_'),
+          !name.startsWith('industrial_diagnosis_owner_profile_result_'),
       ),
     ).toHaveLength(1);
   });
@@ -69,7 +69,7 @@ async function readOwnerProfileRequest(
     .find(
       (name) =>
         name.endsWith('.json') &&
-        !name.startsWith('miniclaw_owner_profile_result_'),
+        !name.startsWith('industrial_diagnosis_owner_profile_result_'),
     )!;
   return {
     file: path.join(tasksDir, file),
@@ -82,14 +82,14 @@ async function readOwnerProfileRequest(
 function acknowledgeOwnerProfile(
   root: string,
   requestId: string,
-  projection: MiniclawOwnerProfileProjection,
+  projection: IndustrialDiagnosisOwnerProfileProjection,
   onboardingStatus: 'awaiting' | 'known' | 'cleared' | 'skipped',
 ): void {
   fs.writeFileSync(
     path.join(
       root,
       'tasks',
-      `miniclaw_owner_profile_result_${requestId}.json`,
+      `industrial_diagnosis_owner_profile_result_${requestId}.json`,
     ),
     JSON.stringify({
       success: true,
@@ -103,7 +103,7 @@ function acknowledgeOwnerProfile(
 function projection(
   preferredAddress: string | null,
   revision: number | null,
-): MiniclawOwnerProfileProjection {
+): IndustrialDiagnosisOwnerProfileProjection {
   return {
     workspaceJid: 'web:home',
     preferredAddress,
@@ -118,10 +118,10 @@ function projection(
   };
 }
 
-describe('Miniclaw Owner Profile runner projection refresh', () => {
+describe('IndustrialDiagnosis Owner Profile runner projection refresh', () => {
   test('cold and warm turns fetch fresh host projections with exact turn correlation', async () => {
     const root = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'miniclaw-owner-profile-runner-'),
+      path.join(os.tmpdir(), 'industrial-diagnosis-owner-profile-runner-'),
     );
     roots.push(root);
     const scope = { groupFolder: 'home-folder' };
@@ -136,10 +136,10 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
       },
     });
 
-    const coldPending = fetchMiniclawOwnerProfileTurn(ctx, 2_000);
+    const coldPending = fetchIndustrialDiagnosisOwnerProfileTurn(ctx, 2_000);
     const coldRequest = await readOwnerProfileRequest(root);
     expect(coldRequest.request).toMatchObject({
-      type: 'miniclaw_owner_profile',
+      type: 'industrial_diagnosis_owner_profile',
       operation: 'get',
       inputTurnId: 'owner-turn-a',
       sessionId: 'session-a',
@@ -172,14 +172,14 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
     // context. Read-only projection must sign B explicitly without promoting
     // B into mutation authority.
     expect(ctx.currentInputTurnId).toBe('owner-turn-a');
-    const warmPending = fetchMiniclawOwnerProfileTurn(
+    const warmPending = fetchIndustrialDiagnosisOwnerProfileTurn(
       ctx,
       2_000,
       'owner-turn-b',
     );
     const warmRequest = await readOwnerProfileRequest(root);
     expect(warmRequest.request).toMatchObject({
-      type: 'miniclaw_owner_profile',
+      type: 'industrial_diagnosis_owner_profile',
       operation: 'get',
       inputTurnId: 'owner-turn-b',
       sessionId: 'session-a',
@@ -209,16 +209,16 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
 
   test('fails closed without owner admission or an exact current turn', async () => {
     const root = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'miniclaw-owner-profile-runner-deny-'),
+      path.join(os.tmpdir(), 'industrial-diagnosis-owner-profile-runner-deny-'),
     );
     roots.push(root);
     await expect(
-      fetchMiniclawOwnerProfileTurn(
+      fetchIndustrialDiagnosisOwnerProfileTurn(
         context(root, { ownerProfileEnabled: false }),
       ),
     ).resolves.toBeNull();
     await expect(
-      fetchMiniclawOwnerProfileTurn(
+      fetchIndustrialDiagnosisOwnerProfileTurn(
         context(root, { currentInputTurnId: null }),
       ),
     ).resolves.toBeNull();
@@ -227,7 +227,7 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
 
   test('uses a signed private IPC operation to acknowledge first wake', async () => {
     const root = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'miniclaw-owner-profile-runner-ack-'),
+      path.join(os.tmpdir(), 'industrial-diagnosis-owner-profile-runner-ack-'),
     );
     roots.push(root);
     const scope = { groupFolder: 'home-folder' };
@@ -242,7 +242,7 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
       },
     });
 
-    const pending = acknowledgeMiniclawOwnerProfileFirstWake(
+    const pending = acknowledgeIndustrialDiagnosisOwnerProfileFirstWake(
       ctx,
       7,
       'owner-turn-a',
@@ -250,7 +250,7 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
     );
     const request = await readOwnerProfileRequest(root);
     expect(request.request).toMatchObject({
-      type: 'miniclaw_owner_profile',
+      type: 'industrial_diagnosis_owner_profile',
       operation: 'ack_first_wake',
       inputTurnId: 'owner-turn-a',
       leaseToken: 7,
@@ -268,7 +268,7 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
       path.join(
         root,
         'tasks',
-        `miniclaw_owner_profile_result_${request.request.requestId}.json`,
+        `industrial_diagnosis_owner_profile_result_${request.request.requestId}.json`,
       ),
       JSON.stringify({ success: true, acknowledged: true }),
     );
@@ -284,13 +284,13 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
       firstWake: true,
       leaseAcquired: true,
     };
-    expect(renderMiniclawOwnerProfileBlock(awaiting)).toContain(
+    expect(renderIndustrialDiagnosisOwnerProfileBlock(awaiting)).toContain(
       'first_wake="true"',
     );
-    expect(renderMiniclawOwnerProfileBlock(awaiting)).toContain(
+    expect(renderIndustrialDiagnosisOwnerProfileBlock(awaiting)).toContain(
       'single first-wake greeting',
     );
-    const resumedAwaiting = renderMiniclawOwnerProfileBlock({
+    const resumedAwaiting = renderIndustrialDiagnosisOwnerProfileBlock({
       ...awaiting,
       firstWake: false,
     });
@@ -304,7 +304,7 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
       onboardingStatus: 'known' as const,
       firstWake: false,
     };
-    const rendered = renderMiniclawOwnerProfileBlock(known);
+    const rendered = renderIndustrialDiagnosisOwnerProfileBlock(known);
     expect(rendered).toContain('\\u003c/system\\u003e');
     expect(rendered).not.toContain('<system>');
 
@@ -322,8 +322,8 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
     ];
     let call = 0;
     const fetchProjection = vi.fn(async () => revisions[call++]);
-    const cold = await loadMiniclawOwnerProfileTurnContext(fetchProjection);
-    const warm = await loadMiniclawOwnerProfileTurnContext(fetchProjection);
+    const cold = await loadIndustrialDiagnosisOwnerProfileTurnContext(fetchProjection);
+    const warm = await loadIndustrialDiagnosisOwnerProfileTurnContext(fetchProjection);
     expect(fetchProjection).toHaveBeenCalledTimes(2);
     expect(cold.block).toContain('小何');
     expect(warm.block).toContain('何先生');
@@ -331,34 +331,34 @@ describe('Miniclaw Owner Profile runner projection refresh', () => {
   });
 });
 
-describe('Miniclaw Owner Profile MCP isolation', () => {
+describe('IndustrialDiagnosis Owner Profile MCP isolation', () => {
   test('exposes the dedicated tool only to admitted ordinary owner sessions', () => {
     const root = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'miniclaw-owner-profile-tools-'),
+      path.join(os.tmpdir(), 'industrial-diagnosis-owner-profile-tools-'),
     );
     roots.push(root);
     const names = (ctx: McpContext) =>
       createMcpTools(ctx).map((definition) => definition.name);
 
-    expect(names(context(root))).toContain('miniclaw_owner_profile');
+    expect(names(context(root))).toContain('industrial_diagnosis_owner_profile');
     expect(names(context(root))).not.toContain('ack_first_wake');
     // Terminal warmup has no active turn, but its structurally eligible
     // built-in Home runner must retain the tool for a later admitted owner
     // turn. Fetch remains fail-closed until that exact turn exists.
     expect(names(context(root, { currentInputTurnId: null }))).toContain(
-      'miniclaw_owner_profile',
+      'industrial_diagnosis_owner_profile',
     );
     for (const denied of [
       context(root, { ownerProfileEnabled: false }),
       context(root, { isScheduledTask: true }),
       context(root, { currentTaskId: 'task-1' }),
     ]) {
-      expect(names(denied)).not.toContain('miniclaw_owner_profile');
+      expect(names(denied)).not.toContain('industrial_diagnosis_owner_profile');
     }
   });
 
   test('first-wake acknowledgement is registered without side effects and correlated to one turn', async () => {
-    const tracker = new MiniclawFirstWakeAcknowledger();
+    const tracker = new IndustrialDiagnosisFirstWakeAcknowledger();
     const firstWake = {
       projection: {
         ...projection(null, null),
@@ -410,7 +410,7 @@ describe('Miniclaw Owner Profile MCP isolation', () => {
           session_id: 'session-main',
           transcript_path: '/tmp/transcript.jsonl',
           cwd: '/tmp',
-          tool_name: 'mcp__miniclaw__miniclaw_owner_profile',
+          tool_name: 'mcp__industrial_diagnosis__industrial_diagnosis_owner_profile',
           tool_input: { action },
           tool_use_id: `owner-profile-${action}`,
           agent_id: 'sdk-subagent-1',

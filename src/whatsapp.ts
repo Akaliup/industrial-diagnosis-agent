@@ -186,7 +186,7 @@ type ClosableWhatsAppSocket = Pick<WASocket, 'end'> & {
  * client implements `close()` as an async method. While the websocket is
  * still CONNECTING, `ws.close()` rejects and `sock.end()` does not observe
  * that promise, which becomes an unhandled rejection and can terminate the
- * whole Miniclaw process.
+ * whole IndustrialDiagnosis process.
  *
  * OpenClaw treats socket shutdown as best-effort and contains every failure.
  * We keep that contract while explicitly awaiting the CONNECTING close path
@@ -194,7 +194,7 @@ type ClosableWhatsAppSocket = Pick<WASocket, 'end'> & {
  */
 export async function closeWhatsAppSocketSafely(
   socket: ClosableWhatsAppSocket | null | undefined,
-  reason = 'Miniclaw WhatsApp socket close',
+  reason = 'IndustrialDiagnosis WhatsApp socket close',
 ): Promise<void> {
   if (!socket) return;
   if (socket.ws?.isConnecting && typeof socket.ws.close === 'function') {
@@ -355,7 +355,7 @@ export function createWhatsAppConnection(
       printQRInTerminal: false,
       // 用 pino 兼容的 logger（baileys 期望 pino 接口）
       logger: logger.child({ feature: 'whatsapp-baileys' }) as never,
-      browser: ['Miniclaw', 'Desktop', '1.0.0'],
+      browser: ['IndustrialDiagnosis', 'Desktop', '1.0.0'],
       markOnlineOnConnect: false,
       // proxy-agent follows HTTP(S)_PROXY / ALL_PROXY and NO_PROXY. This is
       // the WebSocket transport path; Baileys' media fetch dispatcher is a
@@ -537,7 +537,7 @@ export function createWhatsAppConnection(
             );
           }
           // Account-backed WhatsApp groups must pair explicitly. Merely adding
-          // the bot must not silently create/authorize a Miniclaw chat.
+          // the bot must not silently create/authorize a IndustrialDiagnosis chat.
           if (!opts?.isChatAuthorized || opts.isChatAuthorized(chatJid)) {
             opts?.onBotAddedToGroup?.(chatJid, chatName);
           } else {

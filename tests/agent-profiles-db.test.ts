@@ -70,7 +70,7 @@ describe('AgentProfile DB model', () => {
 
     expect(profiles).toHaveLength(1);
     expect(profiles[0].is_default).toBe(true);
-    expect(profiles[0].name).toBe('Miniclaw');
+    expect(profiles[0].name).toBe('工业诊断 Agent');
     expect(profiles[0].identity_prompt).toBe('');
     expect(profiles[0].include_claude_preset).toBe(true);
     expect(profiles[0].model_config_id).toBeNull();
@@ -85,11 +85,11 @@ describe('AgentProfile DB model', () => {
       mcp: { mode: 'inherit', ids: [] },
     });
     expect(profiles[0].identity_hash).toBe(
-      computeAgentProfileIdentityHash('', true, undefined, 'Miniclaw'),
+      computeAgentProfileIdentityHash('', true, undefined, '工业诊断 Agent'),
     );
   });
 
-  test('persists admin Miniclaw as managed; global host policy is resolved at runtime', () => {
+  test('persists admin IndustrialDiagnosis as managed; global host policy is resolved at runtime', () => {
     const userId = 'agent-profile-admin-context';
     seedUser(userId, 'admin');
 
@@ -154,7 +154,7 @@ describe('AgentProfile DB model', () => {
     expect(legacy?.name).toBe('Default Agent');
 
     const migrated = listAgentProfilesForUser(userId)[0];
-    expect(migrated.name).toBe('Miniclaw');
+    expect(migrated.name).toBe('工业诊断 Agent');
     expect(migrated.version).toBe((legacy?.version ?? 0) + 1);
     expect(listAgentProfilePromptVersions(migrated.id, userId)).toHaveLength(1);
     expect(migrated.identity_hash).toBe(
@@ -162,7 +162,7 @@ describe('AgentProfile DB model', () => {
         migrated.identity_prompt,
         migrated.include_claude_preset,
         migrated.runtime_policy,
-        'Miniclaw',
+        '工业诊断 Agent',
       ),
     );
 
@@ -172,19 +172,43 @@ describe('AgentProfile DB model', () => {
     expect(listAgentProfilesForUser(userId)[0].name).toBe(custom?.name);
   });
 
-  test('keeps the current Miniclaw default name stable', () => {
+  test('migrates the previous English built-in name to 工业诊断 Agent', () => {
     const userId = 'agent-profile-user-pre-rename';
     seedUser(userId);
     const original = listAgentProfilesForUser(userId)[0];
 
     const legacy = updateAgentProfile(original.id, userId, {
-      name: 'Miniclaw',
+      name: 'IndustrialDiagnosis',
     });
-    expect(legacy?.name).toBe('Miniclaw');
+    expect(legacy?.name).toBe('IndustrialDiagnosis');
 
     const migrated = listAgentProfilesForUser(userId)[0];
-    expect(migrated.name).toBe('Miniclaw');
-    expect(migrated.version).toBe(legacy?.version);
+    expect(migrated.name).toBe('工业诊断 Agent');
+    expect(migrated.version).toBe((legacy?.version ?? 0) + 1);
+    expect(migrated.identity_hash).toBe(
+      computeAgentProfileIdentityHash(
+        migrated.identity_prompt,
+        migrated.include_claude_preset,
+        migrated.runtime_policy,
+        '工业诊断 Agent',
+      ),
+    );
+  });
+
+  test('keeps the current 工业诊断 Agent default name stable', () => {
+    const userId = 'agent-profile-user-current-name';
+    seedUser(userId);
+    const original = listAgentProfilesForUser(userId)[0];
+    expect(original.name).toBe('工业诊断 Agent');
+
+    const current = updateAgentProfile(original.id, userId, {
+      name: '工业诊断 Agent',
+    });
+    expect(current?.name).toBe('工业诊断 Agent');
+
+    const migrated = listAgentProfilesForUser(userId)[0];
+    expect(migrated.name).toBe('工业诊断 Agent');
+    expect(migrated.version).toBe(current?.version);
   });
 
   test('ignores retired provider, model and tool policies when normalizing', () => {
@@ -239,7 +263,7 @@ describe('AgentProfile DB model', () => {
     );
   });
 
-  test('permanently binds Home Workspace to the built-in Miniclaw', () => {
+  test('permanently binds Home Workspace to the built-in IndustrialDiagnosis', () => {
     const userId = 'agent-profile-home-owner';
     seedUser(userId);
     const homeJid = ensureUserHomeGroup(userId, 'member', userId);
@@ -252,7 +276,7 @@ describe('AgentProfile DB model', () => {
 
     expect(getWorkspaceAgentProfileId(home.folder)).toBe(builtIn.id);
     expect(() => assignWorkspaceAgentProfile(home.folder, custom.id)).toThrow(
-      'Home Workspace must remain bound to the built-in Miniclaw Agent',
+      'Home Workspace must remain bound to the built-in default Agent',
     );
 
     // Simulate a legacy database written before the invariant existed.

@@ -53,16 +53,19 @@ describe('Agent-first frontend product contracts', () => {
     });
   });
 
-  it('shows the legacy built-in Agent name as Miniclaw', () => {
-    expect(getAgentProfileDisplayName('Default Agent')).toBe('Miniclaw');
-    expect(getAgentProfileDisplayName(undefined)).toBe('Miniclaw');
+  it('shows the legacy built-in Agent name as 工业诊断 Agent', () => {
+    expect(getAgentProfileDisplayName('Default Agent')).toBe('工业诊断 Agent');
+    expect(getAgentProfileDisplayName('IndustrialDiagnosis')).toBe(
+      '工业诊断 Agent',
+    );
+    expect(getAgentProfileDisplayName(undefined)).toBe('工业诊断 Agent');
     expect(getAgentProfileDisplayName('代码审查员')).toBe('代码审查员');
   });
 
   it('keeps the Agent management page scoped to custom Agents', () => {
     expect(
       getCustomAgentProfiles([
-        { id: 'miniclaw', is_default: true },
+        { id: 'industrial-diagnosis', is_default: true },
         { id: 'reviewer', is_default: false },
       ]),
     ).toEqual([{ id: 'reviewer', is_default: false }]);
@@ -135,21 +138,21 @@ describe('Agent-first frontend product contracts', () => {
     ]);
   });
 
-  it('keeps the default Miniclaw Agent first and retains its internal home context', () => {
-    const home = workspace('web:main', 'agent-miniclaw', 'Miniclaw');
+  it('keeps the default 工业诊断 Agent first and retains its internal home context', () => {
+    const home = workspace('web:main', 'agent-industrial-diagnosis', '工业诊断 Agent');
     home.is_my_home = true;
 
     const sections = groupWorkspacesByAgent(
       [
         workspace('web:review', 'agent-reviewer', '代码审查员'),
-        workspace('web:project', 'agent-miniclaw', 'Miniclaw'),
+        workspace('web:project', 'agent-industrial-diagnosis', '工业诊断 Agent'),
         home,
       ],
-      'agent-miniclaw',
+      'agent-industrial-diagnosis',
     );
 
     expect(sections.map((section) => section.name)).toEqual([
-      'Miniclaw',
+      '工业诊断 Agent',
       '代码审查员',
     ]);
     expect(sections[0]).toMatchObject({
@@ -159,11 +162,11 @@ describe('Agent-first frontend product contracts', () => {
   });
 
   it('keeps the home context separate from additional Agent workspaces for navigation', () => {
-    const home = workspace('web:main', 'agent-miniclaw', 'Miniclaw');
+    const home = workspace('web:main', 'agent-industrial-diagnosis', '工业诊断 Agent');
     home.is_my_home = true;
     const [section] = groupWorkspacesByAgent(
-      [workspace('web:project', 'agent-miniclaw', 'Miniclaw'), home],
-      'agent-miniclaw',
+      [workspace('web:project', 'agent-industrial-diagnosis', '工业诊断 Agent'), home],
+      'agent-industrial-diagnosis',
     );
 
     expect(getAgentNavigationTargets(section)).toMatchObject({
@@ -173,11 +176,11 @@ describe('Agent-first frontend product contracts', () => {
   });
 
   it('presents the home context as the named main workspace of the primary Agent', () => {
-    const home = workspace('web:main', 'agent-miniclaw', 'Miniclaw');
+    const home = workspace('web:main', 'agent-industrial-diagnosis', '工业诊断 Agent');
     home.is_my_home = true;
     const [section] = groupWorkspacesByAgent(
-      [workspace('web:project', 'agent-miniclaw', 'Miniclaw'), home],
-      'agent-miniclaw',
+      [workspace('web:project', 'agent-industrial-diagnosis', '工业诊断 Agent'), home],
+      'agent-industrial-diagnosis',
     );
 
     expect(
@@ -186,28 +189,28 @@ describe('Agent-first frontend product contracts', () => {
         name,
       })),
     ).toEqual([
-      { jid: 'web:main', name: 'Miniclaw' },
+      { jid: 'web:main', name: '工业诊断 Agent' },
       { jid: 'web:project', name: 'web:project' },
     ]);
   });
 
-  it('separates Miniclaw as the primary Agent from custom Agents', () => {
+  it('separates 工业诊断 Agent as the primary Agent from custom Agents', () => {
     const sections = groupWorkspacesByAgent(
       [
-        workspace('web:main', 'agent-miniclaw', 'Miniclaw'),
+        workspace('web:main', 'agent-industrial-diagnosis', '工业诊断 Agent'),
         workspace('web:review', 'agent-reviewer', '代码审查员'),
       ],
-      'agent-miniclaw',
+      'agent-industrial-diagnosis',
     );
 
     const partitioned = partitionAgentWorkspaceSections(sections);
-    expect(partitioned.primary?.name).toBe('Miniclaw');
+    expect(partitioned.primary?.name).toBe('工业诊断 Agent');
     expect(partitioned.custom.map((section) => section.name)).toEqual([
       '代码审查员',
     ]);
   });
 
-  it('keeps the primary Miniclaw Agent fixed open while custom Agents remain collapsible', () => {
+  it('keeps the primary 工业诊断 Agent fixed open while custom Agents remain collapsible', () => {
     expect(isAgentSectionCollapsible({ isDefault: true })).toBe(false);
     expect(isAgentSectionCollapsible({ isDefault: false })).toBe(true);
   });

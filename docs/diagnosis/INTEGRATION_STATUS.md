@@ -22,7 +22,7 @@
 | 历史案例 | MOCK_TESTED | `knowledge.test.ts`、50 例 Eval | 本地合成案例；无企业历史库 |
 | 报警 Webhook | CONTRACT_TESTED + live 本地验证 | `webhook.test.ts`；本机签名/幂等/401/503 实测 | HMAC-SHA256，时间窗 5 分钟；生产需配置密钥 |
 | 真实模型 Provider | NOT_RUN | `LiveRoleRunner` 实现 + 环境模板 | 未提供已授权 base URL/key/model；Live Eval 未运行 |
-| Miniclaw 主服务/用户体系 | MOCK_TESTED | 登录、Workspace、诊断 SPA、E2E | 复用现有 Cookie 会话与 SQLite；未改主聊天路径 |
+| 主服务/用户体系 | MOCK_TESTED | 登录、Workspace、诊断 SPA、E2E | 复用现有 Cookie 会话与 SQLite；未改主聊天路径 |
 
 ## 2. 通用 REST 适配器
 

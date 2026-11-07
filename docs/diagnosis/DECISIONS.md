@@ -2,9 +2,9 @@
 
 记录本任务中影响架构、安全边界与验收方式的选择。编号仅用于引用，不代表优先级。
 
-## ADR-001 诊断运行时与 Miniclaw 主服务同库、独立入口
+## ADR-001 诊断运行时与 主服务同库、独立入口
 
-**选择**：在 `src/diagnosis/` 建立独立诊断服务入口 `src/diagnosis/server.ts`，复用 Miniclaw
+**选择**：在 `src/diagnosis/` 建立独立诊断服务入口 `src/diagnosis/server.ts`，复用现有
 的 SQLite 数据库、用户会话与静态资源构建；诊断表前缀 `diagnosis_`，由
 `src/diagnosis/db.ts` 以事务迁移创建。
 
@@ -25,7 +25,7 @@
 每次调用先经过 `PolicyGateway`：认证上下文 → Workspace/Run 作用域 → 角色白名单 →
 严格 Zod Schema → 设备范围 → 风险级别 → 预算 → 重复调用守卫 → 执行 → 证据入库。
 
-**原因**：Miniclaw 生产 Runner 的通用工具权限不应被恢复或复用；诊断链路必须有可证明的
+**原因**：生产 Runner 的通用工具权限不应被恢复或复用；诊断链路必须有可证明的
 只读边界。工具白名单和 Schema 在网关内校验，不能靠 Prompt 或 UI 约束。
 
 **替代方案**：复用通用 Agent 的 `runtime_policy.tools` 或直接让角色 Runner 调 MCP。
@@ -42,7 +42,7 @@
 `LiveRoleRunner`。没有依赖未经验证的 Subagent 结果 RPC。
 
 **原因**：角色分工需要的是“谁可以请求哪些工具、输出什么结构”，不是进程数。单进程结构化
-调用更容易做预算、重放、错误修复和 Eval；也避免把 Miniclaw 的通用 Subagent 能力引入诊断。
+调用更容易做预算、重放、错误修复和 Eval；也避免把 通用 Subagent 能力引入诊断。
 
 **影响**：四个角色共享一个编排循环；角色输出必须通过 Zod 校验，失败可带修复问题重试一次。
 
@@ -135,9 +135,9 @@ adapter。未配置来源返回 `UNCONFIGURED`，不静默回退 Mock。根云 a
 
 **影响**：WS 不是唯一真相源；所有状态可从数据库重建。
 
-## ADR-012 保留 Miniclaw 入口与通用 Agent 兼容
+## ADR-012 保留原有入口与通用 Agent 兼容
 
-**选择**：不修改 Miniclaw 原有 `/chat`、渠道、Agent Profile 等入口；诊断作为独立页面
+**选择**：不修改 原有 `/chat`、渠道、Agent Profile 等入口；诊断作为独立页面
 `/diagnosis`。不恢复已废弃的通用 `runtime_policy.tools`。
 
 **原因**：用户要求保留原产品可用性；诊断安全边界不能靠削弱通用 Agent 权限实现。
@@ -154,10 +154,10 @@ adapter。未配置来源返回 `UNCONFIGURED`，不静默回退 Mock。根云 a
 
 **影响**：CI 使用标准 Playwright 安装时无需覆盖；本地运行需设置该环境变量。
 
-## ADR-014 演示账号不写入代码，空库沿用 Miniclaw 初始化
+## ADR-014 演示账号不写入代码，空库沿用工业诊断 Agent 初始化
 
 **选择**：`diagnosis:setup` 只写诊断领域数据与知识库，不创建用户、不设置默认密码。空库
-打开 `/diagnosis` 走 Miniclaw 原有 setup 向导。本地验收使用的 `demo` 账号是本机演示数据，
+打开 `/diagnosis` 走原有 setup 向导。本地验收使用的 `demo` 账号是本机演示数据，
 不写入源码或文档模板。
 
 **原因**：避免“通用默认密码”成为部署后门；测试账号只在隔离测试库/本地演示库创建。

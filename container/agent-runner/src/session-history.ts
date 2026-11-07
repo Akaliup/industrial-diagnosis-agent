@@ -93,7 +93,7 @@ export function extractSessionHistory(
     const recentMessages = messages.slice(-RECOVERY_HISTORY_LIMIT);
 
     const historyLines = recentMessages.map((m) => {
-      const role = m.role === 'user' ? 'User' : 'Miniclaw';
+      const role = m.role === 'user' ? 'User' : '工业诊断 Agent';
       const truncated =
         m.content.length > RECOVERY_MESSAGE_TRUNCATE
           ? m.content.slice(0, RECOVERY_MESSAGE_TRUNCATE) + '…'

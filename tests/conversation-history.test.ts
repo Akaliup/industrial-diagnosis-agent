@@ -21,7 +21,7 @@ describe('conversation history recovery context', () => {
       {
         id: 'assistant-1',
         content: '收到',
-        sender_name: 'Miniclaw',
+        sender_name: 'IndustrialDiagnosis',
         is_from_me: true,
       },
       {
@@ -43,7 +43,7 @@ describe('conversation history recovery context', () => {
       '<history_message id="user-1" role="user" sender="Alice">原始任务</history_message>',
     );
     expect(result?.context).toContain(
-      '<history_message id="assistant-1" role="assistant" sender="Miniclaw">收到</history_message>',
+      '<history_message id="assistant-1" role="assistant" sender="工业诊断 Agent">收到</history_message>',
     );
   });
 

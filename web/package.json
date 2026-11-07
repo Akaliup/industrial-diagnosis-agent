@@ -1,5 +1,5 @@
 {
-  "name": "miniclaw-web",
+  "name": "industrial-diagnosis-agent-web",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -56,12 +56,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/helsome/miniclaw.git",
+    "url": "git+https://github.com/Akaliup/industrial-diagnosis-agent.git",
     "directory": "web"
   },
-  "homepage": "https://github.com/helsome/miniclaw#readme",
+  "homepage": "https://github.com/Akaliup/industrial-diagnosis-agent#readme",
   "bugs": {
-    "url": "https://github.com/helsome/miniclaw/issues"
+    "url": "https://github.com/Akaliup/industrial-diagnosis-agent/issues"
   },
   "author": "helson"
 }

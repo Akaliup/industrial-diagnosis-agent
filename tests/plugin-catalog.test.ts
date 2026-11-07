@@ -26,7 +26,7 @@ const {
 } = catalog;
 
 beforeEach(() => {
-  tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'miniclaw-cat-'));
+  tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'industrial-diagnosis-cat-'));
 });
 
 afterEach(() => {

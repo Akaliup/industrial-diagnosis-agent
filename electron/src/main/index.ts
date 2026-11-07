@@ -10,7 +10,7 @@ import {
 import fs from 'node:fs';
 import path from 'node:path';
 
-const APP_NAME = 'Miniclaw';
+const APP_NAME = '工业诊断 Agent';
 const DEFAULT_SERVER_URL = 'http://127.0.0.1:3000';
 const WINDOW_DEFAULTS = {
   width: 1440,
@@ -69,14 +69,14 @@ function normalizeHttpUrl(rawValue: string, label: string): string {
 function resolveDesktopUrls(): { serverUrl: string; rendererUrl: string } {
   const serverValue =
     getCliValue('--server-url') ||
-    process.env.MINICLAW_SERVER_URL ||
+    process.env.INDUSTRIAL_DIAGNOSIS_SERVER_URL ||
     DEFAULT_SERVER_URL;
-  const serverUrl = normalizeHttpUrl(serverValue, 'Miniclaw server URL');
+  const serverUrl = normalizeHttpUrl(serverValue, '工业诊断 Agent 服务地址');
   const rendererValue =
     getCliValue('--renderer-url') ||
-    process.env.MINICLAW_RENDERER_URL ||
+    process.env.INDUSTRIAL_DIAGNOSIS_RENDERER_URL ||
     serverUrl;
-  const rendererUrl = normalizeHttpUrl(rendererValue, 'Miniclaw renderer URL');
+  const rendererUrl = normalizeHttpUrl(rendererValue, '工业诊断 Agent 渲染地址');
   return { serverUrl, rendererUrl };
 }
 
@@ -163,8 +163,8 @@ async function openExternalUrl(rawUrl: string): Promise<void> {
 function showAbout(): Promise<Electron.MessageBoxReturnValue> {
   const options = {
     type: 'info',
-    title: 'About Miniclaw',
-    message: 'Miniclaw',
+    title: '关于工业诊断 Agent',
+    message: '工业诊断 Agent',
     detail: `Pi Agent Runtime workspace\nVersion ${app.getVersion()}`,
   } as const;
   return mainWindow && !mainWindow.isDestroyed()
@@ -175,9 +175,9 @@ function showAbout(): Promise<Electron.MessageBoxReturnValue> {
 function errorPageHtml(failedUrl: string): string {
   const safeUrl = JSON.stringify(failedUrl).replace(/</g, '\\u003c');
   return `<!doctype html>
-<html><head><meta charset="utf-8"><title>Miniclaw is unavailable</title>
+<html><head><meta charset="utf-8"><title>工业诊断 Agent 服务不可用</title>
 <style>body{font:16px system-ui,sans-serif;background:#101114;color:#f4f4f5;display:grid;place-items:center;min-height:100vh;margin:0}main{max-width:620px;padding:32px;border:1px solid #34363d;border-radius:16px;background:#181a1f}h1{font-size:22px}p{color:#b7bbc5;line-height:1.5}code{word-break:break-all;color:#d8b4fe}button{border:0;border-radius:8px;background:#a78bfa;color:#17131f;padding:10px 16px;font-weight:600;cursor:pointer}</style>
-</head><body><main><h1>Miniclaw Backend 未连接</h1><p>请先启动 Miniclaw Backend，或检查桌面应用配置的服务地址：</p><p><code>${safeUrl}</code></p><button id="retry">重试连接</button><script>document.getElementById('retry').addEventListener('click',()=>window.miniclawDesktop?.retry())</script></main></body></html>`;
+</head><body><main><h1>工业诊断 Agent 后端未连接</h1><p>请先启动工业诊断 Agent 后端，或检查桌面应用配置的服务地址：</p><p><code>${safeUrl}</code></p><button id="retry">重试连接</button><script>document.getElementById('retry').addEventListener('click',()=>window.industrialDiagnosisDesktop?.retry())</script></main></body></html>`;
 }
 
 async function loadRenderer(): Promise<void> {
@@ -204,7 +204,7 @@ function createMainWindow(): BrowserWindow {
     show: false,
     title: APP_NAME,
     backgroundColor: '#101114',
-    icon: path.join(__dirname, '..', 'assets', 'miniclaw-icon.png'),
+    icon: path.join(__dirname, '..', 'assets', 'app-icon.png'),
     webPreferences: {
       preload: path.join(__dirname, '..', 'dist', 'preload.cjs'),
       contextIsolation: true,
@@ -268,9 +268,9 @@ function createApplicationMenu(): void {
   const template: MenuItemConstructorOptions[] = [
     ...(process.platform === 'darwin' ? [{ role: 'appMenu' as const }] : []),
     {
-      label: 'Miniclaw',
+      label: '工业诊断 Agent',
       submenu: [
-        { label: 'About Miniclaw', click: () => void showAbout() },
+        { label: '关于工业诊断 Agent', click: () => void showAbout() },
         { type: 'separator' },
         { role: 'quit' },
       ],
@@ -279,7 +279,7 @@ function createApplicationMenu(): void {
     {
       label: 'Help',
       submenu: [
-        { label: 'Miniclaw on GitHub', click: () => void openExternalUrl('https://github.com/helsome/miniclaw') },
+        { label: 'GitHub 仓库', click: () => void openExternalUrl('https://github.com/Akaliup/industrial-diagnosis-agent') },
       ],
     },
   ];

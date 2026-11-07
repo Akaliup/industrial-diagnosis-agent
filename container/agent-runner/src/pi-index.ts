@@ -1,5 +1,5 @@
 /**
- * Miniclaw's production Agent Runner entry point.
+ * IndustrialDiagnosis's production Agent Runner entry point.
  *
  * This module intentionally imports only the runtime-neutral contracts, Pi,
  * and the existing capability/IPC layer. The former Claude runner remains in
@@ -23,15 +23,15 @@ import {
   type IpcInputMessage,
 } from './ipc-delivery.js';
 import {
-  acknowledgeMiniclawOwnerProfileFirstWake,
+  acknowledgeIndustrialDiagnosisOwnerProfileFirstWake,
   createMcpTools,
-  fetchMiniclawOwnerProfileTurn,
+  fetchIndustrialDiagnosisOwnerProfileTurn,
   fetchWorkspaceMemorySnapshot,
   type McpContext,
 } from './mcp-tools.js';
-import { loadMiniclawOwnerProfileTurnContext } from './owner-profile-context.js';
+import { loadIndustrialDiagnosisOwnerProfileTurnContext } from './owner-profile-context.js';
 import { loadWorkspaceMemoryTurnContext } from './workspace-memory-context.js';
-import { buildMiniclawPromptPlan } from './prompt-plan.js';
+import { buildIndustrialDiagnosisPromptPlan } from './prompt-plan.js';
 import { resolveClaudeProviderRuntime } from './provider-runtime.js';
 import { resolveAgentRuntimeKind } from './runtime-config.js';
 import { adaptClaudeMcpToolsToPi } from './runtime/pi/pi-tools.js';
@@ -39,18 +39,18 @@ import { PiRuntimeAdapter } from './runtime/pi/pi-runtime.js';
 import { runPiQueryAttempt } from './runtime/pi/pi-runner.js';
 
 const WORKSPACE_GROUP =
-  process.env.MINICLAW_WORKSPACE_GROUP ||
+  process.env.INDUSTRIAL_DIAGNOSIS_WORKSPACE_GROUP ||
   '/workspace/group';
 const WORKSPACE_IPC =
-  process.env.MINICLAW_WORKSPACE_IPC ||
-  process.env.MINICLAW_WORKSPACE_IPC ||
+  process.env.INDUSTRIAL_DIAGNOSIS_WORKSPACE_IPC ||
+  process.env.INDUSTRIAL_DIAGNOSIS_WORKSPACE_IPC ||
   '/workspace/ipc';
 const INPUT_DIR = path.join(WORKSPACE_IPC, 'input');
 const CLOSE_SENTINEL = path.join(INPUT_DIR, '_close');
 const INTERRUPT_SENTINEL = path.join(INPUT_DIR, '_interrupt');
 const DRAIN_SENTINEL = path.join(INPUT_DIR, '_drain');
-const OUTPUT_START = '---MINICLAW_OUTPUT_START---';
-const OUTPUT_END = '---MINICLAW_OUTPUT_END---';
+const OUTPUT_START = '---INDUSTRIAL_DIAGNOSIS_OUTPUT_START---';
+const OUTPUT_END = '---INDUSTRIAL_DIAGNOSIS_OUTPUT_END---';
 const DEFAULT_ALLOWED_TOOLS = [
   'Bash',
   'Read',
@@ -63,7 +63,7 @@ const DEFAULT_ALLOWED_TOOLS = [
   'Task',
   'TaskOutput',
   'TaskStop',
-  'mcp__miniclaw__*',
+  'mcp__industrial_diagnosis__*',
 ];
 const PROMPTS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -246,13 +246,13 @@ function buildSystemPrompt(input: ContainerInput, ctx: McpContext): string {
     ? loadPrompt(`channels/${channel}.md`)
     : undefined;
   const identity = input.agentProfile?.identityPrompt?.trim();
-  const plan = buildMiniclawPromptPlan({
+  const plan = buildIndustrialDiagnosisPromptPlan({
     platformIdentity: input.agentProfile?.isDefault
-      ? loadPrompt('identity.miniclaw.md')
+      ? loadPrompt('identity.industrial-diagnosis.md')
       : undefined,
     platformBootstrap:
-      input.agentProfile?.isDefault && input.miniclawOwnerProfileEnabled
-        ? loadPrompt('bootstrap.miniclaw.md')
+      input.agentProfile?.isDefault && input.industrialDiagnosisOwnerProfileEnabled
+        ? loadPrompt('bootstrap.industrial-diagnosis.md')
         : undefined,
     agentIdentity: identity
       ? `<agent-identity profile_id="${input.agentProfile?.id}"><profile-prompt>${identity}</profile-prompt></agent-identity>`
@@ -307,8 +307,8 @@ async function runTurn(
     loadWorkspaceMemoryTurnContext(prompt, (query) =>
       fetchWorkspaceMemorySnapshot(ctx, query),
     ),
-    loadMiniclawOwnerProfileTurnContext(() =>
-      fetchMiniclawOwnerProfileTurn(ctx),
+    loadIndustrialDiagnosisOwnerProfileTurnContext(() =>
+      fetchIndustrialDiagnosisOwnerProfileTurn(ctx),
     ),
   ]);
   if (!memory.snapshot)
@@ -325,7 +325,7 @@ async function runTurn(
     .join('\n\n');
   const tracker = new IpcTurnDeliveryTracker(initialMessages);
   const customTools = adaptClaudeMcpToolsToPi(createMcpTools(ctx), {
-    namespace: 'mcp__miniclaw',
+    namespace: 'mcp__industrial_diagnosis',
   });
   const provider = resolveClaudeProviderRuntime(process.env);
   const runtime = new PiRuntimeAdapter();
@@ -379,7 +379,7 @@ async function runTurn(
           Number.isInteger(leaseToken) &&
           leaseToken > 0
         ) {
-          void acknowledgeMiniclawOwnerProfileFirstWake(
+          void acknowledgeIndustrialDiagnosisOwnerProfileFirstWake(
             ctx,
             leaseToken,
             activeInputTurnId || input.turnId || generateTurnId(),
@@ -451,7 +451,7 @@ async function main(): Promise<void> {
     isHome: input.isHome ?? input.isMain ?? false,
     isAdminHome: input.isAdminHome ?? input.isMain ?? false,
     agentBuilderEnabled: input.agentBuilderEnabled ?? false,
-    ownerProfileEnabled: input.miniclawOwnerProfileEnabled === true,
+    ownerProfileEnabled: input.industrialDiagnosisOwnerProfileEnabled === true,
     interactionMode: input.interactionMode ?? 'assistant',
     isScheduledTask: input.isScheduledTask === true,
     currentTaskId: input.messageTaskId ?? null,

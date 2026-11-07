@@ -19,12 +19,12 @@ import {
 } from 'vitest';
 
 const SHARED_TMP =
-  process.env.MINICLAW_TEST_DATA_DIR ??
+  process.env.INDUSTRIAL_DIAGNOSIS_TEST_DATA_DIR ??
   (() => {
     const d = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'miniclaw-stop-interrupt-'),
+      path.join(os.tmpdir(), 'industrial-diagnosis-stop-interrupt-'),
     );
-    process.env.MINICLAW_TEST_DATA_DIR = d;
+    process.env.INDUSTRIAL_DIAGNOSIS_TEST_DATA_DIR = d;
     return d;
   })();
 
@@ -32,7 +32,7 @@ const tmpDataDir = SHARED_TMP;
 
 vi.mock('../src/config.js', async (importOriginal) => {
   const real = (await importOriginal()) as Record<string, unknown>;
-  const dataDir = process.env.MINICLAW_TEST_DATA_DIR!;
+  const dataDir = process.env.INDUSTRIAL_DIAGNOSIS_TEST_DATA_DIR!;
   return {
     ...real,
     DATA_DIR: dataDir,
@@ -51,9 +51,9 @@ vi.mock('../src/middleware/auth.ts', async (importOriginal) => {
     ...real,
     authMiddleware: async (c: any, next: any) => {
       c.set('user', {
-        id: process.env.MINICLAW_TEST_USER_ID ?? 'alice',
+        id: process.env.INDUSTRIAL_DIAGNOSIS_TEST_USER_ID ?? 'alice',
         username: 'alice',
-        role: (process.env.MINICLAW_TEST_USER_ROLE ?? 'member') as
+        role: (process.env.INDUSTRIAL_DIAGNOSIS_TEST_USER_ROLE ?? 'member') as
           | 'admin'
           | 'member',
         permissions: [],
@@ -92,8 +92,8 @@ function seedTestGroup(): void {
 }
 
 function asUser(userId: string, role: 'admin' | 'member' = 'member'): void {
-  process.env.MINICLAW_TEST_USER_ID = userId;
-  process.env.MINICLAW_TEST_USER_ROLE = role;
+  process.env.INDUSTRIAL_DIAGNOSIS_TEST_USER_ID = userId;
+  process.env.INDUSTRIAL_DIAGNOSIS_TEST_USER_ROLE = role;
 }
 
 async function post(
@@ -127,8 +127,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  delete process.env.MINICLAW_TEST_USER_ID;
-  delete process.env.MINICLAW_TEST_USER_ROLE;
+  delete process.env.INDUSTRIAL_DIAGNOSIS_TEST_USER_ID;
+  delete process.env.INDUSTRIAL_DIAGNOSIS_TEST_USER_ROLE;
 });
 
 for (const route of ['/stop', '/interrupt'] as const) {

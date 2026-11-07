@@ -243,7 +243,7 @@ export interface ClaudeContextAudit {
     runtimePolicyHash?: string;
   };
   cwd?: string;
-  /** Miniclaw repository root used to distinguish platform memory from workspace memory. */
+  /** IndustrialDiagnosis repository root used to distinguish platform memory from workspace memory. */
   projectRoot?: string;
   claudeConfigDir?: string;
   externalClaudeDir?: string;
@@ -265,7 +265,7 @@ export interface ClaudeContextAudit {
   };
   skills: ClaudeContextSkillsAudit;
   mcp?: { manifestHash: string; serverIds: string[] };
-  miniclawPrompt: ClaudeContextPromptAudit;
+  industrialDiagnosisPrompt: ClaudeContextPromptAudit;
   sdkContextUsage?: ClaudeSdkContextUsageAudit;
   contextBudget?: {
     status: 'unavailable' | 'ok' | 'warning' | 'hard_exceeded';

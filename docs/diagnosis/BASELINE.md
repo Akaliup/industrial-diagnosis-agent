@@ -7,18 +7,18 @@
 
 | 项目 | 事实 |
 | --- | --- |
-| 源目录（只读） | `C:\Users\lz\Downloads\项目源码+简历生成skill\工业诊断\miniclaw-main` |
+| 源目录（只读） | 只读源快照（不记录本机绝对路径） |
 | 源目录 Git | 无 `.git`，不能提供 commit；按文件哈希记录快照 |
-| 产品/版本 | Miniclaw 1.0.0 |
+| 产品/版本 | 基线工程 1.0.0 |
 | 许可证 | MIT，`LICENSE` 保留在目标根目录 |
-| 声明仓库 | `https://github.com/helsome/miniclaw`（本次未验证上游可访问性，不据此声明上游状态） |
-| 参考项目（只读） | `C:\Users\lz\Downloads\项目源码+简历生成skill\工业诊断\craft-agents-oss-main`，Craft Agents 0.11.4，Apache-2.0；仅参考界面交互，不迁移 Bun workspace/账号/会话服务 |
+| 声明仓库 | `https://github.com/Akaliup/industrial-diagnosis-agent`（本次未验证上游可访问性，不据此声明上游状态） |
+| 参考项目（只读） | Craft Agents 0.11.4（本地只读快照），Apache-2.0；仅参考界面交互，不迁移 Bun workspace/账号/会话服务 |
 
 目标目录先建立本地 Git 基线，再开始实现：
 
 ```text
 commit fec1d5af9459fd91f23e5ab8f0f5d41b91440754
-baseline: import Miniclaw 1.0.0 source snapshot
+baseline: import source snapshot
 ```
 
 该提交的 `package.json`、`src/db.ts` 哈希与源目录逐字节一致，说明基线导入未夹带修改。
@@ -102,7 +102,7 @@ Windows 平台用例，未新增诊断相关失败。由于基线 worktree 与�
 | --- | --- |
 | 依赖 | 未新增根依赖；E2E 使用 `web/` 已安装的 Playwright 1.62.1 |
 | 诊断 Schema | `DIAGNOSIS_SCHEMA_VERSION=2`，新增 `diagnosis_runs.lease_token` 迁移 |
-| 数据隔离 | 单测使用 `mkdtemp` 临时库；诊断 E2E 使用 `work/diagnosis/e2e-data` + `MINICLAW_DATA_DIR` + 端口 3199 |
+| 数据隔离 | 单测使用 `mkdtemp` 临时库；诊断 E2E 使用 `work/diagnosis/e2e-data` + `INDUSTRIAL_DIAGNOSIS_DATA_DIR` + 端口 3199 |
 | 本地假服务 | 诊断 E2E 在本机随机端口启动假 REST，不访问企业或外部网络 |
 | 配置加载 | shell 环境变量 > `.env.diagnosis` > 代码默认值；无文件时静默使用默认值，非法值明确失败 |
 | 诊断测试 | 19 文件 / 92 测试通过 |

@@ -50,7 +50,7 @@
 - [x] 报警收件箱、发起诊断、工作台、设备台账、数据与知识、复核与审批、评测与回放
 - [x] 三种尺寸、键盘/触屏、进入/过渡/退出、reduced-motion
 - [x] 报告 JSON/Markdown/HTML 导出；HTML 可浏览器打印
-- [x] 幂等 `diagnosis:setup`，空库沿用 Miniclaw 初始化
+- [x] 幂等 `diagnosis:setup`，空库沿用工业诊断 Agent 初始化
 - [x] 真实运行截图（`docs/diagnosis/screenshots/`）
 - [x] Electron typecheck/build 通过；未制作签名安装包
 
@@ -87,7 +87,7 @@
 | 检查项 | 状态 | 证据 |
 | --- | --- | --- |
 | 来源快照、基线、许可证、移植记录 | PASS | `BASELINE.md`、`SOURCE_PROVENANCE.md`、commit `fec1d5a` |
-| 新旧数据库安装/迁移/备份恢复 | PARTIAL | 诊断迁移与临时库测试通过；Miniclaw 备份恢复用例在 Windows 因 symlink `EPERM` 失败，属基线平台问题 |
+| 新旧数据库安装/迁移/备份恢复 | PARTIAL | 诊断迁移与临时库测试通过；工业诊断 Agent 备份恢复用例在 Windows 因 symlink `EPERM` 失败，属基线平台问题 |
 | 统一 Tool 输入/输出/MCP/错误协议 | PASS | `contracts.test.ts`、`mcp-smoke.ts`、`diagnosis:smoke` |
 | 五阶段真实持久化、按假设补查 | PASS | `orchestrator.test.ts`、`diagnosis:demo`、Eval traces |
 | 引用可打开、错误版本/设备/作用域拒绝 | PASS | `report-validator.test.ts`、E2E 证据抽屉、`knowledge.test.ts` |

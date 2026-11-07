@@ -107,7 +107,7 @@ describe('buildClaudeEnvLines', () => {
         customEnv: {
           ANTHROPIC_DEFAULT_OPUS_MODEL: 'stale-model',
           CLAUDE_CODE_AUTO_COMPACT_WINDOW: '42',
-          MINICLAW_FALLBACK_MODEL: 'workspace-fallback',
+          INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL: 'workspace-fallback',
           PROJECT_ENV: 'kept',
         },
       },
@@ -118,7 +118,7 @@ describe('buildClaudeEnvLines', () => {
     expect(lines).toContain('CLAUDE_CODE_AUTO_COMPACT_WINDOW=1000000');
     expect(lines).not.toContain('ANTHROPIC_DEFAULT_OPUS_MODEL=stale-model');
     expect(lines).not.toContain('CLAUDE_CODE_AUTO_COMPACT_WINDOW=42');
-    expect(lines).not.toContain('MINICLAW_FALLBACK_MODEL=workspace-fallback');
+    expect(lines).not.toContain('INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=workspace-fallback');
     expect(lines).toContain('PROJECT_ENV=kept');
   });
 
@@ -127,33 +127,33 @@ describe('buildClaudeEnvLines', () => {
       config({ anthropicBaseUrl: '', anthropicModel: '' }),
       {
         customEnv: {
-          MINICLAW_WORKSPACE_GLOBAL: '/attacker/global',
-          MINICLAW_WORKSPACE_MEMORY: '/attacker/memory',
+          INDUSTRIAL_DIAGNOSIS_WORKSPACE_GLOBAL: '/attacker/global',
+          INDUSTRIAL_DIAGNOSIS_WORKSPACE_MEMORY: '/attacker/memory',
           PROJECT_ENV: 'kept',
         },
       },
       NO_CUSTOM_ENV,
     );
 
-    expect(lines).not.toContain('MINICLAW_WORKSPACE_GLOBAL=/attacker/global');
-    expect(lines).not.toContain('MINICLAW_WORKSPACE_MEMORY=/attacker/memory');
+    expect(lines).not.toContain('INDUSTRIAL_DIAGNOSIS_WORKSPACE_GLOBAL=/attacker/global');
+    expect(lines).not.toContain('INDUSTRIAL_DIAGNOSIS_WORKSPACE_MEMORY=/attacker/memory');
     expect(lines).toContain('PROJECT_ENV=kept');
   });
 
   test('blocks container identity and session permission control variables', () => {
     const blocked = {
-      MINICLAW_HOST_IDENTITY_MODE: 'direct',
-      MINICLAW_HOST_UID: '0',
-      MINICLAW_HOST_GID: '0',
-      MINICLAW_INTERNAL_IDENTITY_MODE: 'direct',
-      MINICLAW_INTERNAL_FUTURE_ROOT_KNOB: '/workspace/group/evil',
-      MINICLAW_PASSWD_FILE: '/workspace/group/passwd',
-      MINICLAW_RECONCILE_SESSION_PERMISSIONS: '1',
-      MINICLAW_MOUNT_PREPARE_MODE: 'recursive',
-      MINICLAW_RUNTIME_USER: 'root',
-      MINICLAW_SESSION_ROOT: '/',
-      MINICLAW_SESSION_PERMISSION_PID: '1',
-      MINICLAW_SESSION_PERMISSION_HELPER: '/workspace/group/evil.sh',
+      INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE: 'direct',
+      INDUSTRIAL_DIAGNOSIS_HOST_UID: '0',
+      INDUSTRIAL_DIAGNOSIS_HOST_GID: '0',
+      INDUSTRIAL_DIAGNOSIS_INTERNAL_IDENTITY_MODE: 'direct',
+      INDUSTRIAL_DIAGNOSIS_INTERNAL_FUTURE_ROOT_KNOB: '/workspace/group/evil',
+      INDUSTRIAL_DIAGNOSIS_PASSWD_FILE: '/workspace/group/passwd',
+      INDUSTRIAL_DIAGNOSIS_RECONCILE_SESSION_PERMISSIONS: '1',
+      INDUSTRIAL_DIAGNOSIS_MOUNT_PREPARE_MODE: 'recursive',
+      INDUSTRIAL_DIAGNOSIS_RUNTIME_USER: 'root',
+      INDUSTRIAL_DIAGNOSIS_SESSION_ROOT: '/',
+      INDUSTRIAL_DIAGNOSIS_SESSION_PERMISSION_PID: '1',
+      INDUSTRIAL_DIAGNOSIS_SESSION_PERMISSION_HELPER: '/workspace/group/evil.sh',
       PATH: '/workspace/group/bin',
       NODE_OPTIONS: '--require=/workspace/group/evil.js',
       LD_PRELOAD: '/workspace/group/evil.so',
@@ -174,8 +174,8 @@ describe('buildClaudeEnvLines', () => {
   test('injects an authoritative endpoint kind that custom env cannot replace', () => {
     const thirdParty = buildContainerEnvLines(
       config({ anthropicBaseUrl: 'https://proxy.test' }),
-      { customEnv: { MINICLAW_CLAUDE_ENDPOINT_KIND: 'official' } },
-      { MINICLAW_CLAUDE_ENDPOINT_KIND: 'official' },
+      { customEnv: { INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND: 'official' } },
+      { INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND: 'official' },
     );
     const official = buildContainerEnvLines(
       config({ anthropicBaseUrl: '', anthropicModel: '' }),
@@ -183,9 +183,9 @@ describe('buildClaudeEnvLines', () => {
       NO_CUSTOM_ENV,
     );
 
-    expect(thirdParty).toContain('MINICLAW_CLAUDE_ENDPOINT_KIND=custom');
-    expect(thirdParty).not.toContain('MINICLAW_CLAUDE_ENDPOINT_KIND=official');
-    expect(official).toContain('MINICLAW_CLAUDE_ENDPOINT_KIND=official');
+    expect(thirdParty).toContain('INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND=custom');
+    expect(thirdParty).not.toContain('INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND=official');
+    expect(official).toContain('INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND=official');
   });
 
   test('clears inherited provider values before host-mode config is applied', () => {
@@ -195,7 +195,7 @@ describe('buildClaudeEnvLines', () => {
       ANTHROPIC_API_KEY: 'stale-key',
       ANTHROPIC_MODEL: 'stale-model',
       ANTHROPIC_CUSTOM_HEADERS: 'x-stale-auth: yes',
-      MINICLAW_CLAUDE_ENDPOINT_KIND: 'custom',
+      INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND: 'custom',
       KEEP_ME: 'yes',
     };
 
@@ -206,7 +206,7 @@ describe('buildClaudeEnvLines', () => {
     expect(env.ANTHROPIC_API_KEY).toBeUndefined();
     expect(env.ANTHROPIC_MODEL).toBeUndefined();
     expect(env.ANTHROPIC_CUSTOM_HEADERS).toBeUndefined();
-    expect(env.MINICLAW_CLAUDE_ENDPOINT_KIND).toBeUndefined();
+    expect(env.INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND).toBeUndefined();
     expect(env.KEEP_ME).toBe('yes');
 
     const selectedProviderLines = buildContainerEnvLines(

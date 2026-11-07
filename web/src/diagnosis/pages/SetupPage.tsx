@@ -60,7 +60,7 @@ export function SetupPage() {
             创建管理员账户
           </h1>
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            该账户用于登录 Miniclaw
+            该账户用于登录工业诊断 Agent
             与诊断工作台。系统不会写入通用默认密码，请设置你自己的强密码。
           </p>
 

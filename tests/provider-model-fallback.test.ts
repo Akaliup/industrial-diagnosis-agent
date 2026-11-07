@@ -89,7 +89,7 @@ describe('provider model fallback lifecycle', () => {
     expect(state.activateForResult("You've hit your Opus limit.")).toBe(false);
 
     const provider = resolveClaudeProviderRuntime({
-      MINICLAW_CLAUDE_ENDPOINT_KIND: 'official',
+      INDUSTRIAL_DIAGNOSIS_CLAUDE_ENDPOINT_KIND: 'official',
       ANTHROPIC_MODEL: 'primary-model',
     });
     expect(
@@ -225,16 +225,16 @@ describe('provider model fallback lifecycle', () => {
 
   test('global fallback env is authoritative and empty config removes inherited values', () => {
     const configured = [
-      'MINICLAW_FALLBACK_MODEL=workspace-value',
+      'INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=workspace-value',
       'KEEP_ME=yes',
     ];
     applyFallbackModelToEnvLines(configured, 'fallback-model');
-    expect(configured).toContain('MINICLAW_FALLBACK_MODEL=fallback-model');
+    expect(configured).toContain('INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=fallback-model');
     expect(configured).not.toContain(
-      'MINICLAW_FALLBACK_MODEL=workspace-value',
+      'INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=workspace-value',
     );
 
-    const cleared = ['MINICLAW_FALLBACK_MODEL=inherited-value', 'KEEP_ME=yes'];
+    const cleared = ['INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=inherited-value', 'KEEP_ME=yes'];
     applyFallbackModelToEnvLines(cleared, '');
     expect(cleared).toEqual(['KEEP_ME=yes']);
   });

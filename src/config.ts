@@ -11,9 +11,9 @@ const envWithLegacyAlias = (
 ): string => process.env[current] || process.env[legacy] || fallback;
 
 export const ASSISTANT_NAME = envWithLegacyAlias(
-  'MINICLAW_ASSISTANT_NAME',
+  'INDUSTRIAL_DIAGNOSIS_ASSISTANT_NAME',
   'ASSISTANT_NAME',
-  'Miniclaw',
+  '工业诊断 Agent',
 );
 export const POLL_INTERVAL = 2000;
 export const SCHEDULER_POLL_INTERVAL = 60000;
@@ -30,10 +30,10 @@ export const MOUNT_ALLOWLIST_PATH = path.resolve(
   'config',
   'mount-allowlist.json',
 );
-// 测试/CI 可通过 MINICLAW_DATA_DIR 把全部运行时数据隔离到临时目录；
+// 测试/CI 可通过 INDUSTRIAL_DIAGNOSIS_DATA_DIR 把全部运行时数据隔离到临时目录；
 // 未设置时保持原有的仓库 data/ 布局。
-export const DATA_DIR = process.env.MINICLAW_DATA_DIR
-  ? path.resolve(PROJECT_ROOT, process.env.MINICLAW_DATA_DIR)
+export const DATA_DIR = process.env.INDUSTRIAL_DIAGNOSIS_DATA_DIR
+  ? path.resolve(PROJECT_ROOT, process.env.INDUSTRIAL_DIAGNOSIS_DATA_DIR)
   : path.resolve(PROJECT_ROOT, 'data');
 export const STORE_DIR = path.join(DATA_DIR, 'db');
 export const GROUPS_DIR = path.join(DATA_DIR, 'groups');
@@ -49,9 +49,9 @@ export const MAX_FILE_SIZE_MB =
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export const CONTAINER_IMAGE = envWithLegacyAlias(
-  'MINICLAW_CONTAINER_IMAGE',
+  'INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE',
   'CONTAINER_IMAGE',
-  'helsome/miniclaw-agent:latest',
+  'industrial-diagnosis-agent:latest',
 );
 // Timezone for scheduled tasks (cron expressions, etc.)
 // Uses TZ env var with Asia/Shanghai fallback
@@ -67,8 +67,8 @@ export const WEB_PORT = parseInt(process.env.WEB_PORT || '3000', 10);
 // When accessed over HTTPS: use __Host- prefix (requires Secure; Path=/; no Domain)
 // When accessed over HTTP (localhost dev or no TLS): use plain name
 // Determined per-request via isSecureRequest(), not at startup
-export const SESSION_COOKIE_NAME_SECURE = '__Host-miniclaw_session';
-export const SESSION_COOKIE_NAME_PLAIN = 'miniclaw_session';
+export const SESSION_COOKIE_NAME_SECURE = '__Host-industrial_diagnosis_session';
+export const SESSION_COOKIE_NAME_PLAIN = 'industrial_diagnosis_session';
 export const LEGACY_SESSION_COOKIE_NAME_SECURE = SESSION_COOKIE_NAME_SECURE;
 export const LEGACY_SESSION_COOKIE_NAME_PLAIN = SESSION_COOKIE_NAME_PLAIN;
 const SESSION_SECRET_FILE = path.join(DATA_DIR, 'config', 'session-secret.key');

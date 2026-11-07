@@ -20,7 +20,7 @@ export type SubAgentResult = {
 };
 
 /**
- * Adapter over pi-subagents' documented event-bus RPC. Miniclaw does not
+ * Adapter over pi-subagents' documented event-bus RPC. IndustrialDiagnosis does not
  * import the extension's internal classes, so the third-party package can be
  * replaced without changing the product runtime contract.
  */

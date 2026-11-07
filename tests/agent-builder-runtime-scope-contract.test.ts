@@ -22,7 +22,7 @@ describe('Agent Builder runtime scope contract', () => {
 
     const promptAssembly = section(
       runner,
-      'const promptPlan = buildMiniclawPromptPlan({',
+      'const promptPlan = buildIndustrialDiagnosisPromptPlan({',
       'const systemPromptAppend = promptPlan.text;',
     );
     expect(promptAssembly).toMatch(/agentBuilderEnabled/);

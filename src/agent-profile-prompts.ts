@@ -57,7 +57,7 @@ export function hasAgentProfilePrompts(
 
 /**
  * Build the user-configurable Agent prompt in one canonical order. This is not
- * the complete Miniclaw system prompt: platform runtime, channel, and memory
+ * the complete IndustrialDiagnosis system prompt: platform runtime, channel, and memory
  * instructions are appended outside this block and cannot be removed by
  * prompt_mode=replace.
  */

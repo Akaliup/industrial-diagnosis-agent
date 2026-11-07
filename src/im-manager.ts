@@ -1852,7 +1852,7 @@ export class IMConnectionManager {
   }
 
   /**
-   * Sync every connected Feishu bot owned by one Miniclaw user.
+   * Sync every connected Feishu bot owned by one IndustrialDiagnosis user.
    *
    * The binding UI uses this instead of guessing a default account: every bot
    * has a different chat membership inventory, and legacy/default connectors

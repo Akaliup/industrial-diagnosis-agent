@@ -96,7 +96,7 @@ describe('exact processing indicator host contract', () => {
     }
   });
 
-  test('provider registry keys omit Miniclaw account scoping on attach', () => {
+  test('provider registry keys omit IndustrialDiagnosis account scoping on attach', () => {
     for (const file of ['src/feishu.ts', 'src/discord.ts', 'src/dingtalk.ts']) {
       expect(fs.readFileSync(file, 'utf8')).toMatch(/extractProviderTarget/);
     }

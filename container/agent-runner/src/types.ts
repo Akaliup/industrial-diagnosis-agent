@@ -1,5 +1,5 @@
 /**
- * Shared types for Miniclaw Agent Runner.
+ * Shared types for IndustrialDiagnosis Agent Runner.
  *
  * These types are used across index.ts, stream-processor.ts, and mcp-tools.ts.
  */
@@ -9,7 +9,7 @@ export type { StreamEventType, StreamEvent } from './stream-event.types.js';
 import type { ClaudeContextAudit, StreamEvent } from './stream-event.types.js';
 
 /**
- * Sanitized, per-input-turn channel identity supplied by the Miniclaw host.
+ * Sanitized, per-input-turn channel identity supplied by the IndustrialDiagnosis host.
  *
  * This is deliberately a capability context rather than a credential bag:
  * tokens, app secrets and provider client objects must never cross the runner
@@ -184,7 +184,7 @@ export function formatChannelTurnContextForPrompt(
 ): string {
   if (!context) return '';
   return [
-    '<channel_context source="miniclaw_host" trust="verified">',
+    '<channel_context source="industrial_diagnosis_host" trust="verified">',
     JSON.stringify(context),
     '</channel_context>',
     'Use this context for the current input only. Never guess IDs or credentials that are absent.',
@@ -236,7 +236,7 @@ export interface ContainerInput {
     id: string;
     name: string;
     version: number;
-    /** Host-authoritative marker for the built-in Miniclaw AgentProfile. */
+    /** Host-authoritative marker for the built-in IndustrialDiagnosis AgentProfile. */
     isDefault: boolean;
     identityHash: string;
     identityPrompt: string;
@@ -245,15 +245,15 @@ export interface ContainerInput {
     runtimePolicy?: unknown;
   };
   /**
-   * True only for an interactive turn in the built-in Miniclaw Home
+   * True only for an interactive turn in the built-in IndustrialDiagnosis Home
    * Workspace before the owner-preferred-address memory has been established.
    */
-  miniclawBootstrapPending?: boolean;
+  industrialDiagnosisBootstrapPending?: boolean;
   /**
    * Initial host-authoritative projection for the actual owner turn. A
    * dedicated IPC read refreshes this before every cold/warm model turn.
    */
-  miniclawOwnerProfile?: {
+  industrialDiagnosisOwnerProfile?: {
     workspaceJid: string;
     preferredAddress: string | null;
     revision: number | null;
@@ -267,9 +267,9 @@ export interface ContainerInput {
   };
   /** Structural capability; the host re-authorizes the actual sender on every
    * cold/warm Owner Profile IPC request. */
-  miniclawOwnerProfileEnabled?: boolean;
+  industrialDiagnosisOwnerProfileEnabled?: boolean;
   /** Host-derived capability flag. True only for an interactive session whose
-   * effective top-level AgentProfile is the built-in main Miniclaw. */
+   * effective top-level AgentProfile is the built-in main IndustrialDiagnosis. */
   agentBuilderEnabled?: boolean;
   agentId?: string;
   agentName?: string;
@@ -282,7 +282,7 @@ export interface ContainerInput {
   plugins?: Array<{ type: 'local'; path: string }>;
   /** Runtime context audit bootstrap from the host/container launcher. */
   contextAudit?: ClaudeContextAudit;
-  /** Canonical effective Skill set resolved by the Miniclaw host. */
+  /** Canonical effective Skill set resolved by the IndustrialDiagnosis host. */
   skillManifest?: { hash: string; selectedSkillIds: string[] };
 }
 

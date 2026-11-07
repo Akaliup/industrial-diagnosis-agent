@@ -15,7 +15,7 @@ function normalizeUrl(url: string): string {
   return url.endsWith('/') ? url : `${url}/`;
 }
 
-export function isLegacyMiniclawRegistration(
+export function isLegacyIndustrialDiagnosisRegistration(
   registration: Pick<
     ServiceWorkerRegistration,
     'scope' | 'active' | 'waiting' | 'installing'
@@ -33,7 +33,7 @@ export function isLegacyMiniclawRegistration(
 }
 
 /**
- * Remove registrations and Cache Storage left by Miniclaw releases that used
+ * Remove registrations and Cache Storage left by 工业诊断 Agent releases that used
  * Workbox. The cleanup is deliberately best-effort and never blocks rendering.
  */
 export async function cleanupLegacyPwaArtifacts(): Promise<void> {
@@ -52,7 +52,7 @@ export async function cleanupLegacyPwaArtifacts(): Promise<void> {
           Promise.allSettled(
             registrations
               .filter((registration) =>
-                isLegacyMiniclawRegistration(
+                isLegacyIndustrialDiagnosisRegistration(
                   registration,
                   appScope,
                   legacyScriptUrl,

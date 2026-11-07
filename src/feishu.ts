@@ -81,7 +81,7 @@ import type {
 export interface FeishuConnectionConfig {
   appId: string;
   appSecret: string;
-  /** Optional Miniclaw account id. The scoped source JID remains authoritative. */
+  /** Optional IndustrialDiagnosis account id. The scoped source JID remains authoritative. */
   channelAccountId?: string;
 }
 
@@ -3723,7 +3723,7 @@ export function createFeishuConnection(
 
             // chat.list is the authoritative membership inventory for the bot.
             // Register every visible chat, even when the membership event was
-            // missed or the chat has never sent a message to Miniclaw. The
+            // missed or the chat has never sent a message to IndustrialDiagnosis. The
             // account-scoping wrapper makes the JID unique for multi-bot users.
             connectOptions?.onNewChat?.(rawJid, chatName);
             if (chat.avatar) {

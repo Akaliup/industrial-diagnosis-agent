@@ -360,7 +360,7 @@ export function createDiscordConnection(
       if (msg.author.bot) return;
 
       // Discord group DMs do not have a stable channel ownership model in
-      // Miniclaw (the previous implementation incorrectly keyed them by the
+      // IndustrialDiagnosis (the previous implementation incorrectly keyed them by the
       // individual sender). Match OpenClaw's safe default and ignore them.
       if (isUnsupportedDiscordGroupDm(msg.channel.type)) {
         logger.debug({ channelId: msg.channelId }, 'Discord GroupDM ignored');
@@ -794,7 +794,7 @@ export function createDiscordConnection(
           readyFired = true;
           opts.onReady?.();
 
-          // Register Miniclaw slash commands as Discord Application Commands
+          // Register IndustrialDiagnosis slash commands as Discord Application Commands
           try {
             await readyClient.application.commands.set([
               { name: 'clear', description: '清除当前对话的会话上下文' },
@@ -857,7 +857,7 @@ export function createDiscordConnection(
             : `discord:${interaction.channelId}`;
           const jid = opts.normalizeIncomingJid?.(rawJid) ?? rawJid;
 
-          // Build command string matching Miniclaw's text command format.
+          // Build command string matching IndustrialDiagnosis's text command format.
           let cmdBody = interaction.commandName;
           const enabledOpt =
             interaction.commandName === 'require_mention'

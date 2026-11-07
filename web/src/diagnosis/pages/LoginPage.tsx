@@ -127,7 +127,7 @@ export function LoginPage() {
               登录工作台
             </h2>
             <p className="mt-1 text-xs text-gray-500">
-              使用 Miniclaw 账户登录，诊断数据按工作区隔离。
+              使用工业诊断 Agent 账户登录，诊断数据按工作区隔离。
             </p>
 
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">

@@ -1,7 +1,7 @@
 /**
  * 设备智诊 Schema 与迁移。
  *
- * 表建在 Miniclaw 现有 SQLite 连接上；不修改旧表，不改变主服务迁移版本。
+ * 表建在 IndustrialDiagnosis 现有 SQLite 连接上；不修改旧表，不改变主服务迁移版本。
  * 迁移具备：版本记录、前向升级、拒绝降级、事务、文件库升级前 VACUUM INTO 备份。
  */
 import fs from 'node:fs';

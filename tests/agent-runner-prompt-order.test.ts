@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { buildMiniclawPromptPlan } from '../container/agent-runner/src/prompt-plan.js';
+import { buildIndustrialDiagnosisPromptPlan } from '../container/agent-runner/src/prompt-plan.js';
 
 describe('agent-runner system prompt composition order', () => {
   test('Agent identity leads platform workspace/context material', () => {
-    const plan = buildMiniclawPromptPlan({
-      platformIdentity: 'Miniclaw',
+    const plan = buildIndustrialDiagnosisPromptPlan({
+      platformIdentity: 'IndustrialDiagnosis',
       platformBootstrap: 'first wake',
       agentIdentity: 'identity',
       interaction: 'interaction',
@@ -12,8 +12,8 @@ describe('agent-runner system prompt composition order', () => {
       output: 'output',
     });
     expect(plan.blocks.map((block) => block.id)).toEqual([
-      'identity.miniclaw',
-      'bootstrap.miniclaw',
+      'identity.industrial-diagnosis',
+      'bootstrap.industrial-diagnosis',
       'agent-profile',
       'interaction',
       'security-rules',

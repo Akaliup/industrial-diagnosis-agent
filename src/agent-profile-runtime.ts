@@ -14,18 +14,18 @@ import type { AgentProfile, RegisteredGroup } from './types.js';
 import { logger } from './logger.js';
 
 /**
- * The built-in Miniclaw identity is code-owned rather than persisted in an
+ * The built-in IndustrialDiagnosis identity is code-owned rather than persisted in an
  * editable AgentProfile field. Bump this version whenever the protected
  * identity contract changes so existing SDK sessions restart under it.
  */
-export const MINICLAW_PLATFORM_IDENTITY_VERSION = 1;
+export const INDUSTRIAL_DIAGNOSIS_PLATFORM_IDENTITY_VERSION = 1;
 
-export function bindMiniclawPlatformIdentityHash(
+export function bindIndustrialDiagnosisPlatformIdentityHash(
   identityHash: string,
 ): string {
   return createHash('sha256')
     .update(
-      `miniclaw-platform-identity:v${MINICLAW_PLATFORM_IDENTITY_VERSION}\0${identityHash}`,
+      `industrial-diagnosis-platform-identity:v${INDUSTRIAL_DIAGNOSIS_PLATFORM_IDENTITY_VERSION}\0${identityHash}`,
       'utf8',
     )
     .digest('hex');
@@ -95,7 +95,7 @@ export function resolveEffectiveAgentProfile(
   return {
     ...profile,
     identity_hash: profile.is_default
-      ? bindMiniclawPlatformIdentityHash(effectiveIdentityHash)
+      ? bindIndustrialDiagnosisPlatformIdentityHash(effectiveIdentityHash)
       : effectiveIdentityHash,
     runtime_policy: effectiveRuntimePolicy,
   };

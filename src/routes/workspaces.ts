@@ -19,13 +19,13 @@ import {
   type AgentChannelMountRecord,
   type WorkspaceRecord,
 } from '../db.js';
-import { MiniclawOwnerProfileMutationSchema } from '../schemas.js';
+import { IndustrialDiagnosisOwnerProfileMutationSchema } from '../schemas.js';
 import {
-  clearMiniclawOwnerPreferredAddress,
-  getMiniclawOwnerProfileProjection,
+  clearIndustrialDiagnosisOwnerPreferredAddress,
+  getIndustrialDiagnosisOwnerProfileProjection,
   OwnerProfileStoreError,
-  setMiniclawOwnerPreferredAddress,
-  skipMiniclawOwnerIntroduction,
+  setIndustrialDiagnosisOwnerPreferredAddress,
+  skipIndustrialDiagnosisOwnerIntroduction,
 } from '../owner-profile-store.js';
 
 const workspaceRoutes = new Hono<{ Variables: Variables }>();
@@ -206,7 +206,7 @@ workspaceRoutes.get('/:jid/owner-profile', authMiddleware, (c) => {
   if (!access) return c.json({ error: 'Owner Profile not found' }, 404);
   try {
     return c.json({
-      profile: getMiniclawOwnerProfileProjection(access.workspace.jid),
+      profile: getIndustrialDiagnosisOwnerProfileProjection(access.workspace.jid),
     });
   } catch (error) {
     return ownerProfileError(c, error);
@@ -218,7 +218,7 @@ workspaceRoutes.patch('/:jid/owner-profile', authMiddleware, async (c) => {
   const access = resolveOwnerProfileAccess(user, c.req.param('jid'));
   if (!access) return c.json({ error: 'Owner Profile not found' }, 404);
   const body = await c.req.json().catch(() => null);
-  const parsed = MiniclawOwnerProfileMutationSchema.safeParse(body);
+  const parsed = IndustrialDiagnosisOwnerProfileMutationSchema.safeParse(body);
   if (!parsed.success) {
     return c.json(
       { error: 'Invalid request', details: parsed.error.format() },
@@ -235,7 +235,7 @@ workspaceRoutes.patch('/:jid/owner-profile', authMiddleware, async (c) => {
     switch (parsed.data.action) {
       case 'set':
         return c.json(
-          setMiniclawOwnerPreferredAddress({
+          setIndustrialDiagnosisOwnerPreferredAddress({
             workspaceJid: access.workspace.jid,
             preferredAddress: parsed.data.preferredAddress,
             expectedRevision: parsed.data.expectedRevision,
@@ -245,7 +245,7 @@ workspaceRoutes.patch('/:jid/owner-profile', authMiddleware, async (c) => {
         );
       case 'clear':
         return c.json(
-          clearMiniclawOwnerPreferredAddress({
+          clearIndustrialDiagnosisOwnerPreferredAddress({
             workspaceJid: access.workspace.jid,
             expectedRevision: parsed.data.expectedRevision,
             idempotencyKey: parsed.data.idempotencyKey,
@@ -254,7 +254,7 @@ workspaceRoutes.patch('/:jid/owner-profile', authMiddleware, async (c) => {
         );
       case 'skip':
         return c.json(
-          skipMiniclawOwnerIntroduction({
+          skipIndustrialDiagnosisOwnerIntroduction({
             workspaceJid: access.workspace.jid,
             expectedOnboardingRevision: parsed.data.expectedOnboardingRevision,
             context,

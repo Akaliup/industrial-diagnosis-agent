@@ -1,7 +1,7 @@
 export type AgentRuntimeKind = 'claude' | 'pi';
 
 export const AGENT_RUNTIME_ENV = 'AGENT_RUNTIME';
-export const MINICLAW_AGENT_RUNTIME_ENV = 'MINICLAW_AGENT_RUNTIME';
+export const INDUSTRIAL_DIAGNOSIS_AGENT_RUNTIME_ENV = 'INDUSTRIAL_DIAGNOSIS_AGENT_RUNTIME';
 
 /**
  * Resolve the runner engine. Pi is the product runtime; Claude is retained
@@ -11,7 +11,7 @@ export const MINICLAW_AGENT_RUNTIME_ENV = 'MINICLAW_AGENT_RUNTIME';
 export function resolveAgentRuntimeKind(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): AgentRuntimeKind {
-  const configured = (env[MINICLAW_AGENT_RUNTIME_ENV] || env[AGENT_RUNTIME_ENV])
+  const configured = (env[INDUSTRIAL_DIAGNOSIS_AGENT_RUNTIME_ENV] || env[AGENT_RUNTIME_ENV])
     ?.trim()
     .toLowerCase();
   if (!configured || configured === 'pi') return 'pi';

@@ -2,7 +2,7 @@
  * 初始化“设备智诊”演示数据（幂等）。
  *
  * 只写入诊断领域表与本地知识库；不会创建用户、不会设置默认密码，
- * 也不会修改 Miniclaw 主 Schema 版本。
+ * 也不会修改 IndustrialDiagnosis 主 Schema 版本。
  *
  * 用法：npm run diagnosis:setup
  * 环境变量：DIAGNOSIS_SETUP_WORKSPACE（默认 web:main）

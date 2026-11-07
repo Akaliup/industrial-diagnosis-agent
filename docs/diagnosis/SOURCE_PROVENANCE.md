@@ -4,10 +4,10 @@
 
 | 项目 | 版本 | 许可证 | 使用方式 |
 | --- | --- | --- | --- |
-| Miniclaw | 1.0.0 | MIT | 目标项目基线；保留其 Node/TypeScript、Hono、React、SQLite、鉴权、Web 构建、测试与 CI 结构 |
+| 基线工程（上游快照） | 1.0.0 | MIT | 目标项目基线；保留其 Node/TypeScript、Hono、React、SQLite、鉴权、Web 构建、测试与 CI 结构 |
 | Craft Agents（本地快照） | 0.11.4 | Apache-2.0 | 只参考工作台的信息层级、状态步骤条、证据抽屉、复核队列等交互模式；未复制其 Bun workspace、账号体系、Electron IPC、会话服务或后台任务实现 |
 
-Miniclaw 的 `LICENSE`、`README.md`、`SECURITY.md` 与原有依赖锁文件均保留。
+基线工程的 `LICENSE`、`README.md`、`SECURITY.md` 与原有依赖锁文件均保留。
 Craft 的源码没有进入目标目录，因此没有分发其代码；本文记录参考关系，便于后续审计。
 
 ## 2. 本次新增代码
@@ -32,7 +32,7 @@ evals/diagnosis/                      50 例输入与 gold
 
 ## 3. 第三方依赖
 
-沿用 Miniclaw 已锁定的依赖，没有新增需要改变许可证边界的运行时：
+沿用基线工程已锁定的依赖，没有新增需要改变许可证边界的运行时：
 
 | 依赖 | 用途 | 许可证（上游声明） |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ evals/diagnosis/                      50 例输入与 gold
 - 没有把 Craft 的 Bun 工作区、账户、登录态、Electron IPC 或任何真实用户数据搬入目标目录。
 - 没有使用真实企业设备数据、真实工单、真实手册或真实 RootCloud 接口。
 - `fixtures/diagnosis/` 与 `evals/diagnosis/` 中的设备、报警、手册、案例均为虚构或合成数据，并在 UI/报告中标注“模拟数据 / Fixture 预录推理”。
-- 没有复制 Miniclaw 上游仓库的 Git 历史；目标仓库的基线提交是本任务建立的本地快照。
+- 没有复制上游仓库的 Git 历史；目标仓库的基线提交是本任务建立的本地快照。
 - 没有把任何个人密钥、Cookie、企业账号写入源码、fixture、文档或提交。
 
 ## 5. 参考的交互模式
@@ -64,4 +64,4 @@ evals/diagnosis/                      50 例输入与 gold
 | 复核队列 | Craft 待处理列表 | `ReviewsPage.tsx`，数据来自 `diagnosis_runs` / `diagnosis_reviews` |
 | 工具调用轨迹 | Agent 运行轨迹展示 | `ToolTrace.tsx`，展示 PolicyGateway 记录的逻辑调用与尝试 |
 
-这些组件按 Miniclaw 的 React 19、Tailwind 4、Radix 组件体系重写，没有引入 Craft 的运行时依赖。
+这些组件按基线工程的 React 19、Tailwind 4、Radix 组件体系重写，没有引入 Craft 的运行时依赖。

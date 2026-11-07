@@ -5,7 +5,7 @@ import { createWeChatHttpDispatcher } from './wechat-http.js';
 const WECHAT_API_BASE = 'https://ilinkai.weixin.qq.com';
 const WECHAT_QR_BOT_TYPE = '3';
 const WECHAT_ILINK_APP_ID = 'bot';
-const MINICLAW_CHANNEL_VERSION = '1.0.0';
+const INDUSTRIAL_DIAGNOSIS_CHANNEL_VERSION = '1.0.0';
 
 export type WeChatQrStatusValue =
   | 'wait'
@@ -34,7 +34,7 @@ export interface WeChatQrStatus {
 export interface WeChatQrStartOptions {
   /** Existing token for this account only. Never include another user's token. */
   localTokenList?: string[];
-  /** Bypass Miniclaw's HTTP(S) proxy for this account. */
+  /** Bypass IndustrialDiagnosis's HTTP(S) proxy for this account. */
   bypassProxy?: boolean;
 }
 
@@ -43,7 +43,7 @@ export interface WeChatQrPollOptions {
   baseUrl?: string;
   /** Number shown by the WeChat client for second-factor verification. */
   verifyCode?: string;
-  /** Bypass Miniclaw's HTTP(S) proxy for this account. */
+  /** Bypass IndustrialDiagnosis's HTTP(S) proxy for this account. */
   bypassProxy?: boolean;
 }
 
@@ -61,7 +61,7 @@ export function weChatIlinkHeaders(): Record<string, string> {
   return {
     'iLink-App-Id': WECHAT_ILINK_APP_ID,
     'iLink-App-ClientVersion': String(
-      encodeWeChatClientVersion(MINICLAW_CHANNEL_VERSION),
+      encodeWeChatClientVersion(INDUSTRIAL_DIAGNOSIS_CHANNEL_VERSION),
     ),
   };
 }

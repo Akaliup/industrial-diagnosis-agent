@@ -71,7 +71,7 @@ export function resolveFeishuCliBoundAccountId(
  * An exact inbound Feishu turn is authoritative. A workspace-level account is
  * used only when no turn-scoped account exists. With no bound account this
  * returns null and feishu-cli resolves any native container profile/config
- * without Miniclaw parsing it. Host-mode execution must not call this
+ * without IndustrialDiagnosis parsing it. Host-mode execution must not call this
  * resolver at all.
  *
  * Once a Feishu account is explicitly bound, failures are closed rather than

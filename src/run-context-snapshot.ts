@@ -114,10 +114,10 @@ export function recordRunContextSnapshot(input: {
         }
       : null,
     prompt: {
-      planHash: audit.miniclawPrompt.planHash ?? null,
-      totalBytes: audit.miniclawPrompt.totalBytes,
-      estimatedTokens: nullableNumber(audit.miniclawPrompt.estimatedTokens),
-      blocks: audit.miniclawPrompt.files.map((block) => ({
+      planHash: audit.industrialDiagnosisPrompt.planHash ?? null,
+      totalBytes: audit.industrialDiagnosisPrompt.totalBytes,
+      estimatedTokens: nullableNumber(audit.industrialDiagnosisPrompt.estimatedTokens),
+      blocks: audit.industrialDiagnosisPrompt.files.map((block) => ({
         id: block.id ?? block.name,
         version: nullableNumber(block.version),
         scope: block.scope ?? null,

@@ -143,7 +143,7 @@ export function resolveFeishuConversationPlan(
   }
 
   // Feishu can deliver the first bot mention from an already-existing native
-  // thread before Miniclaw has created its durable context binding. Preserve
+  // thread before IndustrialDiagnosis has created its durable context binding. Preserve
   // that native thread identity instead of anchoring a second, nested topic to
   // the triggering message. Once admitted, subsequent messages resolve via
   // the active-context branch above and no longer require another mention.

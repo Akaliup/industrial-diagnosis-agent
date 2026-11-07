@@ -105,7 +105,7 @@ export async function testChannelAccountCredentials(
       return {
         success: false,
         error:
-          '当前账号要求使用 HTTP(S) 代理，但 Miniclaw 启动环境中没有配置 HTTPS_PROXY 或 HTTP_PROXY',
+          '当前账号要求使用 HTTP(S) 代理，但工业诊断 Agent 启动环境中没有配置 HTTPS_PROXY 或 HTTP_PROXY',
       };
     }
 

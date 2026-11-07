@@ -14,7 +14,7 @@ import {
 let tmp: string;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'miniclaw-pm-'));
+  tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'industrial-diagnosis-pm-'));
 });
 
 afterEach(() => {

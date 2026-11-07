@@ -26,7 +26,7 @@ vi.mock('../src/db.js', () => ({
 }));
 
 vi.mock('../src/config.js', () => ({
-  DATA_DIR: '/tmp/miniclaw-test',
+  DATA_DIR: '/tmp/industrial-diagnosis-test',
 }));
 
 describe('isClearCommand', () => {

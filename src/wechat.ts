@@ -75,7 +75,7 @@ export interface WeChatConnectionConfig {
   baseUrl?: string;
   cdnBaseUrl?: string;
   getUpdatesBuf?: string;
-  /** Bypass Miniclaw's HTTP(S) proxy. System TUN/VPN routing still applies. */
+  /** Bypass IndustrialDiagnosis's HTTP(S) proxy. System TUN/VPN routing still applies. */
   bypassProxy?: boolean;
   logContext?: {
     accountId?: string;
@@ -413,19 +413,19 @@ export function weChatConnectionErrorMessage(
 ): string {
   switch (code) {
     case 'connect_timeout':
-      return '连接微信服务超时，Miniclaw 正在自动重试';
+      return '连接微信服务超时，工业诊断 Agent 正在自动重试';
     case 'request_timeout':
-      return '微信长轮询暂时无响应，Miniclaw 正在自动重试';
+      return '微信长轮询暂时无响应，工业诊断 Agent 正在自动重试';
     case 'connection_reset':
-      return '微信连接在 TLS 建立前被中断，Miniclaw 正在自动重试';
+      return '微信连接在 TLS 建立前被中断，工业诊断 Agent 正在自动重试';
     case 'tls_error':
-      return '微信服务 TLS 连接失败，Miniclaw 正在自动重试';
+      return '微信服务 TLS 连接失败，工业诊断 Agent 正在自动重试';
     case 'api_error':
-      return '微信服务返回异常，Miniclaw 正在自动重试';
+      return '微信服务返回异常，工业诊断 Agent 正在自动重试';
     case 'network_error':
-      return '暂时无法访问微信服务，Miniclaw 正在自动重试';
+      return '暂时无法访问微信服务，工业诊断 Agent 正在自动重试';
     default:
-      return '微信连接暂时异常，Miniclaw 正在自动重试';
+      return '微信连接暂时异常，工业诊断 Agent 正在自动重试';
   }
 }
 
@@ -526,7 +526,7 @@ export function createWeChatConnection(
   function baseInfo(): Record<string, string> {
     return {
       channel_version: CHANNEL_VERSION,
-      bot_agent: `Miniclaw/${CHANNEL_VERSION}`,
+      bot_agent: `IndustrialDiagnosis/${CHANNEL_VERSION}`,
     };
   }
 

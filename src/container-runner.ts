@@ -1,5 +1,5 @@
 /**
- * Container Runner for miniclaw
+ * Container Runner for industrial-diagnosis
  * Spawns agent execution in Docker container and handles IPC
  */
 import {
@@ -51,7 +51,7 @@ import {
   revokeWorkspaceMemoryWriteCapability,
   type WorkspaceMemoryCapabilityScope,
 } from './workspace-memory-capability.js';
-import { releaseMiniclawOwnerIntroductionLease } from './owner-profile-store.js';
+import { releaseIndustrialDiagnosisOwnerIntroductionLease } from './owner-profile-store.js';
 import {
   deleteSession,
   getUserById,
@@ -125,7 +125,7 @@ import {
 /**
  * 宿主机的 ~/.claude.json 路径。
  * 所有工作区共享此文件，确保 deviceId (userID) 一致。
- * 即使 Miniclaw 项目删除重建，此文件始终存在于宿主机上。
+ * 即使工业诊断 Agent 项目删除重建，此文件始终存在于宿主机上。
  */
 function getHostClaudeJsonPath(): string {
   return path.join(os.homedir(), '.claude.json');
@@ -289,7 +289,7 @@ function ensureSettingsJson(
 ): void {
   const projectionFile = path.join(
     path.dirname(settingsFile),
-    '.miniclaw-native-settings.json',
+    '.industrial-diagnosis-native-settings.json',
   );
   const current = readSettingsRecord(settingsFile);
   const previousProjection = readSettingsRecord(projectionFile);
@@ -382,7 +382,7 @@ export interface ContainerInput {
     id: string;
     name: string;
     version: number;
-    /** Host-authoritative marker for the built-in Miniclaw AgentProfile. */
+    /** Host-authoritative marker for the built-in IndustrialDiagnosis AgentProfile. */
     isDefault: boolean;
     identityHash: string;
     identityPrompt: string;
@@ -392,16 +392,16 @@ export interface ContainerInput {
     runtimePolicy?: AgentProfileRuntimePolicy;
   };
   /**
-   * True only for an interactive turn in the built-in Miniclaw Home
+   * True only for an interactive turn in the built-in IndustrialDiagnosis Home
    * Workspace before the owner-preferred-address memory has been established.
    */
-  miniclawBootstrapPending?: boolean;
+  industrialDiagnosisBootstrapPending?: boolean;
   /**
    * Host-authoritative initial Owner Profile projection. Present only for an
-   * actual-owner interactive turn of built-in Miniclaw in Home. The runner
+   * actual-owner interactive turn of built-in IndustrialDiagnosis in Home. The runner
    * refreshes it over dedicated IPC before every cold/warm model turn.
    */
-  miniclawOwnerProfile?: {
+  industrialDiagnosisOwnerProfile?: {
     workspaceJid: string;
     preferredAddress: string | null;
     revision: number | null;
@@ -415,8 +415,8 @@ export interface ContainerInput {
   };
   /** Structural capability only; exact owner authorization is re-evaluated by
    * the host for every dedicated IPC request, including warm turns. */
-  miniclawOwnerProfileEnabled?: boolean;
-  /** Host-derived capability flag for main-Miniclaw interactive sessions. */
+  industrialDiagnosisOwnerProfileEnabled?: boolean;
+  /** Host-derived capability flag for main-IndustrialDiagnosis interactive sessions. */
   agentBuilderEnabled?: boolean;
   agentId?: string;
   agentName?: string;
@@ -529,9 +529,9 @@ export function replaceHostMcpServersEnv(
   env: Record<string, string>,
   servers: Record<string, Record<string, unknown>>,
 ): void {
-  delete env['MINICLAW_USER_MCP_SERVERS_JSON'];
+  delete env['INDUSTRIAL_DIAGNOSIS_USER_MCP_SERVERS_JSON'];
   if (Object.keys(servers).length > 0) {
-    env['MINICLAW_USER_MCP_SERVERS_JSON'] = JSON.stringify(servers);
+    env['INDUSTRIAL_DIAGNOSIS_USER_MCP_SERVERS_JSON'] = JSON.stringify(servers);
   }
 }
 
@@ -991,13 +991,13 @@ export function applyFallbackModelToEnvLines(
   configuredFallbackModel = getSystemSettings().fallbackModel,
 ): void {
   for (let i = envLines.length - 1; i >= 0; i--) {
-    if (envLines[i].startsWith('MINICLAW_FALLBACK_MODEL=')) {
+    if (envLines[i].startsWith('INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=')) {
       envLines.splice(i, 1);
     }
   }
   const fallbackModel = configuredFallbackModel?.trim();
   if (!fallbackModel) return;
-  envLines.push(`MINICLAW_FALLBACK_MODEL=${fallbackModel}`);
+  envLines.push(`INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL=${fallbackModel}`);
 }
 
 function assertRuntimeEnvPathSegment(value: string, label: string): string {
@@ -1198,7 +1198,7 @@ export function buildVolumeMounts(
     settingsFile,
     resolveRuntimeMcpServers(group, agentProfile),
     {
-      // The session settings file is Miniclaw-owned. Always replace this map
+      // The session settings file is IndustrialDiagnosis-owned. Always replace this map
       // with the resolved layers so removed/unselected managed MCP cannot
       // survive from a previous Agent run.
       replaceMcpServers: true,
@@ -1264,7 +1264,7 @@ export function buildVolumeMounts(
 
   // Per-user native feishu-cli state (profiles, token.json, config.yaml).
   // Without this mount, every container restart loses the user's feishu OAuth
-  // authorization, forcing re-auth every IDLE_TIMEOUT (#477). Miniclaw never
+  // authorization, forcing re-auth every IDLE_TIMEOUT (#477). IndustrialDiagnosis never
   // creates or switches profiles here: the CLI keeps ownership of its native
   // config, while a bound Bot's App credentials are overlaid via env below.
   if (ownerId) {
@@ -1384,9 +1384,9 @@ export function buildVolumeMounts(
     if (
       envLines[index]?.startsWith('AUTO_COMPACT_WINDOW=') ||
       envLines[index]?.startsWith('AUTO_COMPACT_PERCENTAGE=') ||
-      envLines[index]?.startsWith('MINICLAW_AGENT_TOOL_POLICY=') ||
-      envLines[index]?.startsWith('MINICLAW_AGENT_DISALLOWED_TOOLS=') ||
-      envLines[index]?.startsWith('MINICLAW_AGENT_MCP_POLICY=')
+      envLines[index]?.startsWith('INDUSTRIAL_DIAGNOSIS_AGENT_TOOL_POLICY=') ||
+      envLines[index]?.startsWith('INDUSTRIAL_DIAGNOSIS_AGENT_DISALLOWED_TOOLS=') ||
+      envLines[index]?.startsWith('INDUSTRIAL_DIAGNOSIS_AGENT_MCP_POLICY=')
     ) {
       envLines.splice(index, 1);
     }
@@ -1400,7 +1400,7 @@ export function buildVolumeMounts(
   }
   const mcpPolicyMode = getAgentProfileMcpPolicyMode(agentProfile);
   if (mcpPolicyMode !== 'inherit') {
-    envLines.push(`MINICLAW_AGENT_MCP_POLICY=${mcpPolicyMode}`);
+    envLines.push(`INDUSTRIAL_DIAGNOSIS_AGENT_MCP_POLICY=${mcpPolicyMode}`);
   }
   applyFallbackModelToEnvLines(envLines);
   applyFeishuCliBindingToEnvLines(envLines, feishuCliBinding);
@@ -1465,7 +1465,7 @@ export function buildVolumeMounts(
 
   // Prompts must ride along with the source for the same reason: the image
   // bakes a copy at build time, so a prompt file added after the last image
-  // build (e.g. identity.miniclaw.md) is missing inside the container while
+  // build (e.g. identity.industrial-diagnosis.md) is missing inside the container while
   // the freshly-mounted runner code already requires it — every container
   // startup then dies with ENOENT. The entrypoint's /tmp/prompts symlink
   // resolves through this mount.
@@ -1623,7 +1623,7 @@ export function detectContainerHostIdentity(
     | null = probeContainerSecurityOptions,
 ): ContainerHostIdentity {
   // Probe every launch. Docker context/daemon security options can change
-  // while Miniclaw is running; reusing an earlier direct result could bypass
+  // while IndustrialDiagnosis is running; reusing an earlier direct result could bypass
   // rootless/userns fail-closed handling, while caching unknown blocks recovery.
   const securityOptions = readSecurityOptions();
   return resolveContainerHostIdentity({
@@ -1644,13 +1644,13 @@ export function buildContainerArgs(
 
   // Set timezone so container Node.js processes use local time (Asia/Shanghai)
   args.push('-e', `TZ=${tz}`);
-  args.push('-e', `MINICLAW_HOST_IDENTITY_MODE=${hostIdentity.mode}`);
+  args.push('-e', `INDUSTRIAL_DIAGNOSIS_HOST_IDENTITY_MODE=${hostIdentity.mode}`);
   if (hostIdentity.mode === 'direct') {
     if (isPositiveUnixId(hostIdentity.uid)) {
-      args.push('-e', `MINICLAW_HOST_UID=${hostIdentity.uid}`);
+      args.push('-e', `INDUSTRIAL_DIAGNOSIS_HOST_UID=${hostIdentity.uid}`);
     }
     if (isPositiveUnixId(hostIdentity.gid)) {
-      args.push('-e', `MINICLAW_HOST_GID=${hostIdentity.gid}`);
+      args.push('-e', `INDUSTRIAL_DIAGNOSIS_HOST_GID=${hostIdentity.gid}`);
     }
   }
 
@@ -1753,7 +1753,7 @@ export async function runContainerAgent(
     const agentSuffix = sessionAgentId
       ? `-${sessionAgentId.replace(/[^a-zA-Z0-9-]/g, '-')}`
       : '';
-    const containerName = `miniclaw-${safeName}${agentSuffix}-${Date.now()}`;
+    const containerName = `industrial-diagnosis-${safeName}${agentSuffix}-${Date.now()}`;
     const containerArgs = buildContainerArgs(mounts, containerName, TIMEZONE);
 
     logger.debug(
@@ -2175,7 +2175,7 @@ export async function runContainerAgent(
       workspaceMemoryRunnerInstanceId,
     );
     try {
-      releaseMiniclawOwnerIntroductionLease(workspaceMemoryRunnerInstanceId);
+      releaseIndustrialDiagnosisOwnerIntroductionLease(workspaceMemoryRunnerInstanceId);
     } catch (err) {
       logger.warn(
         { err, runnerInstanceId: workspaceMemoryRunnerInstanceId },
@@ -2497,14 +2497,14 @@ export async function runHostAgent(
   // Per-run policy must replace, never merge with, a parent process value.
   // Otherwise disabled/custom MCP can inherit servers from an earlier wrapper
   // environment even when this run intentionally resolves to an empty set.
-  delete hostEnv['MINICLAW_USER_MCP_SERVERS_JSON'];
+  delete hostEnv['INDUSTRIAL_DIAGNOSIS_USER_MCP_SERVERS_JSON'];
   // Provider selection is authoritative. Do not let API settings inherited
-  // from the Miniclaw parent process leak into a host-mode child after the
+  // from the IndustrialDiagnosis parent process leak into a host-mode child after the
   // user switches providers (especially third-party -> official OAuth).
   clearInheritedClaudeProviderEnv(hostEnv);
 
   // Strip macOS launch-context vars that must not be inherited by child
-  // processes. When miniclaw is started by a background process manager
+  // processes. When industrial-diagnosis is started by a background process manager
   // (launchd / ssh / cron) outside a normal login session, XPC_FLAGS=0x2
   // leaks into the environment. The bundled bun/CFNetwork-based claude CLI then
   // can't reach mDNSResponder/securityd through XPC, so DNS resolution and the
@@ -2588,9 +2588,9 @@ export async function runHostAgent(
     }
     const fallbackModel = getSystemSettings().fallbackModel?.trim();
     if (fallbackModel) {
-      hostEnv['MINICLAW_FALLBACK_MODEL'] = fallbackModel;
+      hostEnv['INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL'] = fallbackModel;
     } else {
-      delete hostEnv['MINICLAW_FALLBACK_MODEL'];
+      delete hostEnv['INDUSTRIAL_DIAGNOSIS_FALLBACK_MODEL'];
     }
 
     // Third-party provider: unless this provider explicitly injects
@@ -2673,16 +2673,16 @@ export async function runHostAgent(
       hostEnv['AUTO_COMPACT_WINDOW'] = String(autoCompactWindow);
     }
     const hostMcpPolicyMode = getAgentProfileMcpPolicyMode(input.agentProfile);
-    delete hostEnv['MINICLAW_AGENT_TOOL_POLICY'];
-    delete hostEnv['MINICLAW_AGENT_DISALLOWED_TOOLS'];
-    delete hostEnv['MINICLAW_AGENT_MCP_POLICY'];
+    delete hostEnv['INDUSTRIAL_DIAGNOSIS_AGENT_TOOL_POLICY'];
+    delete hostEnv['INDUSTRIAL_DIAGNOSIS_AGENT_DISALLOWED_TOOLS'];
+    delete hostEnv['INDUSTRIAL_DIAGNOSIS_AGENT_MCP_POLICY'];
     if (hostMcpPolicyMode !== 'inherit') {
-      hostEnv['MINICLAW_AGENT_MCP_POLICY'] = hostMcpPolicyMode;
+      hostEnv['INDUSTRIAL_DIAGNOSIS_AGENT_MCP_POLICY'] = hostMcpPolicyMode;
     }
 
     // 路径映射
-    hostEnv['MINICLAW_WORKSPACE_GROUP'] = groupDir;
-    hostEnv['MINICLAW_WORKSPACE_IPC'] = groupIpcDir;
+    hostEnv['INDUSTRIAL_DIAGNOSIS_WORKSPACE_GROUP'] = groupDir;
+    hostEnv['INDUSTRIAL_DIAGNOSIS_WORKSPACE_IPC'] = groupIpcDir;
 
     // Resolve symlinks so CLAUDE_CONFIG_DIR ends up as the real on-disk path.
     // Host mode also goes through the synchronized session .claude directory so
@@ -3083,7 +3083,7 @@ export async function runHostAgent(
       workspaceMemoryRunnerInstanceId,
     );
     try {
-      releaseMiniclawOwnerIntroductionLease(workspaceMemoryRunnerInstanceId);
+      releaseIndustrialDiagnosisOwnerIntroductionLease(workspaceMemoryRunnerInstanceId);
     } catch (err) {
       logger.warn(
         { err, runnerInstanceId: workspaceMemoryRunnerInstanceId },

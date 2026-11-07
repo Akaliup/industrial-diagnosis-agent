@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, test } from 'vitest';
 import {
-  isLegacyMiniclawRegistration,
+  isLegacyIndustrialDiagnosisRegistration,
   isLegacyPwaCacheName,
 } from '../web/src/utils/legacyPwaCleanup';
 
@@ -38,7 +38,7 @@ describe('PWA cache retirement', () => {
     expect(main).toContain('cleanupLegacyPwaArtifacts');
     expect(main).not.toMatch(/serviceWorker\.register|registerSW/);
     expect(manifest.display).toBe('standalone');
-    expect(manifest.start_url).toBe('./chat');
+    expect(manifest.start_url).toBe('./diagnosis');
     expect(manifest.scope).toBe('./');
     expect(manifest.icons.map((icon) => icon.sizes)).toEqual(
       expect.arrayContaining(['192x192', '512x512']),
@@ -57,14 +57,14 @@ describe('PWA cache retirement', () => {
     expect(worker).not.toMatch(/addEventListener\(['"]fetch|cache\.put|addAll/);
   });
 
-  test('recognizes only Miniclaw legacy caches and registrations', () => {
+  test('recognizes only IndustrialDiagnosis legacy caches and registrations', () => {
     expect(
       isLegacyPwaCacheName('workbox-precache-v2-https://example.com/'),
     ).toBe(true);
     expect(isLegacyPwaCacheName('api-groups-cache')).toBe(true);
     expect(isLegacyPwaCacheName('unrelated-product-cache')).toBe(false);
 
-    const appScope = 'https://example.com/miniclaw/';
+    const appScope = 'https://example.com/industrial-diagnosis/';
     const scriptUrl = `${appScope}sw.js`;
     const worker = { scriptURL: scriptUrl } as ServiceWorker;
     const registration = {
@@ -74,10 +74,10 @@ describe('PWA cache retirement', () => {
       installing: null,
     };
     expect(
-      isLegacyMiniclawRegistration(registration, appScope, scriptUrl),
+      isLegacyIndustrialDiagnosisRegistration(registration, appScope, scriptUrl),
     ).toBe(true);
     expect(
-      isLegacyMiniclawRegistration(
+      isLegacyIndustrialDiagnosisRegistration(
         {
           ...registration,
           scope: 'https://example.com/other/',

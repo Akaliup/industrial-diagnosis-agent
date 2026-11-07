@@ -21,7 +21,7 @@ function usage(
     model: 'test-model',
     memoryFiles: [],
     mcpTools: [],
-    systemPromptSections: [{ name: 'Miniclaw', tokens: startupTokens }],
+    systemPromptSections: [{ name: 'IndustrialDiagnosis', tokens: startupTokens }],
     agents: [],
     isAutoCompactEnabled: true,
     apiUsage: null,

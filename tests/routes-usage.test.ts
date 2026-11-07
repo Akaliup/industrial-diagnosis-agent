@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'miniclaw-routes-usage-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'industrial-diagnosis-routes-usage-'));
 const store = path.join(tmp, 'db');
 const groups = path.join(tmp, 'groups');
 fs.mkdirSync(store, { recursive: true });
@@ -189,7 +189,7 @@ describe('/api/usage contract and isolation', () => {
     expect(body.daily).toEqual([]);
   });
 
-  test('main Miniclaw attribution has a filterable stable sentinel', async () => {
+  test('main IndustrialDiagnosis attribution has a filterable stable sentinel', async () => {
     process.env.USAGE_TEST_USER = 'main-user';
     process.env.USAGE_TEST_ROLE = 'member';
     const stats = await usage.request(
@@ -198,7 +198,7 @@ describe('/api/usage contract and isolation', () => {
     const body = await stats.json();
     expect(body.summary.runCount).toBe(1);
     expect(body.attributions.agents).toEqual([
-      expect.objectContaining({ key: '__main__', name: 'Miniclaw' }),
+      expect.objectContaining({ key: '__main__', name: '工业诊断 Agent' }),
     ]);
   });
 

@@ -1,8 +1,9 @@
 import { getMessagesPage } from './db.js';
+import { ASSISTANT_NAME } from './config.js';
 import { escapeXml } from './message-prompt.js';
 
 /**
- * Build a `<system_context>` block of recent persisted Miniclaw chat history
+ * Build a `<system_context>` block of recent persisted IndustrialDiagnosis chat history
  * to prepend to a prompt when the underlying Claude SDK session is fresh
  * (recovery after a crash, or after switching provider/model so the old
  * thinking-block-bearing session was cleared). Without this the new model sees
@@ -34,7 +35,7 @@ export function buildRecentConversationHistoryContext(
   const maxLen = opts.maxMessageLength ?? 700;
   const historyLines = historyMsgs.map((m) => {
     const role = m.is_from_me ? 'assistant' : 'user';
-    const sender = m.is_from_me ? 'Miniclaw' : m.sender_name;
+    const sender = m.is_from_me ? ASSISTANT_NAME : m.sender_name;
     const truncated =
       m.content.length > maxLen ? m.content.slice(0, maxLen) + '…' : m.content;
     // Strip lone (unpaired) surrogates while preserving valid surrogate pairs
@@ -60,7 +61,7 @@ export function buildRecentConversationHistoryContext(
     context:
       '<system_context>\n' +
       opts.intro +
-      '\n重要：这些只是 Miniclaw 持久化的历史聊天记录，用来在新模型/新 session 中恢复上下文。回答当前用户消息时，请优先依据当前消息和当前文件状态；如果历史与当前问题无关，请直接忽略。\n\n' +
+      '\n重要：这些只是工业诊断 Agent 持久化的历史聊天记录，用来在新模型/新 session 中恢复上下文。回答当前用户消息时，请优先依据当前消息和当前文件状态；如果历史与当前问题无关，请直接忽略。\n\n' +
       historyLines.join('\n') +
       '\n</system_context>\n\n',
   };

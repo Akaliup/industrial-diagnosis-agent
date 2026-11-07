@@ -6,7 +6,7 @@ import { afterAll, describe, expect, test, vi } from 'vitest';
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'appearance-config-'));
 
 vi.mock('../src/config.js', () => ({
-  ASSISTANT_NAME: 'Miniclaw',
+  ASSISTANT_NAME: 'IndustrialDiagnosis',
   DATA_DIR: tmpDir,
 }));
 

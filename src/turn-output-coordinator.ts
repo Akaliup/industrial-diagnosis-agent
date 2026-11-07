@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { isRedundantProactiveSdkClosure } from './proactive-final-classifier.js';
 
 /**
- * User-visible delivery semantics are deliberately owned by the Miniclaw
+ * User-visible delivery semantics are deliberately owned by the IndustrialDiagnosis
  * host, not inferred from the fact that an MCP tool happened to run.
  */
 export type TurnMessageDeliveryRole = 'progress' | 'final' | 'separate';

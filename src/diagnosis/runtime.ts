@@ -27,7 +27,7 @@ export interface DiagnosisRuntimeOptions {
 }
 
 /**
- * 设备智诊运行时：在 Miniclaw 主数据库连接上挂载领域表与服务。
+ * 设备智诊运行时：在 IndustrialDiagnosis 主数据库连接上挂载领域表与服务。
  *
  * 不修改主服务 Schema/迁移版本；诊断表使用独立的 diagnosis_meta 版本。
  * Worker 与 Web/API 共享同一 SQLite 连接（WAL），写操作通过 better-sqlite3

@@ -4,12 +4,12 @@ import type {
 } from '@anthropic-ai/claude-agent-sdk';
 
 const WRITE_TOOLS = new Set([
-  'mcp__miniclaw__workspace_memory_remember',
-  'mcp__miniclaw__workspace_memory_update',
-  'mcp__miniclaw__workspace_memory_forget',
+  'mcp__industrial_diagnosis__workspace_memory_remember',
+  'mcp__industrial_diagnosis__workspace_memory_update',
+  'mcp__industrial_diagnosis__workspace_memory_forget',
 ]);
 const OWNER_PROFILE_TOOLS = new Set([
-  'mcp__miniclaw__miniclaw_owner_profile',
+  'mcp__industrial_diagnosis__industrial_diagnosis_owner_profile',
 ]);
 
 /** Sub-agents inherit the MCP server, so enforce read-only access in a hook. */
@@ -28,7 +28,7 @@ export function createWorkspaceMemoryWriteGuard(): HookCallback {
           hookEventName: 'PreToolUse',
           permissionDecision: 'deny',
           permissionDecisionReason: ownerProfile
-            ? 'Owner Profile is private to the actual owner’s top-level Miniclaw turn and is unavailable to sub-agents.'
+            ? 'Owner Profile is private to the actual owner’s top-level IndustrialDiagnosis turn and is unavailable to sub-agents.'
             : 'Sub-agents have read-only Workspace Memory access. Return proposed learnings to the top-level session.',
         },
       };

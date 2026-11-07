@@ -13,25 +13,25 @@ import {
 } from 'vitest';
 
 const SHARED_TMP =
-  process.env.MINICLAW_HOST_MOUNT_RUNNER_TEST_DIR ??
+  process.env.INDUSTRIAL_DIAGNOSIS_HOST_MOUNT_RUNNER_TEST_DIR ??
   (() => {
     const dir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'miniclaw-host-mount-runner-'),
+      path.join(os.tmpdir(), 'industrial-diagnosis-host-mount-runner-'),
     );
-    process.env.MINICLAW_HOST_MOUNT_RUNNER_TEST_DIR = dir;
+    process.env.INDUSTRIAL_DIAGNOSIS_HOST_MOUNT_RUNNER_TEST_DIR = dir;
     return dir;
   })();
 
 vi.mock('../src/config.js', async (importOriginal) => {
   const real = (await importOriginal()) as Record<string, unknown>;
-  const root = process.env.MINICLAW_HOST_MOUNT_RUNNER_TEST_DIR!;
+  const root = process.env.INDUSTRIAL_DIAGNOSIS_HOST_MOUNT_RUNNER_TEST_DIR!;
   return {
     ...real,
     DATA_DIR: path.join(root, 'data'),
     GROUPS_DIR: path.join(root, 'data', 'groups'),
     STORE_DIR: path.join(root, 'data', 'db'),
     MOUNT_ALLOWLIST_PATH: path.join(root, 'mount-allowlist.json'),
-    CONTAINER_IMAGE: 'miniclaw-agent:test',
+    CONTAINER_IMAGE: 'industrial-diagnosis-agent:test',
     TIMEZONE: 'UTC',
     MAIN_GROUP_FOLDER: 'main',
   };

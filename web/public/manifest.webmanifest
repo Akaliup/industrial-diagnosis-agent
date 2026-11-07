@@ -1,8 +1,8 @@
 {
-  "name": "Miniclaw",
-  "short_name": "Miniclaw",
-  "description": "Personal Claude Assistant",
-  "start_url": "./chat",
+  "name": "工业诊断 Agent",
+  "short_name": "工业诊断",
+  "description": "工业设备诊断与证据复核 Agent",
+  "start_url": "./diagnosis",
   "display": "standalone",
   "display_override": ["standalone"],
   "background_color": "#FAF9F5",

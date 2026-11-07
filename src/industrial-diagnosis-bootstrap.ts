@@ -1,4 +1,4 @@
-export interface MiniclawBootstrapTurn {
+export interface IndustrialDiagnosisBootstrapTurn {
   turnId?: string;
   isHome: boolean;
   isDefaultProfile: boolean;
@@ -7,11 +7,11 @@ export interface MiniclawBootstrapTurn {
 
 /**
  * Restrict the one-shot first-wake ritual to a real interactive turn of the
- * built-in Miniclaw in Home. Process warmups have no turnId; scheduled runs,
+ * built-in IndustrialDiagnosis in Home. Process warmups have no turnId; scheduled runs,
  * custom Agents, and non-Home workspaces are always excluded.
  */
-export function isMiniclawBootstrapTurn(
-  input: MiniclawBootstrapTurn,
+export function isIndustrialDiagnosisBootstrapTurn(
+  input: IndustrialDiagnosisBootstrapTurn,
 ): boolean {
   return Boolean(
     input.turnId &&
@@ -21,7 +21,7 @@ export function isMiniclawBootstrapTurn(
   );
 }
 
-export interface MiniclawOwnerProfileRuntime {
+export interface IndustrialDiagnosisOwnerProfileRuntime {
   isHome: boolean;
   isDefaultProfile: boolean;
   isScheduledTask?: boolean;
@@ -34,8 +34,8 @@ export interface MiniclawOwnerProfileRuntime {
  * runner can later serve an admitted owner turn. Per-turn data and mutations
  * remain host-authorized; scheduled/task/spawn runtimes never receive it.
  */
-export function isMiniclawOwnerProfileRuntimeStructurallyEligible(
-  input: MiniclawOwnerProfileRuntime,
+export function isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible(
+  input: IndustrialDiagnosisOwnerProfileRuntime,
 ): boolean {
   return Boolean(
     input.isHome &&

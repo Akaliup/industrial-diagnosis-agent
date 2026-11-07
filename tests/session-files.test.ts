@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'miniclaw-session-'));
+const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'industrial-diagnosis-session-'));
 
 vi.mock('../src/config.js', () => ({
   DATA_DIR: tmpRoot,

@@ -2,7 +2,7 @@
 
 ## 1. 我做了什么
 
-在 Miniclaw 1.0.0 的自托管 Agent 工作台上，新增了一条**设备报警后的故障诊断链路**：
+在自托管 Agent 工作台上，新增了一条**设备报警后的故障诊断链路**：
 
 ```text
 报警 → 统一设备查询 → 状态确认 → 异常定位 → 假设生成 → 证据验证 → 引用报告 → 人工复核
@@ -17,7 +17,7 @@
    设备解析、状态/时序/报警/MES/工单查询、手册检索、手册页、案例检索、证据读取六个工具。
    mock/replay 使用本地 fixture store；live 支持配置固定的通用 REST adapter；根云 adapter
    在没有接口文档、签名和账号时明确返回 `UNCONFIGURED`。
-3. **PolicyGateway 与 RoleRunner**：没有恢复 Miniclaw 的通用 Agent 工具权限，而是为诊断
+3. **PolicyGateway 与 RoleRunner**：没有恢复 通用 Agent 工具权限，而是为诊断
    单独实现网关：角色白名单、严格 Zod Schema、设备作用域、风险、预算、重复调用守卫、
    证据入库。四个逻辑角色由结构化 RoleRunner 执行，不依赖 Subagent 结果 RPC。
 4. **五阶段 Harness**：实现 `confirm_status → locate_anomaly → generate_hypotheses →
@@ -67,7 +67,7 @@
 
 ## 4. 开源复用边界
 
-- 基线：Miniclaw 1.0.0，MIT；保留 LICENSE、lockfile、原有入口与依赖。
+- 基线：基线工程 1.0.0，MIT；保留 LICENSE、lockfile、原有入口与依赖。
 - 参考：Craft Agents 0.11.4，Apache-2.0；只参考信息层级、步骤条、证据抽屉、复核队列等
   交互模式，未迁移其 Bun workspace、账号、Electron IPC 或会话服务，未复制源码。
 - 新增诊断代码、MCP 子包、Web 页面、fixture、Eval 与测试为本任务编写；依赖均为项目局部

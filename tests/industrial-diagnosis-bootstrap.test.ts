@@ -1,27 +1,27 @@
 import { describe, expect, test } from 'vitest';
 
 import {
-  isMiniclawBootstrapTurn,
-  isMiniclawOwnerProfileRuntimeStructurallyEligible,
-} from '../src/miniclaw-bootstrap.js';
+  isIndustrialDiagnosisBootstrapTurn,
+  isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible,
+} from '../src/industrial-diagnosis-bootstrap.js';
 
-describe('Miniclaw first-wake eligibility', () => {
+describe('IndustrialDiagnosis first-wake eligibility', () => {
   test('allows only a real interactive Home turn of the built-in profile', () => {
     expect(
-      isMiniclawBootstrapTurn({
+      isIndustrialDiagnosisBootstrapTurn({
         turnId: 'owner-turn',
         isHome: true,
         isDefaultProfile: true,
       }),
     ).toBe(true);
     expect(
-      isMiniclawBootstrapTurn({
+      isIndustrialDiagnosisBootstrapTurn({
         isHome: true,
         isDefaultProfile: true,
       }),
     ).toBe(false);
     expect(
-      isMiniclawBootstrapTurn({
+      isIndustrialDiagnosisBootstrapTurn({
         turnId: 'scheduled-turn',
         isHome: true,
         isDefaultProfile: true,
@@ -29,14 +29,14 @@ describe('Miniclaw first-wake eligibility', () => {
       }),
     ).toBe(false);
     expect(
-      isMiniclawBootstrapTurn({
+      isIndustrialDiagnosisBootstrapTurn({
         turnId: 'custom-turn',
         isHome: true,
         isDefaultProfile: false,
       }),
     ).toBe(false);
     expect(
-      isMiniclawBootstrapTurn({
+      isIndustrialDiagnosisBootstrapTurn({
         turnId: 'project-turn',
         isHome: false,
         isDefaultProfile: true,
@@ -45,31 +45,31 @@ describe('Miniclaw first-wake eligibility', () => {
   });
 });
 
-describe('Miniclaw Owner Profile structural runtime eligibility', () => {
+describe('IndustrialDiagnosis Owner Profile structural runtime eligibility', () => {
   test('keeps capability across terminal warmup but denies unsafe runtime kinds', () => {
     const warmup = {
       isHome: true,
       isDefaultProfile: true,
     };
-    expect(isMiniclawOwnerProfileRuntimeStructurallyEligible(warmup)).toBe(
+    expect(isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible(warmup)).toBe(
       true,
     );
     expect(
-      isMiniclawOwnerProfileRuntimeStructurallyEligible({
+      isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible({
         ...warmup,
         runtimeAgentId: 'conversation-1',
         runtimeAgentKind: 'conversation',
       }),
     ).toBe(true);
     expect(
-      isMiniclawOwnerProfileRuntimeStructurallyEligible({
+      isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible({
         ...warmup,
         isScheduledTask: true,
       }),
     ).toBe(false);
     for (const runtimeAgentKind of ['task', 'spawn'] as const) {
       expect(
-        isMiniclawOwnerProfileRuntimeStructurallyEligible({
+        isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible({
           ...warmup,
           runtimeAgentId: `${runtimeAgentKind}-1`,
           runtimeAgentKind,
@@ -77,13 +77,13 @@ describe('Miniclaw Owner Profile structural runtime eligibility', () => {
       ).toBe(false);
     }
     expect(
-      isMiniclawOwnerProfileRuntimeStructurallyEligible({
+      isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible({
         ...warmup,
         isHome: false,
       }),
     ).toBe(false);
     expect(
-      isMiniclawOwnerProfileRuntimeStructurallyEligible({
+      isIndustrialDiagnosisOwnerProfileRuntimeStructurallyEligible({
         ...warmup,
         isDefaultProfile: false,
       }),

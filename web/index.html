@@ -18,7 +18,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Miniclaw" />
+    <meta name="apple-mobile-web-app-title" content="工业诊断 Agent" />
     <link
       rel="apple-touch-icon"
       href="%BASE_URL%icons/apple-touch-icon-180.png"
@@ -43,15 +43,15 @@
       });
     </script>
 
-    <title>Miniclaw</title>
+    <title>工业诊断 Agent</title>
   </head>
   <body>
     <script>
       (function () {
         var d = document.documentElement,
           s =
-            localStorage.getItem('miniclaw-theme') ||
-            localStorage.getItem('miniclaw-theme');
+            localStorage.getItem('industrial-diagnosis-theme') ||
+            localStorage.getItem('industrial-diagnosis-theme');
         if (
           s === 'dark' ||
           (s === 'system' &&
@@ -59,13 +59,13 @@
         )
           d.classList.add('dark');
         var c =
-          localStorage.getItem('miniclaw-color-scheme') ||
-          localStorage.getItem('miniclaw-color-scheme');
+          localStorage.getItem('industrial-diagnosis-color-scheme') ||
+          localStorage.getItem('industrial-diagnosis-color-scheme');
         if (c === 'orange') d.classList.add('theme-orange');
         if (c === 'neutral') d.classList.add('theme-neutral');
         if (
-          (localStorage.getItem('miniclaw-font-style') ||
-            localStorage.getItem('miniclaw-font-style')) === 'anthropic'
+          (localStorage.getItem('industrial-diagnosis-font-style') ||
+            localStorage.getItem('industrial-diagnosis-font-style')) === 'anthropic'
         )
           d.classList.add('font-anthropic');
       })();

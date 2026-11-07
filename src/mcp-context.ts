@@ -49,9 +49,9 @@ export function loadHostClaudeMcpServers(
 }
 
 /**
- * Claude-native MCP is project/host context, not a Miniclaw-managed user MCP
+ * Claude-native MCP is project/host context, not a IndustrialDiagnosis-managed user MCP
  * grant.  Materialize it explicitly so strict Agent MCP filtering cannot hide
- * it (and cannot accidentally re-enable unselected Miniclaw user servers).
+ * it (and cannot accidentally re-enable unselected IndustrialDiagnosis user servers).
  * Later/more-local sources win, matching Claude settings precedence.
  */
 export function loadClaudeContextMcpServers(options: {
@@ -80,7 +80,7 @@ export function loadClaudeContextMcpServers(options: {
   };
 }
 
-/** Miniclaw-managed MCP is an additive final layer. */
+/** IndustrialDiagnosis-managed MCP is an additive final layer. */
 export function mergeMcpServerLayers(
   contextServers: McpServerMap,
   managedUserServers: McpServerMap,

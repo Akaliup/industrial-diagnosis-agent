@@ -78,7 +78,7 @@ describe('task scheduler startup recovery', () => {
       },
       onProcess: vi.fn(),
       sendMessage: vi.fn(),
-      assistantName: 'Miniclaw',
+      assistantName: 'IndustrialDiagnosis',
     } as never);
 
     expect(db.getTaskRunLogs(task.id)[0]).toMatchObject({

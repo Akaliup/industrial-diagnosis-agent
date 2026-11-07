@@ -1,8 +1,8 @@
 {
-  "name": "miniclaw-agent-runner",
+  "name": "industrial-diagnosis-agent-runner",
   "version": "1.0.0",
   "type": "module",
-  "description": "Container-side Pi agent runner for Miniclaw",
+  "description": "Container-side Pi agent runner for IndustrialDiagnosis",
   "main": "dist/pi-index.js",
   "scripts": {
     "build": "tsc",
@@ -26,17 +26,17 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/helsome/miniclaw.git",
+    "url": "git+https://github.com/Akaliup/industrial-diagnosis-agent.git",
     "directory": "container/agent-runner"
   },
-  "homepage": "https://github.com/helsome/miniclaw#readme",
+  "homepage": "https://github.com/Akaliup/industrial-diagnosis-agent#readme",
   "bugs": {
-    "url": "https://github.com/helsome/miniclaw/issues"
+    "url": "https://github.com/Akaliup/industrial-diagnosis-agent/issues"
   },
   "author": "helson",
   "keywords": [
     "agent-runner",
     "mcp",
-    "miniclaw"
+    "industrial-diagnosis"
   ]
 }

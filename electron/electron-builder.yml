@@ -1,8 +1,8 @@
-appId: cc.miniclaw.desktop
-productName: Miniclaw
-copyright: Copyright © 2026 Miniclaw contributors
+appId: com.industrialdiagnosis.agent
+productName: 工业诊断 Agent
+copyright: Copyright © 2026 工业诊断 Agent contributors
 electronVersion: 39.8.10
-icon: assets/miniclaw-icon.png
+icon: assets/app-icon.png
 
 directories:
   output: release
@@ -20,7 +20,7 @@ asar: true
 
 mac:
   category: public.app-category.productivity
-  icon: assets/miniclaw.icns
+  icon: assets/app.icns
   target:
     - dmg
     - zip

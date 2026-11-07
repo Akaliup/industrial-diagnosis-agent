@@ -28,7 +28,7 @@ npm run diagnosis:server
 
 - 访问：`http://127.0.0.1:3100/diagnosis`
 - 模式：`fixture` 模型 + `mock` 数据
-- 空库：打开页面走 Miniclaw 原有 setup 向导创建管理员
+- 空库：打开页面走原有 setup 向导创建管理员
 - 本机演示库已有 `demo` 管理员；密码仅用于本机演示，不写入源码/部署模板
 - 端口冲突：设置 `DIAGNOSIS_PORT`，不要终止占用进程
 
@@ -40,7 +40,7 @@ npm run diagnosis:server
 | R2 | 重试与模型调用可能绕过累计预算 | 模型调用改为预留/结算式额度；重试与多角色共享 `model_calls`、输入/输出 token、墙钟截止时间；工具超时取剩余墙钟与单次超时的较小值 | `budget.test.ts`、`worker.test.ts`、50 例 Eval 预算断言 | PASS |
 | R3 | Eval 把被策略拒绝的尝试计为已执行，分母不一致 | 区分“已执行”与“被阻止”：只有真正到达来源的调用进入执行指标；按适用用例计算分母并提供 `*_n`；阻断用例必须同时包含一次成功必需查询 | `eval-scorer.test.ts`、`eval-fixture-regression.test.ts`、`diagnosis:eval:gate` | PASS |
 | R4 | 多 Workspace 种子/文档主键冲突 | 报警、文档、chunk 使用 Workspace 作用域的稳定 ID；重复种子幂等；旧全局报警 ID 在同 Workspace 幂等键下复用 | `workspace-scope.test.ts` | PASS |
-| R5 | CI/E2E 复用本地库或已启动服务，测试互相污染 | 新增 `diagnosis:e2e:server`：每次清空并重建 `work/diagnosis/e2e-data`，使用 `MINICLAW_DATA_DIR`、独立端口 3199、本地假 REST 与固定测试密钥；诊断 Playwright 配置 `reuseExistingServer: false`；移动端配置忽略 `diagnosis/**`；CI 增加契约同步、类型检查、MCP 构建、诊断测试、50 例门禁、Trace replay、Web 构建与隔离 E2E | 诊断 E2E 6/6、移动端 E2E 9/9、CI 工作流 | PASS |
+| R5 | CI/E2E 复用本地库或已启动服务，测试互相污染 | 新增 `diagnosis:e2e:server`：每次清空并重建 `work/diagnosis/e2e-data`，使用 `INDUSTRIAL_DIAGNOSIS_DATA_DIR`、独立端口 3199、本地假 REST 与固定测试密钥；诊断 Playwright 配置 `reuseExistingServer: false`；移动端配置忽略 `diagnosis/**`；CI 增加契约同步、类型检查、MCP 构建、诊断测试、50 例门禁、Trace replay、Web 构建与隔离 E2E | 诊断 E2E 6/6、移动端 E2E 9/9、CI 工作流 | PASS |
 | R6 | `.env.diagnosis` 未加载或错误配置静默生效 | 新增统一配置入口 `loadDiagnosisEnv`：shell 环境变量 > `.env.diagnosis` > 代码默认值；校验端口、模式、JSON、映射文件、模型 URL；`DIAGNOSIS_MODEL_MODE=live` 缺字段直接失败，不回退 Fixture | `config-loader.test.ts` | PASS |
 
 ## 4. 四项残余风险
@@ -111,6 +111,7 @@ npm run diagnosis:server
 | 基线 `fec1d5a` | 334 | 2744 | 54 | 71 | 23 |
 | 初次交付 `443136b` | 346 | 2931 | 32 | 58 | 23 |
 | 本次补修 | 353 | 2968 | 32 | 58 | 23 |
+| 产品标识统一后 | 353 | 2969 | 34 | 60 | 23 |
 
 - 本次比初次交付多 7 个文件 / 37 个测试，正好对应诊断测试从 12 文件 / 55 测试增加到
   19 文件 / 92 测试。
@@ -122,6 +123,32 @@ npm run diagnosis:server
 
 失败名称清单：`work/diagnosis/logs/root-tests-final-fix-names.txt`；完整日志：
 `work/diagnosis/logs/root-tests-final-fix.log`。
+
+### 5.2 产品标识统一后复验（23:44–23:54）
+
+产品标识统一为“工业诊断 Agent”后，按同一命令集复验；`LICENSE` 保留上游 MIT 版权声明。
+
+| 命令 | 退出码 | 结果 |
+| --- | --- | --- |
+| `npm run docs:check` | 0 | Markdown 链接/格式检查通过 |
+| `git diff --check` | 0 | 无空白错误 |
+| `npm run diagnosis:check` | 0 | 19 文件 / 92 测试通过 |
+| `npm run build` / `build:web` / `diagnosis:build:mcp` / runner build | 0 | 全部构建通过 |
+| `npm run desktop:typecheck` / `desktop:build` | 0 | 通过 |
+| `npm run diagnosis:eval:gate` | 0 | 50/50，`live_eval=NOT_RUN` |
+| `npm run diagnosis:replay` | 0 | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0` |
+| `npm run diagnosis:smoke` | 0 | 六工具 MCP + pipeline 通过 |
+| `npm run diagnosis:e2e` | 0 | 6/6 通过，27.3s |
+| `npm --prefix web run test:e2e` | 0 | 9/9 通过，34.8s |
+| `npm test -- --run` | 1 | 353 文件：319 通过 / 34 失败；2969 测试：2886 通过 / 60 失败 / 23 跳过 |
+
+全量根测试新增的 4 条失败为并发负载下的 5s 超时（`db-upgrade-safety`、
+`schema-v49-channel-accounts`、`schema-v51-usage`）及 `backup-restore-safety` 套件级错误，
+单独运行均通过；其余失败与 §5.1 的 Windows 平台类别一致。未修改断言、阈值或测试集。
+
+日志：`work/diagnosis/logs/identity-verify-build.log`、
+`work/diagnosis/logs/identity-verify-eval.log`、`work/diagnosis/logs/identity-e2e-diagnosis.log`、
+`work/diagnosis/logs/identity-e2e-mobile.log`、`work/diagnosis/logs/root-tests-identity-final.log`。
 
 ## 6. 50 例 Fixture Eval
 

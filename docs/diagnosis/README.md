@@ -1,6 +1,6 @@
 # 设备智诊文档索引
 
-本目录记录 Miniclaw 上新增的“设备智诊”工程版：报警 → 统一设备查询 → 状态确认 →
+本目录记录 本项目新增的“设备智诊”工程版：报警 → 统一设备查询 → 状态确认 →
 异常定位 → 假设生成 → 证据验证 → 引用报告 → 人工复核。
 
 ## 快速开始
@@ -11,7 +11,7 @@ npm run diagnosis:server
 ```
 
 访问 `http://127.0.0.1:3100/diagnosis`。默认 `fixture` 模型 + `mock` 数据；空库首次打开
-走 Miniclaw setup 向导。端口冲突时使用 `DIAGNOSIS_PORT`。
+走 setup 向导。端口冲突时使用 `DIAGNOSIS_PORT`。
 
 ## 文档
 
@@ -24,7 +24,7 @@ npm run diagnosis:server
 | [BASELINE.md](BASELINE.md) | 源快照、环境、哈希、基线测试失败 |
 | [DECISIONS.md](DECISIONS.md) | ADR：运行时、工具边界、角色、证据、预算、审批、适配器、UI |
 | [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md) | 每个企业来源的 scaffold/contract/mock/live 状态 |
-| [SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md) | Miniclaw/Craft 许可证与复用边界 |
+| [SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md) | 工业诊断 Agent 与 Craft 许可证与复用边界 |
 | [PROJECT_STORY.md](PROJECT_STORY.md) | 本人新增工作、实测指标、难点与边界 |
 | [../../config/diagnosis/README.md](../../config/diagnosis/README.md) | 通用 REST / 根云字段映射模板与接入说明 |
 

@@ -62,7 +62,7 @@ describe('task scheduler shutdown boundary', () => {
       queue: { isShuttingDown: () => true },
       onProcess: vi.fn(),
       sendMessage: vi.fn(),
-      assistantName: 'Miniclaw',
+      assistantName: 'IndustrialDiagnosis',
     } as never);
 
     expect(db.getTaskRunsForTask('past-due-at-shutdown', 10)).toHaveLength(0);

@@ -16,7 +16,7 @@ RUN     := npx
 RUNNER  := npx tsx src/index.ts
 RUNTIME_DATA_DIR ?= data
 BACKUP_DIR ?= .
-CONTAINER_IMAGE ?= helsome/miniclaw-agent:latest
+CONTAINER_IMAGE ?= industrial-diagnosis-agent:latest
 export CONTAINER_IMAGE
 
 # ─── Development ─────────────────────────────────────────────
@@ -118,14 +118,14 @@ _build-backend-if-stale: ## (内部) 后端变更时重新编译（Node 模式�
 	fi; \
 	if [ "$$NEED_BACKEND" = "1" ]; then echo "🔨 检测到后端源码变更，重新编译后端..."; $(PKG) run build; else echo "✅ 后端无变更，跳过编译"; fi
 
-logs: ## 实时查看日志（需配合手动后台运行：make start > /tmp/miniclaw.log 2>&1 &）
-	@tail -f /tmp/miniclaw.log
+logs: ## 实时查看日志（需配合手动后台运行：make start > /tmp/industrial-diagnosis.log 2>&1 &）
+	@tail -f /tmp/industrial-diagnosis.log
 
 stop: ## 停止监听指定端口的服务进程
-	@lsof -ti:$(PORT) -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null && echo "✅ 已停止 Miniclaw (端口 $(PORT))" || echo "⚠️  端口 $(PORT) 未被占用，无需停止"
+	@lsof -ti:$(PORT) -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null && echo "✅ 已停止 工业诊断 Agent (端口 $(PORT))" || echo "⚠️  端口 $(PORT) 未被占用，无需停止"
 
 status: ## 查看服务运行状态
-	@echo "=== Miniclaw 服务状态 ==="
+	@echo "=== 工业诊断 Agent 服务状态 ==="
 	@if lsof -ti:$(PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
 	  echo "✅ 后端进程: 运行中 (端口 $(PORT))"; \
 	  curl -s http://localhost:$(PORT)/api/health 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"   健康状态: {d.get('status','unknown')}\")" 2>/dev/null || echo "   健康状态: 无法获取"; \
@@ -134,16 +134,16 @@ status: ## 查看服务运行状态
 	fi
 	@echo ""
 	@echo "=== 日志文件 ==="
-	@if [ -f /tmp/miniclaw.log ]; then \
-	  echo "✅ /tmp/miniclaw.log 存在 ($$(wc -l < /tmp/miniclaw.log) 行)"; \
+	@if [ -f /tmp/industrial-diagnosis.log ]; then \
+	  echo "✅ /tmp/industrial-diagnosis.log 存在 ($$(wc -l < /tmp/industrial-diagnosis.log) 行)"; \
 	  echo "   最近 3 行:"; \
-	  tail -3 /tmp/miniclaw.log | sed 's/^/   /'; \
+	  tail -3 /tmp/industrial-diagnosis.log | sed 's/^/   /'; \
 	else \
-	  echo "⚠️  /tmp/miniclaw.log 不存在（未用后台模式启动）"; \
+	  echo "⚠️  /tmp/industrial-diagnosis.log 不存在（未用后台模式启动）"; \
 	fi
 	@echo ""
 	@echo "=== Docker 容器 ==="
-	@docker ps --filter "name=miniclaw" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "   Docker 未运行或无 Miniclaw 容器"
+	@docker ps --filter "name=industrial-diagnosis" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "   Docker 未运行或无 工业诊断 Agent 容器"
 
 # ─── Quality ─────────────────────────────────────────────────
 
@@ -239,14 +239,14 @@ reset-init: ## 完全重置为首装状态（清空所有运行时数据）
 
 # ─── Backup / Restore ────────────────────────────────────────
 
-backup: ## 备份运行时数据到 miniclaw-backup-{date}.tar.gz
+backup: ## 备份运行时数据到 industrial-diagnosis-backup-{date}.tar.gz
 	@set -eu; \
 	DATE=$$(date +%Y%m%d-%H%M%S); \
 	mkdir -p "$(BACKUP_DIR)"; \
-	FILE="$(BACKUP_DIR)/miniclaw-backup-$$DATE.tar.gz"; \
-	if [ -e "$$FILE" ]; then FILE="$(BACKUP_DIR)/miniclaw-backup-$$DATE-$$$$.tar.gz"; fi; \
+	FILE="$(BACKUP_DIR)/industrial-diagnosis-backup-$$DATE.tar.gz"; \
+	if [ -e "$$FILE" ]; then FILE="$(BACKUP_DIR)/industrial-diagnosis-backup-$$DATE-$$$$.tar.gz"; fi; \
 	TMP_FILE="$$FILE.tmp-$$$$"; \
-	TMP_ROOT=$$(mktemp -d "$${TMPDIR:-/tmp}/miniclaw-backup.XXXXXX"); \
+	TMP_ROOT=$$(mktemp -d "$${TMPDIR:-/tmp}/industrial-diagnosis-backup.XXXXXX"); \
 	trap 'rm -rf "$$TMP_ROOT" "$$TMP_FILE"' EXIT INT TERM; \
 	HARDLINK_SOURCE=$$(find "$(RUNTIME_DATA_DIR)" -xdev -type f -links +1 -print -quit 2>/dev/null || true); \
 	if [ -n "$$HARDLINK_SOURCE" ]; then \
@@ -286,18 +286,18 @@ backup: ## 备份运行时数据到 miniclaw-backup-{date}.tar.gz
 	chmod 600 "$$FILE"; \
 	echo "✅ 备份完成：$$FILE ($$(du -sh "$$FILE" | cut -f1))"
 
-restore: ## 从 miniclaw-backup-*.tar.gz 恢复数据（用法：make restore 或 make restore FILE=xxx.tar.gz）
+restore: ## 从 industrial-diagnosis-backup-*.tar.gz 恢复数据（用法：make restore 或 make restore FILE=xxx.tar.gz）
 	@set -eu; \
 	if [ -n "$(FILE)" ]; then \
 	  BACKUP="$(FILE)"; \
-	elif [ $$(find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'miniclaw-backup-*.tar.gz' 2>/dev/null | wc -l) -eq 1 ]; then \
-	  BACKUP=$$(find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'miniclaw-backup-*.tar.gz' | head -1); \
-	elif [ $$(find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'miniclaw-backup-*.tar.gz' 2>/dev/null | wc -l) -gt 1 ]; then \
+	elif [ $$(find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'industrial-diagnosis-backup-*.tar.gz' 2>/dev/null | wc -l) -eq 1 ]; then \
+	  BACKUP=$$(find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'industrial-diagnosis-backup-*.tar.gz' | head -1); \
+	elif [ $$(find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'industrial-diagnosis-backup-*.tar.gz' 2>/dev/null | wc -l) -gt 1 ]; then \
 	  echo "❌ 发现多个备份文件，请用 make restore FILE=xxx.tar.gz 指定："; \
-	  find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'miniclaw-backup-*.tar.gz' -print; \
+	  find "$(BACKUP_DIR)" -maxdepth 1 -type f -name 'industrial-diagnosis-backup-*.tar.gz' -print; \
 	  exit 1; \
 	else \
-	  echo "❌ 未找到备份文件，请将 miniclaw-backup-*.tar.gz 放到当前目录"; \
+	  echo "❌ 未找到备份文件，请将 industrial-diagnosis-backup-*.tar.gz 放到当前目录"; \
 	  exit 1; \
 	fi; \
 	if [ ! -f "$$BACKUP" ]; then \

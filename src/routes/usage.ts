@@ -229,7 +229,7 @@ usage.get('/export.csv', (c) => {
   c.header('Content-Type', 'text/csv; charset=utf-8');
   c.header(
     'Content-Disposition',
-    `attachment; filename="miniclaw-usage-${window.from}-${window.to}.csv"`,
+    `attachment; filename="industrial-diagnosis-usage-${window.from}-${window.to}.csv"`,
   );
   return c.body(`\uFEFF${csv}`);
 });

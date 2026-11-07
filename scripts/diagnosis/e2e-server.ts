@@ -1,7 +1,7 @@
 /**
  * 设备智诊 E2E 专用服务入口。
  *
- * 每次启动前清空并重建 work/diagnosis/e2e-data，使用独立的 Miniclaw 数据目录，
+ * 每次启动前清空并重建 work/diagnosis/e2e-data，使用独立的 IndustrialDiagnosis 数据目录，
  * 因此不会读取或修改本地演示库 data/，也不依赖已有用户、默认密码或已启动服务。
  * 端口由 DIAGNOSIS_E2E_PORT 指定（默认 3199）。
  */
@@ -24,7 +24,7 @@ if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
 fs.rmSync(dataDir, { recursive: true, force: true });
 fs.mkdirSync(dataDir, { recursive: true });
 
-process.env.MINICLAW_DATA_DIR = dataDir;
+process.env.INDUSTRIAL_DIAGNOSIS_DATA_DIR = dataDir;
 process.env.DIAGNOSIS_HOST = '127.0.0.1';
 process.env.DIAGNOSIS_PORT = process.env.DIAGNOSIS_E2E_PORT ?? '3199';
 process.env.DIAGNOSIS_MODEL_MODE ??= 'fixture';

@@ -1,12 +1,12 @@
 import crypto from 'node:crypto';
 
 import {
-  MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+  INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
   WorkspaceMemoryStoreError,
-  enforceMiniclawOwnerAddressCanonicalInvariant,
-  getMiniclawOwnerAddressMemoryItem,
-  mutateMiniclawOwnerAddressMemory,
-  reconcileMiniclawOwnerAddressCanonicalKey,
+  enforceIndustrialDiagnosisOwnerAddressCanonicalInvariant,
+  getIndustrialDiagnosisOwnerAddressMemoryItem,
+  mutateIndustrialDiagnosisOwnerAddressMemory,
+  reconcileIndustrialDiagnosisOwnerAddressCanonicalKey,
   type WorkspaceMemoryMutationContext,
 } from './memory-store.js';
 
@@ -28,8 +28,8 @@ interface SqliteDatabase {
 
 let database: SqliteDatabase | null = null;
 
-export const MINICLAW_OWNER_INTRODUCTION_FLOW_KEY =
-  'miniclaw.owner-introduction';
+export const INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY =
+  'industrial-diagnosis.owner-introduction';
 
 /**
  * Exact values emitted by historical cold-start prompts when the owner
@@ -48,20 +48,20 @@ const LEGACY_OWNER_ADDRESS_SKIP_SENTINEL_SET = new Set<string>(
   LEGACY_OWNER_ADDRESS_SKIP_SENTINELS,
 );
 
-export type MiniclawOwnerIntroductionState =
+export type IndustrialDiagnosisOwnerIntroductionState =
   | 'pending'
   | 'claimed'
   | 'completed'
   | 'skipped';
 
-export interface MiniclawOwnerProfileProjection {
+export interface IndustrialDiagnosisOwnerProfileProjection {
   workspaceJid: string;
   preferredAddress: string | null;
   /** Monotonic revision of the single reserved Memory item, including clear. */
   revision: number | null;
   onboarding: {
-    flowKey: typeof MINICLAW_OWNER_INTRODUCTION_FLOW_KEY;
-    state: MiniclawOwnerIntroductionState;
+    flowKey: typeof INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY;
+    state: IndustrialDiagnosisOwnerIntroductionState;
     revision: number;
     leaseOwner: string | null;
     leaseToken: number | null;
@@ -73,7 +73,7 @@ export interface MiniclawOwnerProfileProjection {
 interface OnboardingRow {
   workspace_jid: string;
   flow_key: string;
-  state: MiniclawOwnerIntroductionState;
+  state: IndustrialDiagnosisOwnerIntroductionState;
   revision: number;
   lease_owner: string | null;
   lease_token: number;
@@ -136,7 +136,7 @@ function requireHomeWorkspace(workspaceJid: string): void {
   if (!row) {
     throw new OwnerProfileStoreError(
       'not_home_workspace',
-      'Miniclaw Owner Profile is available only in the owner Home Workspace',
+      'IndustrialDiagnosis Owner Profile is available only in the owner Home Workspace',
     );
   }
 }
@@ -148,7 +148,7 @@ function onboardingRow(workspaceJid: string): OnboardingRow | null {
         `SELECT * FROM workspace_onboarding_states
          WHERE workspace_jid = ? AND flow_key = ?`,
       )
-      .get(workspaceJid, MINICLAW_OWNER_INTRODUCTION_FLOW_KEY) as
+      .get(workspaceJid, INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY) as
       | OnboardingRow
       | undefined) ?? null
   );
@@ -161,7 +161,7 @@ function ensureOnboardingRow(workspaceJid: string, at: string): OnboardingRow {
       workspace_jid, flow_key, state, revision, lease_owner, lease_token,
       lease_expires_at, completed_at, skipped_at, created_at, updated_at
     ) VALUES (?, ?, 'pending', 0, NULL, 0, NULL, NULL, NULL, ?, ?)`,
-  ).run(workspaceJid, MINICLAW_OWNER_INTRODUCTION_FLOW_KEY, at, at);
+  ).run(workspaceJid, INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY, at, at);
   return onboardingRow(workspaceJid)!;
 }
 
@@ -220,7 +220,7 @@ export function createOwnerProfileSchema(db: SqliteDatabase): void {
         workspace_jid, flow_key, state, revision, lease_owner, lease_token,
         lease_expires_at, completed_at, skipped_at, created_at, updated_at
       ) VALUES (
-        NEW.jid, 'miniclaw.owner-introduction', 'pending', 0, NULL, 0,
+        NEW.jid, 'industrial-diagnosis.owner-introduction', 'pending', 0, NULL, 0,
         NULL, NULL, NULL, NEW.created_at, NEW.updated_at
       );
     END;
@@ -230,7 +230,7 @@ export function createOwnerProfileSchema(db: SqliteDatabase): void {
       lease_expires_at, completed_at, skipped_at, created_at, updated_at
     )
     SELECT
-      jid, 'miniclaw.owner-introduction', 'pending', 0, NULL, 0,
+      jid, 'industrial-diagnosis.owner-introduction', 'pending', 0, NULL, 0,
       NULL, NULL, NULL, created_at, updated_at
     FROM workspaces
     WHERE is_home = 1;
@@ -258,11 +258,11 @@ export function createOwnerProfileSchema(db: SqliteDatabase): void {
   }
 }
 
-export function getMiniclawOwnerProfileProjection(
+export function getIndustrialDiagnosisOwnerProfileProjection(
   workspaceJid: string,
-): MiniclawOwnerProfileProjection {
+): IndustrialDiagnosisOwnerProfileProjection {
   requireHomeWorkspace(workspaceJid);
-  const { item } = getMiniclawOwnerAddressMemoryItem(workspaceJid);
+  const { item } = getIndustrialDiagnosisOwnerAddressMemoryItem(workspaceJid);
   const onboarding = onboardingRow(workspaceJid);
   return {
     workspaceJid,
@@ -270,7 +270,7 @@ export function getMiniclawOwnerProfileProjection(
       item?.status === 'active' ? item.content.trim() || null : null,
     revision: item?.revision ?? null,
     onboarding: {
-      flowKey: MINICLAW_OWNER_INTRODUCTION_FLOW_KEY,
+      flowKey: INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY,
       state: onboarding?.state ?? 'pending',
       revision: Number(onboarding?.revision ?? 0),
       leaseOwner: onboarding?.lease_owner ?? null,
@@ -292,17 +292,17 @@ function completeIntroduction(workspaceJid: string, at: string): void {
            completed_at = ?, skipped_at = NULL, updated_at = ?
        WHERE workspace_jid = ? AND flow_key = ?`,
     )
-    .run(at, at, workspaceJid, MINICLAW_OWNER_INTRODUCTION_FLOW_KEY);
+    .run(at, at, workspaceJid, INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY);
 }
 
-export function setMiniclawOwnerPreferredAddress(input: {
+export function setIndustrialDiagnosisOwnerPreferredAddress(input: {
   workspaceJid: string;
   preferredAddress: string;
   expectedRevision?: number;
   idempotencyKey?: string | null;
   context: WorkspaceMemoryMutationContext;
 }): {
-  projection: MiniclawOwnerProfileProjection;
+  projection: IndustrialDiagnosisOwnerProfileProjection;
   replayed: boolean;
   changed: boolean;
 } {
@@ -311,7 +311,7 @@ export function setMiniclawOwnerPreferredAddress(input: {
   const db = requireDatabase();
   try {
     return db.transaction(() => {
-      const mutation = mutateMiniclawOwnerAddressMemory({
+      const mutation = mutateIndustrialDiagnosisOwnerAddressMemory({
         workspaceJid: input.workspaceJid,
         preferredAddress,
         expectedRevision: input.expectedRevision,
@@ -324,7 +324,7 @@ export function setMiniclawOwnerPreferredAddress(input: {
       });
       completeIntroduction(input.workspaceJid, nowIso());
       return {
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
         replayed: mutation.replayed,
         changed: mutation.changed,
       };
@@ -334,13 +334,13 @@ export function setMiniclawOwnerPreferredAddress(input: {
   }
 }
 
-export function clearMiniclawOwnerPreferredAddress(input: {
+export function clearIndustrialDiagnosisOwnerPreferredAddress(input: {
   workspaceJid: string;
   expectedRevision: number;
   idempotencyKey?: string | null;
   context: WorkspaceMemoryMutationContext;
 }): {
-  projection: MiniclawOwnerProfileProjection;
+  projection: IndustrialDiagnosisOwnerProfileProjection;
   replayed: boolean;
   changed: boolean;
 } {
@@ -348,7 +348,7 @@ export function clearMiniclawOwnerPreferredAddress(input: {
   const db = requireDatabase();
   try {
     return db.transaction(() => {
-      const mutation = mutateMiniclawOwnerAddressMemory({
+      const mutation = mutateIndustrialDiagnosisOwnerAddressMemory({
         workspaceJid: input.workspaceJid,
         clear: true,
         expectedRevision: input.expectedRevision,
@@ -364,7 +364,7 @@ export function clearMiniclawOwnerPreferredAddress(input: {
         completeIntroduction(input.workspaceJid, nowIso());
       }
       return {
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
         replayed: mutation.replayed,
         changed: mutation.changed,
       };
@@ -374,7 +374,7 @@ export function clearMiniclawOwnerPreferredAddress(input: {
   }
 }
 
-export function claimMiniclawOwnerIntroduction(input: {
+export function claimIndustrialDiagnosisOwnerIntroduction(input: {
   workspaceJid: string;
   leaseOwner: string;
   leaseMs?: number;
@@ -387,7 +387,7 @@ export function claimMiniclawOwnerIntroduction(input: {
   newlyClaimed: boolean;
   leaseToken: number | null;
   leaseExpiresAt: string | null;
-  projection: MiniclawOwnerProfileProjection;
+  projection: IndustrialDiagnosisOwnerProfileProjection;
 } {
   requireHomeWorkspace(input.workspaceJid);
   const leaseOwner = input.leaseOwner.trim();
@@ -412,7 +412,7 @@ export function claimMiniclawOwnerIntroduction(input: {
   const expiresAt = new Date(atMs + leaseMs).toISOString();
   const db = requireDatabase();
   return db.transaction(() => {
-    const profile = getMiniclawOwnerAddressMemoryItem(input.workspaceJid);
+    const profile = getIndustrialDiagnosisOwnerAddressMemoryItem(input.workspaceJid);
     if (profile.item?.status === 'active') {
       completeIntroduction(input.workspaceJid, at);
       return {
@@ -422,7 +422,7 @@ export function claimMiniclawOwnerIntroduction(input: {
         newlyClaimed: false,
         leaseToken: null,
         leaseExpiresAt: null,
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
       };
     }
     const row = ensureOnboardingRow(input.workspaceJid, at);
@@ -434,7 +434,7 @@ export function claimMiniclawOwnerIntroduction(input: {
         newlyClaimed: false,
         leaseToken: null,
         leaseExpiresAt: null,
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
       };
     }
     const leaseIsCurrent =
@@ -449,7 +449,7 @@ export function claimMiniclawOwnerIntroduction(input: {
         newlyClaimed: false,
         leaseToken: Number(row.lease_token),
         leaseExpiresAt: row.lease_expires_at,
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
       };
     }
     if (leaseIsCurrent && row.lease_owner === leaseOwner) {
@@ -462,7 +462,7 @@ export function claimMiniclawOwnerIntroduction(input: {
         expiresAt,
         at,
         input.workspaceJid,
-        MINICLAW_OWNER_INTRODUCTION_FLOW_KEY,
+        INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY,
         leaseOwner,
       );
       return {
@@ -472,7 +472,7 @@ export function claimMiniclawOwnerIntroduction(input: {
         newlyClaimed: row.first_wake_at === null,
         leaseToken: Number(row.lease_token),
         leaseExpiresAt: expiresAt,
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
       };
     }
     const firstWake = row.first_wake_at === null;
@@ -496,7 +496,7 @@ export function claimMiniclawOwnerIntroduction(input: {
         expiresAt,
         at,
         input.workspaceJid,
-        MINICLAW_OWNER_INTRODUCTION_FLOW_KEY,
+        INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY,
         at,
       );
     const claimed = onboardingRow(input.workspaceJid)!;
@@ -513,7 +513,7 @@ export function claimMiniclawOwnerIntroduction(input: {
       newlyClaimed: isFirstWake,
       leaseToken: Number(claimed.lease_token),
       leaseExpiresAt: claimed.lease_expires_at,
-      projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+      projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
     };
   })();
 }
@@ -523,14 +523,14 @@ export function claimMiniclawOwnerIntroduction(input: {
  * healthy top-level Assistant progress for the claiming turn. Both fences are
  * required so a stale/overlapping runner cannot acknowledge another lease.
  */
-export function acknowledgeMiniclawOwnerIntroduction(input: {
+export function acknowledgeIndustrialDiagnosisOwnerIntroduction(input: {
   workspaceJid: string;
   leaseOwner: string;
   leaseToken: number;
   now?: string;
 }): {
   acknowledged: boolean;
-  projection: MiniclawOwnerProfileProjection;
+  projection: IndustrialDiagnosisOwnerProfileProjection;
 } {
   requireHomeWorkspace(input.workspaceJid);
   const leaseOwner = input.leaseOwner.trim();
@@ -567,7 +567,7 @@ export function acknowledgeMiniclawOwnerIntroduction(input: {
     if (row.first_wake_at !== null) {
       return {
         acknowledged: false,
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
       };
     }
     const result = db
@@ -582,7 +582,7 @@ export function acknowledgeMiniclawOwnerIntroduction(input: {
         at,
         at,
         input.workspaceJid,
-        MINICLAW_OWNER_INTRODUCTION_FLOW_KEY,
+        INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY,
         leaseOwner,
         input.leaseToken,
       );
@@ -594,7 +594,7 @@ export function acknowledgeMiniclawOwnerIntroduction(input: {
     }
     return {
       acknowledged: true,
-      projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+      projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
     };
   })();
 }
@@ -603,7 +603,7 @@ export function acknowledgeMiniclawOwnerIntroduction(input: {
  * Release an uncompleted runner lease on process exit. The first-wake marker is
  * intentionally retained only when it was separately acknowledged.
  */
-export function releaseMiniclawOwnerIntroductionLease(
+export function releaseIndustrialDiagnosisOwnerIntroductionLease(
   leaseOwner: string,
   now: string = nowIso(),
 ): number {
@@ -620,30 +620,30 @@ export function releaseMiniclawOwnerIntroductionLease(
   return result.changes;
 }
 
-export function skipMiniclawOwnerIntroduction(input: {
+export function skipIndustrialDiagnosisOwnerIntroduction(input: {
   workspaceJid: string;
   expectedOnboardingRevision?: number;
   context: WorkspaceMemoryMutationContext;
 }): {
-  projection: MiniclawOwnerProfileProjection;
+  projection: IndustrialDiagnosisOwnerProfileProjection;
   changed: boolean;
 } {
   requireHomeWorkspace(input.workspaceJid);
   const db = requireDatabase();
   return db.transaction(() => {
     const at = nowIso();
-    const profile = getMiniclawOwnerAddressMemoryItem(input.workspaceJid);
+    const profile = getIndustrialDiagnosisOwnerAddressMemoryItem(input.workspaceJid);
     if (profile.item?.status === 'active') {
       completeIntroduction(input.workspaceJid, at);
       return {
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
         changed: false,
       };
     }
     const row = ensureOnboardingRow(input.workspaceJid, at);
     if (row.state === 'skipped') {
       return {
-        projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+        projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
         changed: false,
       };
     }
@@ -653,7 +653,7 @@ export function skipMiniclawOwnerIntroduction(input: {
     ) {
       throw new OwnerProfileStoreError(
         'revision_conflict',
-        'Miniclaw onboarding revision conflict',
+        'IndustrialDiagnosis onboarding revision conflict',
         { currentRevision: row.revision },
       );
     }
@@ -663,9 +663,9 @@ export function skipMiniclawOwnerIntroduction(input: {
            lease_owner = NULL, lease_expires_at = NULL,
            completed_at = NULL, skipped_at = ?, updated_at = ?
        WHERE workspace_jid = ? AND flow_key = ?`,
-    ).run(at, at, input.workspaceJid, MINICLAW_OWNER_INTRODUCTION_FLOW_KEY);
+    ).run(at, at, input.workspaceJid, INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY);
     return {
-      projection: getMiniclawOwnerProfileProjection(input.workspaceJid),
+      projection: getIndustrialDiagnosisOwnerProfileProjection(input.workspaceJid),
       changed: true,
     };
   })();
@@ -686,13 +686,13 @@ export function reconcileLegacyOwnerProfileMemory(): {
 } {
   const db = requireDatabase();
   return db.transaction(() => {
-    const reconciled = reconcileMiniclawOwnerAddressCanonicalKey();
+    const reconciled = reconcileIndustrialDiagnosisOwnerAddressCanonicalKey();
     const homes = db
       .prepare(`SELECT jid FROM workspaces WHERE is_home = 1`)
       .all() as Array<{ jid: string }>;
     for (const home of homes) {
       const at = nowIso();
-      const { item } = getMiniclawOwnerAddressMemoryItem(home.jid);
+      const { item } = getIndustrialDiagnosisOwnerAddressMemoryItem(home.jid);
       const onboarding = ensureOnboardingRow(home.jid, at);
       // A prior explicit outcome is authoritative. In particular, a normal
       // restart must never reinterpret an already-skipped row as completed.
@@ -701,14 +701,14 @@ export function reconcileLegacyOwnerProfileMemory(): {
       }
       if (!item) continue;
       if (item.status === 'active' && legacyAddressMeansSkip(item.content)) {
-        mutateMiniclawOwnerAddressMemory({
+        mutateIndustrialDiagnosisOwnerAddressMemory({
           workspaceJid: home.jid,
           clear: true,
           expectedRevision: item.revision,
           context: {
             actorId: 'schema-v66-owner-profile-reconciliation',
             sourceType: 'migration',
-            sourceId: MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+            sourceId: INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
             observedAt: at,
           },
         });
@@ -718,12 +718,12 @@ export function reconcileLegacyOwnerProfileMemory(): {
                lease_owner = NULL, lease_expires_at = NULL,
                skipped_at = ?, updated_at = ?
            WHERE workspace_jid = ? AND flow_key = ?`,
-        ).run(at, at, home.jid, MINICLAW_OWNER_INTRODUCTION_FLOW_KEY);
+        ).run(at, at, home.jid, INDUSTRIAL_DIAGNOSIS_OWNER_INTRODUCTION_FLOW_KEY);
       } else {
         completeIntroduction(home.jid, at);
       }
     }
-    enforceMiniclawOwnerAddressCanonicalInvariant();
+    enforceIndustrialDiagnosisOwnerAddressCanonicalInvariant();
     return reconciled;
   })();
 }

@@ -13,7 +13,7 @@ import {
 
 /**
  * Native Claude Code capability directories that belong to the user config
- * layer. Skills stay out of this list because Miniclaw governs them with an
+ * layer. Skills stay out of this list because IndustrialDiagnosis governs them with an
  * independent, per-Agent policy.
  */
 export const HOST_CLAUDE_NATIVE_DIRECTORIES = [
@@ -48,7 +48,7 @@ export interface ClaudeContextPlanArgs {
   groupSessionsDir?: string;
   /**
    * Explicit Agent policy opt-in for the administrator's native ~/.claude
-   * context. Managed Miniclaw skills are resolved independently below.
+   * context. Managed IndustrialDiagnosis skills are resolved independently below.
    */
   includeHostClaudeContext?: boolean;
   /** Host ~/.claude/skills policy, independent of CLAUDE.md/rules. */
@@ -168,7 +168,7 @@ function mergeSettings(
 
 /**
  * Load the complete native user settings layer in Claude Code precedence
- * order. The caller applies Miniclaw's required env and effective MCP policy
+ * order. The caller applies IndustrialDiagnosis's required env and effective MCP policy
  * afterward, so enabling native context cannot bypass those explicit controls.
  */
 export function loadHostClaudeSettings(
@@ -183,7 +183,7 @@ export function loadHostClaudeSettings(
       if (isPlainRecord(parsed)) merged = mergeSettings(merged, parsed);
     } catch {
       // Invalid native settings are surfaced by Claude Code when used
-      // directly. Miniclaw skips the invalid layer to keep startup usable.
+      // directly. IndustrialDiagnosis skips the invalid layer to keep startup usable.
     }
   }
   return merged;
@@ -438,7 +438,7 @@ export function buildClaudeContextPlan(
       selectedSkillIds: effectiveSkills.selected.map((skill) => skill.id),
       sources: skillAuditSources,
     },
-    miniclawPrompt: { totalBytes: 0, files: [] },
+    industrialDiagnosisPrompt: { totalBytes: 0, files: [] },
     warnings,
   };
 
@@ -494,7 +494,7 @@ export function syncHostClaudeContext(
     (entry) => entry.isFile() || entry.isDirectory() || entry.isSymbolicLink(),
   );
 
-  // These paths are Miniclaw-owned projections of the selected native user
+  // These paths are IndustrialDiagnosis-owned projections of the selected native user
   // config. Always remove a previous Agent's projection first so disabling or
   // changing the policy cannot leak stale capabilities into the next run.
   for (const name of [

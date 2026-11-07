@@ -17,7 +17,7 @@ describe('Makefile runtime contract', () => {
     expect(makefile).toMatch(/^dev-backend:.*\n\t\$\(RUNNER\)$/m);
     expect(makefile).toMatch(/^stop: ## 停止监听指定端口的服务进程/m);
     expect(makefile).not.toContain('PM2_GUARD');
-    expect(makefile).toContain('$$(wc -l < /tmp/miniclaw.log)');
+    expect(makefile).toContain('$$(wc -l < /tmp/industrial-diagnosis.log)');
   });
 
   test('uses SQLite-aware backup and guarded restore commands', () => {

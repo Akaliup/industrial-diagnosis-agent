@@ -6,7 +6,7 @@ import { shouldUseHashRouter } from './utils/url';
 import { cleanupLegacyPwaArtifacts } from './utils/legacyPwaCleanup';
 
 if (typeof window !== 'undefined') {
-  window.__MINICLAW_HASH_ROUTER__ = shouldUseHashRouter();
+  window.__INDUSTRIAL_DIAGNOSIS_HASH_ROUTER__ = shouldUseHashRouter();
 
   // Prevent pinch-to-zoom on iOS (iOS 10+ ignores user-scalable=no).
   // 多指缩放由 globals.css 的 `touch-action: pan-x pan-y` 声明式拦截；这里只保留
@@ -17,7 +17,7 @@ if (typeof window !== 'undefined') {
 }
 
 if (typeof window !== 'undefined') {
-  // Miniclaw no longer uses a Service Worker. Clean up registrations and
+  // 工业诊断 Agent no longer uses a Service Worker. Clean up registrations and
   // Cache Storage left by older releases without delaying the first render.
   void cleanupLegacyPwaArtifacts();
 }

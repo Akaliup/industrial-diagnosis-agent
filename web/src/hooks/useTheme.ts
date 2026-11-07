@@ -4,12 +4,12 @@ export type Theme = 'light' | 'dark' | 'system';
 export type ColorScheme = 'default' | 'orange' | 'neutral';
 export type FontStyle = 'default' | 'anthropic';
 
-const THEME_KEY = 'miniclaw-theme';
-const SCHEME_KEY = 'miniclaw-color-scheme';
-const FONT_KEY = 'miniclaw-font-style';
-const LEGACY_THEME_KEY = 'miniclaw-theme';
-const LEGACY_SCHEME_KEY = 'miniclaw-color-scheme';
-const LEGACY_FONT_KEY = 'miniclaw-font-style';
+const THEME_KEY = 'industrial-diagnosis-theme';
+const SCHEME_KEY = 'industrial-diagnosis-color-scheme';
+const FONT_KEY = 'industrial-diagnosis-font-style';
+const LEGACY_THEME_KEY = 'industrial-diagnosis-theme';
+const LEGACY_SCHEME_KEY = 'industrial-diagnosis-color-scheme';
+const LEGACY_FONT_KEY = 'industrial-diagnosis-font-style';
 const listeners = new Set<() => void>();
 
 function notify() { listeners.forEach((cb) => cb()); }

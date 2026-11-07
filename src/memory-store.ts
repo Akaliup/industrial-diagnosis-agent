@@ -36,10 +36,10 @@ export type WorkspaceMemorySourceType =
   | 'scheduled_task'
   | 'migration';
 
-/** One durable Home Workspace fact completes Miniclaw's first-wake ritual. */
-export const MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY =
-  'miniclaw.owner.preferred_address';
-const MINICLAW_OWNER_PROFILE_MEMORY_NAMESPACE = 'miniclaw.owner-profile';
+/** One durable Home Workspace fact completes IndustrialDiagnosis's first-wake ritual. */
+export const INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY =
+  'industrial-diagnosis.owner.preferred_address';
+const INDUSTRIAL_DIAGNOSIS_OWNER_PROFILE_MEMORY_NAMESPACE = 'industrial-diagnosis.owner-profile';
 
 export interface WorkspaceMemoryProvenance {
   sourceType: WorkspaceMemorySourceType;
@@ -180,7 +180,7 @@ function normalizeNullable(value: string | null | undefined): string | null {
 
 function isReservedCanonicalKey(value: string | null | undefined): boolean {
   return (
-    normalizeNullable(value) === MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY
+    normalizeNullable(value) === INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY
   );
 }
 
@@ -188,7 +188,7 @@ function rejectReservedCanonicalKey(value: string | null | undefined): void {
   if (!isReservedCanonicalKey(value)) return;
   throw new WorkspaceMemoryStoreError(
     'reserved_canonical_key',
-    'This canonical key is owned by the Miniclaw Owner Profile service',
+    'This canonical key is owned by the IndustrialDiagnosis Owner Profile service',
   );
 }
 
@@ -335,7 +335,7 @@ function isReservedMemoryItem(item: WorkspaceMemoryItem): boolean {
          WHERE item_id = ? AND canonical_key = ?
          LIMIT 1`,
       )
-      .get(item.id, item.id, MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY),
+      .get(item.id, item.id, INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY),
   );
 }
 
@@ -346,14 +346,14 @@ function markPlatformMemoryItem(itemId: string, at: string): void {
         item_id, namespace, created_at
       ) VALUES (?, ?, ?)`,
     )
-    .run(itemId, MINICLAW_OWNER_PROFILE_MEMORY_NAMESPACE, at);
+    .run(itemId, INDUSTRIAL_DIAGNOSIS_OWNER_PROFILE_MEMORY_NAMESPACE, at);
 }
 
 function rejectReservedMemoryItem(item: WorkspaceMemoryItem): void {
   if (!isReservedMemoryItem(item)) return;
   throw new WorkspaceMemoryStoreError(
     'reserved_canonical_key',
-    'This memory item is owned by the Miniclaw Owner Profile service',
+    'This memory item is owned by the IndustrialDiagnosis Owner Profile service',
   );
 }
 
@@ -677,17 +677,17 @@ export function createWorkspaceMemorySchema(db: SqliteDatabase): void {
       item_id, namespace, created_at
     )
     SELECT
-      id, 'miniclaw.owner-profile', created_at
+      id, 'industrial-diagnosis.owner-profile', created_at
     FROM workspace_memory_items
-    WHERE canonical_key = 'miniclaw.owner.preferred_address';
+    WHERE canonical_key = 'industrial-diagnosis.owner.preferred_address';
 
     INSERT OR IGNORE INTO workspace_memory_platform_items (
       item_id, namespace, created_at
     )
     SELECT
-      item_id, 'miniclaw.owner-profile', MIN(created_at)
+      item_id, 'industrial-diagnosis.owner-profile', MIN(created_at)
     FROM workspace_memory_versions
-    WHERE canonical_key = 'miniclaw.owner.preferred_address'
+    WHERE canonical_key = 'industrial-diagnosis.owner.preferred_address'
     GROUP BY item_id;
   `);
 }
@@ -703,7 +703,7 @@ export function bindWorkspaceMemoryDatabase(db: SqliteDatabase | null): void {
  * be undone by an older active duplicate. Every duplicate is detached from
  * the reserved key with full version/audit/outbox history.
  */
-export function reconcileMiniclawOwnerAddressCanonicalKey(): {
+export function reconcileIndustrialDiagnosisOwnerAddressCanonicalKey(): {
   workspaces: number;
   retiredItems: number;
 } {
@@ -717,7 +717,7 @@ export function reconcileMiniclawOwnerAddressCanonicalKey(): {
          GROUP BY store_id
          HAVING COUNT(*) > 1`,
       )
-      .all(MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY) as Array<{
+      .all(INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY) as Array<{
       store_id: string;
     }>;
     let retiredItems = 0;
@@ -730,7 +730,7 @@ export function reconcileMiniclawOwnerAddressCanonicalKey(): {
         )
         .all(
           duplicate.store_id,
-          MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+          INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
         ) as MemoryItemRow[];
       const storeRowValue = db
         .prepare(
@@ -763,7 +763,7 @@ export function reconcileMiniclawOwnerAddressCanonicalKey(): {
             store.id,
             loser.id,
             loser.revision,
-            MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+            INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
           );
         if (result.changes !== 1) continue;
         store = bumpStore(store.id, at);
@@ -771,7 +771,7 @@ export function reconcileMiniclawOwnerAddressCanonicalKey(): {
         const context: WorkspaceMemoryMutationContext = {
           actorId: 'schema-v66-owner-profile-reconciliation',
           sourceType: 'migration',
-          sourceId: 'miniclaw.owner.preferred_address',
+          sourceId: 'industrial-diagnosis.owner.preferred_address',
           observedAt: at,
         };
         appendVersion(versionItem, 'update', context, at);
@@ -796,7 +796,7 @@ export function reconcileMiniclawOwnerAddressCanonicalKey(): {
  * createWorkspaceMemorySchema is essential: an old database may contain
  * duplicates and would otherwise fail before the migration can repair them.
  */
-export function enforceMiniclawOwnerAddressCanonicalInvariant(): void {
+export function enforceIndustrialDiagnosisOwnerAddressCanonicalInvariant(): void {
   requireDatabase()
     .prepare(
       `DELETE FROM workspace_memory_fts
@@ -808,20 +808,20 @@ export function enforceMiniclawOwnerAddressCanonicalInvariant(): void {
        )`,
     )
     .run(
-      MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
-      MINICLAW_OWNER_PROFILE_MEMORY_NAMESPACE,
+      INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+      INDUSTRIAL_DIAGNOSIS_OWNER_PROFILE_MEMORY_NAMESPACE,
     );
   requireDatabase().exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_workspace_memory_owner_address_unique
       ON workspace_memory_items(store_id, canonical_key)
-      WHERE canonical_key = 'miniclaw.owner.preferred_address';
+      WHERE canonical_key = 'industrial-diagnosis.owner.preferred_address';
   `);
 }
 
 /**
  * Remove every memory artifact for a deleted workspace explicitly.
  *
- * Miniclaw may temporarily disable SQLite foreign-key enforcement when a
+ * IndustrialDiagnosis may temporarily disable SQLite foreign-key enforcement when a
  * legacy installation contains unrelated FK orphans. Deletion therefore must
  * not rely on ON DELETE CASCADE: leaving the store behind would let a future
  * workspace that reuses the same JID inherit another owner's memory.
@@ -968,7 +968,7 @@ export interface ReservedWorkspaceMemoryMutationResult {
  * Read the platform-owned Owner Profile item without exposing it through the
  * generic Workspace Memory service.
  */
-export function getMiniclawOwnerAddressMemoryItem(workspaceJid: string): {
+export function getIndustrialDiagnosisOwnerAddressMemoryItem(workspaceJid: string): {
   store: WorkspaceMemoryStore;
   item: WorkspaceMemoryItem | null;
 } {
@@ -984,7 +984,7 @@ export function getMiniclawOwnerAddressMemoryItem(workspaceJid: string): {
          i.id DESC
        LIMIT 1`,
     )
-    .get(store.id, MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY) as
+    .get(store.id, INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY) as
     | MemoryItemRow
     | undefined;
   return { store, item: row ? mapItem(row) : null };
@@ -1047,7 +1047,7 @@ function reservedRequestReplay(
  * to `superseded`; restoring changes it back to `active`. This lets callers
  * use one CAS lineage across set → update → clear → restore.
  */
-export function mutateMiniclawOwnerAddressMemory(input: {
+export function mutateIndustrialDiagnosisOwnerAddressMemory(input: {
   workspaceJid: string;
   preferredAddress?: string;
   clear?: boolean;
@@ -1059,7 +1059,7 @@ export function mutateMiniclawOwnerAddressMemory(input: {
   const db = requireDatabase();
   return db.transaction(() => {
     const { store: initialStore, item: current } =
-      getMiniclawOwnerAddressMemoryItem(input.workspaceJid);
+      getIndustrialDiagnosisOwnerAddressMemoryItem(input.workspaceJid);
     const idempotencyKey = normalizeNullable(input.idempotencyKey);
     const preferredAddress = normalizeNullable(input.preferredAddress);
     if (!input.clear && !preferredAddress) {
@@ -1070,7 +1070,7 @@ export function mutateMiniclawOwnerAddressMemory(input: {
       if (input.clear) {
         throw new WorkspaceMemoryStoreError(
           'revision_conflict',
-          'Miniclaw Owner Profile revision conflict',
+          'IndustrialDiagnosis Owner Profile revision conflict',
           { currentRevision: 0, storeRevision: initialStore.revision },
         );
       }
@@ -1080,7 +1080,7 @@ export function mutateMiniclawOwnerAddressMemory(input: {
       ) {
         throw new WorkspaceMemoryStoreError(
           'revision_conflict',
-          'Miniclaw Owner Profile revision conflict',
+          'IndustrialDiagnosis Owner Profile revision conflict',
           { currentRevision: 0, storeRevision: initialStore.revision },
         );
       }
@@ -1132,7 +1132,7 @@ export function mutateMiniclawOwnerAddressMemory(input: {
         store.workspaceJid,
         '主人称呼',
         preferredAddress,
-        MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+        INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
         idempotencyKey,
         normalizeNullable(input.requestHash),
         at,
@@ -1191,7 +1191,7 @@ export function mutateMiniclawOwnerAddressMemory(input: {
     ) {
       throw new WorkspaceMemoryStoreError(
         'revision_conflict',
-        'Miniclaw Owner Profile revision conflict',
+        'IndustrialDiagnosis Owner Profile revision conflict',
         {
           currentRevision: current.revision,
           storeRevision: initialStore.revision,
@@ -1249,13 +1249,13 @@ export function mutateMiniclawOwnerAddressMemory(input: {
         initialStore.id,
         current.id,
         input.expectedRevision,
-        MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+        INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
       );
     if (result.changes !== 1) {
       const latest = requireItem(initialStore, current.id);
       throw new WorkspaceMemoryStoreError(
         'revision_conflict',
-        'Miniclaw Owner Profile revision conflict',
+        'IndustrialDiagnosis Owner Profile revision conflict',
         {
           currentRevision: latest.revision,
           storeRevision: requireStore(input.workspaceJid).revision,
@@ -1688,7 +1688,7 @@ export function listWorkspaceMemoryItems(input: {
   const params: unknown[] = [
     store.id,
     input.status ?? 'active',
-    MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+    INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
   ];
   if (input.kind) {
     clauses.push('i.kind = ?');
@@ -1725,7 +1725,7 @@ export function listRecallableWorkspaceMemoryItems(input: {
   const kindClause = input.kind ? 'AND i.kind = ?' : '';
   const params: unknown[] = [
     store.id,
-    MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+    INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
     now,
     now,
     now,
@@ -1774,7 +1774,7 @@ export function searchWorkspaceMemoryItems(input: {
   const kindClause = input.kind ? 'AND i.kind = ?' : '';
   const params: unknown[] = [
     store.id,
-    MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+    INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
     now,
     now,
     now,

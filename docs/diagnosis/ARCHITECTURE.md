@@ -20,10 +20,10 @@ flowchart LR
   N --> O[React 工作台]
 ```
 
-- Web 入口：`/diagnosis`，独立 SPA（HashRouter），复用 Miniclaw 登录与 Workspace。
+- Web 入口：`/diagnosis`，独立 SPA（HashRouter），复用现有 登录与 Workspace。
 - 服务入口：`src/diagnosis/server.ts`，只挂载 `/api/auth` 与 `/api/diagnosis`。
 - 诊断状态真相源：SQLite 的 `diagnosis_*` 表；WebSocket 只是通知通道。
-- 通用 Miniclaw Agent 的工具权限不被诊断链路使用；诊断工具固定白名单。
+- 通用 Agent 的工具权限不被诊断链路使用；诊断工具固定白名单。
 
 ## 2. 五阶段
 
@@ -99,7 +99,7 @@ coverage / warnings / error / next_cursor`。`status` 为 `success|partial|no_da
 | `diagnosis_context_manifests` | 每轮上下文来源与预算清单 |
 | `diagnosis_eval_runs` | 50 例 Eval 结果与 trace 路径 |
 
-迁移由 `src/diagnosis/db.ts` 在事务中执行，带备份目录参数；诊断表不改变 Miniclaw 主
+迁移由 `src/diagnosis/db.ts` 在事务中执行，带备份目录参数；诊断表不改变主
 Schema 版本语义。
 
 ## 6. 事件协议
@@ -174,7 +174,7 @@ npm run diagnosis:setup      # 幂等种子（不创建用户）
 npm run diagnosis:server     # http://127.0.0.1:3100/diagnosis
 ```
 
-- 空库首次打开走 Miniclaw setup 向导创建管理员。
+- 空库首次打开走 setup 向导创建管理员。
 - 默认 `fixture` 模型 + `mock` 数据；`live` 需要 `.env.diagnosis` 配置。
 - 端口冲突时用 `DIAGNOSIS_PORT` 选择空闲端口，不杀占用者。
 - 控制执行在所有模式下为 `disabled`。

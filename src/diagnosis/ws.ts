@@ -46,7 +46,7 @@ function reject(socket: import('node:stream').Duplex, status: string): void {
 /**
  * 挂载 `/ws/diagnosis?run_id=...&after_seq=...`。
  *
- * 认证复用 Miniclaw 会话 Cookie；每个事件都带 Run 内单调 seq，客户端断线后
+ * 认证复用 IndustrialDiagnosis 会话 Cookie；每个事件都带 Run 内单调 seq，客户端断线后
  * 用 after_seq 补拉。先订阅再读 backlog，backlog 发送期间的事件先缓冲，
  * 避免重连时丢事件或乱序。
  */

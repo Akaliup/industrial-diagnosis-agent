@@ -29,10 +29,10 @@ vi.mock('../src/logger.js', () => ({
 vi.mock('../src/middleware/auth.ts', () => ({
   authMiddleware: async (c: any, next: any) => {
     c.set('user', {
-      id: process.env.MINICLAW_MEMORY_TEST_USER ?? 'alice',
-      username: process.env.MINICLAW_MEMORY_TEST_USER ?? 'alice',
+      id: process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_USER ?? 'alice',
+      username: process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_USER ?? 'alice',
       display_name: '',
-      role: process.env.MINICLAW_MEMORY_TEST_ROLE ?? 'member',
+      role: process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_ROLE ?? 'member',
       status: 'active',
       permissions: [],
       must_change_password: false,
@@ -50,8 +50,8 @@ const WORKSPACE_A = 'web:memory-a';
 const WORKSPACE_B = 'web:memory-b';
 
 function asUser(id: string, role: 'member' | 'admin' = 'member'): void {
-  process.env.MINICLAW_MEMORY_TEST_USER = id;
-  process.env.MINICLAW_MEMORY_TEST_ROLE = role;
+  process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_USER = id;
+  process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_ROLE = role;
 }
 
 function route(workspaceJid: string, suffix = ''): string {
@@ -110,8 +110,8 @@ beforeEach(() => {
 });
 
 afterAll(() => {
-  delete process.env.MINICLAW_MEMORY_TEST_USER;
-  delete process.env.MINICLAW_MEMORY_TEST_ROLE;
+  delete process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_USER;
+  delete process.env.INDUSTRIAL_DIAGNOSIS_MEMORY_TEST_ROLE;
   db.closeDatabase();
   fs.rmSync(root, { recursive: true, force: true });
 });
@@ -121,12 +121,12 @@ describe('Workspace Memory v2 routes', () => {
     expect(
       memoryStore.hasRecallableWorkspaceMemoryCanonicalKey(
         WORKSPACE_A,
-        memoryStore.MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+        memoryStore.INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
       ),
     ).toBe(false);
     const created = await create(WORKSPACE_A, '主人希望被称为小何', {
       title: '主人称呼',
-      canonicalKey: memoryStore.MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+      canonicalKey: memoryStore.INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
     });
     expect(created).toMatchObject({
       status: 400,
@@ -135,7 +135,7 @@ describe('Workspace Memory v2 routes', () => {
     expect(
       memoryStore.hasRecallableWorkspaceMemoryCanonicalKey(
         WORKSPACE_A,
-        memoryStore.MINICLAW_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
+        memoryStore.INDUSTRIAL_DIAGNOSIS_OWNER_PREFERRED_ADDRESS_CANONICAL_KEY,
       ),
     ).toBe(false);
   });

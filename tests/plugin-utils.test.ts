@@ -40,7 +40,7 @@ function seedRuntimeManifest(
 }
 
 beforeEach(() => {
-  tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'miniclaw-plugin-utils-'));
+  tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'industrial-diagnosis-plugin-utils-'));
 });
 
 afterEach(() => {
