@@ -4,7 +4,7 @@
 项目位置：`E:\工业诊断\industrial-diagnosis-agent`
 基线提交：`71a6ffb9df16761aa6d5752cfc0baaef1498769f`
 初次交付提交：`eea97ed`
-审计补修提交：`0a1c0a3`（仅本地，未推送）
+审计补修提交：见 `git log`（仅本地，未推送）
 
 ## 1. 状态结论
 
