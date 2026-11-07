@@ -222,9 +222,9 @@ CI（run 42410313357）；最终提交 `8ea4006` 上再次通过：Diagnosis CI�
 | top3_hit                  | 1.0（适用 40 例）                                 |
 | multi_fault_coverage      | 1.0（适用 10 例）                                 |
 | multi_fault_precision     | 1.0                                               |
-| mean / p95 latency        | 539 ms / 2919 ms                                  |
-| model_calls               | 326（失败 0）                                     |
-| tokens                    | 1,914,985 in / 188,942 out / 2,103,927 total      |
+| mean / p95 latency        | 681 ms / 3079 ms                                  |
+| model_calls               | 328（失败 0）                                     |
+| tokens                    | 2,152,812 in / 189,647 out / 2,342,459 total      |
 | estimated_cost_usd        | n/a（未配置单价，不能冒充账单）                   |
 | threshold_check           | ok，failures=[]                                   |
 | live_eval                 | `NOT_RUN`（本表是 Fixture 门禁；真实模型见 §6.1） |
