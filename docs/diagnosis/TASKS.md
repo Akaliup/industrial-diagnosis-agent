@@ -7,7 +7,7 @@
 
 - [x] 只读源目录检查，目标目录安全复制，排除 `.git`、`node_modules`、运行数据与日志
 - [x] 保留 `LICENSE`、lockfile、`.env.example`、原文档
-- [x] 本地 Git 基线提交 `71a6ffb`，关键文件 SHA-256 记录在 `BASELINE.md`
+- [x] 本地 Git 基线提交 `fec1d5a`，关键文件 SHA-256 记录在 `BASELINE.md`
 - [x] 记录 Node/npm/OS/浏览器环境与基线测试失败原貌
 - [x] 三个 Node 项目依赖安装与锁文件保留
 
@@ -86,7 +86,7 @@
 
 | 检查项 | 状态 | 证据 |
 | --- | --- | --- |
-| 来源快照、基线、许可证、移植记录 | PASS | `BASELINE.md`、`SOURCE_PROVENANCE.md`、commit `71a6ffb` |
+| 来源快照、基线、许可证、移植记录 | PASS | `BASELINE.md`、`SOURCE_PROVENANCE.md`、commit `fec1d5a` |
 | 新旧数据库安装/迁移/备份恢复 | PARTIAL | 诊断迁移与临时库测试通过；Miniclaw 备份恢复用例在 Windows 因 symlink `EPERM` 失败，属基线平台问题 |
 | 统一 Tool 输入/输出/MCP/错误协议 | PASS | `contracts.test.ts`、`mcp-smoke.ts`、`diagnosis:smoke` |
 | 五阶段真实持久化、按假设补查 | PASS | `orchestrator.test.ts`、`diagnosis:demo`、Eval traces |

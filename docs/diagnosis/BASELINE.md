@@ -17,11 +17,13 @@
 目标目录先建立本地 Git 基线，再开始实现：
 
 ```text
-commit 71a6ffb9df16761aa6d5752cfc0baaef1498769f
+commit fec1d5af9459fd91f23e5ab8f0f5d41b91440754
 baseline: import Miniclaw 1.0.0 source snapshot
 ```
 
 该提交的 `package.json`、`src/db.ts` 哈希与源目录逐字节一致，说明基线导入未夹带修改。
+2026-11-07 创建公开仓库时清理了基线快照中的个人材料并重写历史，基线哈希由 `71a6ffb`
+变为 `fec1d5a`；树内容除移除 `interview-prep/` 外一致，详见 §9。
 
 ## 2. 源快照关键哈希（SHA-256）
 
@@ -41,7 +43,7 @@ baseline: import Miniclaw 1.0.0 source snapshot
 | OS | Windows 11 Home China 10.0.26200 |
 | Node.js | v24.16.0 |
 | npm | 11.13.0 |
-| Git | 可用；本地基线提交 `71a6ffb` |
+| Git | 可用；本地基线提交 `fec1d5a`（历史重写后） |
 | Python | 3.14（仅辅助脚本，不是运行时依赖） |
 | 浏览器 | Playwright Chromium 1248；Playwright 期望 revision 1234，E2E 通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指向已安装 Chromium |
 | Docker | 未验证；本交付不依赖 Docker |
@@ -88,8 +90,13 @@ Windows 平台用例，未新增诊断相关失败。由于基线 worktree 与�
 
 ## 8. 审计补修记录（2026-11-07）
 
-补修基于同一基线 `71a6ffb` 与初次交付 `eea97ed`，不改写历史、不重置用户数据；
-补修提交在交付后单独创建，仅存在于本地，未推送；具体哈希以 `git log` 为准。
+补修基于同一基线 `fec1d5a` 与初次交付 `443136b`；R1–R6 补修本身未改写历史、
+未重置用户数据，补修提交在交付后单独创建。
+2026-11-07 创建公开仓库时发现基线快照包含与产品无关的个人 `interview-prep/` 材料，
+已另行重写历史将其从所有提交移除并强制推送；本地工作副本仍保留，且被 `.gitignore`
+忽略，不会再进入提交。重写后的关键提交：基线 `fec1d5a`、初次交付 `443136b`、
+审计补修 `fd88584`、补修文档 `e89a11c`、忽略规则 `40c180e`；文件内容除移除该目录
+和新增忽略规则外未变。
 
 | 项 | 补修后事实 |
 | --- | --- |
@@ -106,3 +113,15 @@ Windows 平台用例，未新增诊断相关失败。由于基线 worktree 与�
 本机 Playwright 1.62.1 期望 ffmpeg revision 1011，而已安装为 1013；移动端 E2E 运行时
 把现有二进制复制到项目内 `work/diagnosis/pw-browsers/ffmpeg-1011`，未修改全局缓存。
 该目录属于运行产物，不进入 Git；CI 使用标准 Playwright 安装时不需要。
+
+## 9. 公开仓库历史清理（2026-11-07）
+
+基线快照的 `interview-prep/` 目录包含与产品无关的个人面试准备材料。创建公开仓库后
+发现该目录随基线提交进入历史，已使用 `git filter-branch` 从全部提交中移除，并强制
+推送重写后的 `main` 与 `feat/industrial-diagnosis`。
+
+- 移除范围：`interview-prep/` 14 个文件（232 KB），不涉及产品代码、测试、文档或数据。
+- 本地保留：工作副本文件仍在项目目录中，仅从 Git 历史移除；`.gitignore` 新增
+  `/interview-prep/`，防止再次提交。
+- 重写影响：所有提交哈希变化，当前关键提交见 §8；旧哈希不再可达。
+- 未修改：源目录、用户数据库、运行数据和其他产品文件。
