@@ -366,11 +366,12 @@ evidence_coverage、top3_hit、counter_evidence_retained、unnecessary_handoff�
 错误，重试上限 3 次，不把外部故障算作模型诊断错误。Holdout 用例包含在全量运行中，不单独
 声称 holdout-only 精度。
 
-### 6.2 Phase 3 独立 10 例复验
+### 6.2 Phase 3 开发集 10 例复验
 
 评测集：`evals/diagnosis-phase3/`（2 机械、3 多故障、2 传感器、3 负例/数据不足），
-与原始 50 例分开，gold 不进入模型上下文。产物与逐例 Trace 见
-`docs/diagnosis/artifacts/phase3-live/`。
+与原始 50 例分开，gold 不进入模型上下文。但该集在 Phase 3 调试期间被用于定位报告层、
+多故障和预算缺陷，因此是**已调试开发集**，不是未触碰的 holdout；定向 PASS 不能作为
+泛化证据。产物与逐例 Trace 见 `docs/diagnosis/artifacts/phase3-live/`。
 
 | 运行 | 范围 | 结果 | 说明 |
 | --- | --- | --- | --- |
