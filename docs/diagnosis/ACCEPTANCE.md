@@ -153,21 +153,21 @@ npm run diagnosis:server
 
 ### 5.3 真实 Agent 评测改造复验（2026-11-08）
 
-| 命令                                                           | 退出码 | 结果                                                                                                                          |
-| -------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `npm run diagnosis:sync-check`                                 | 0      | 契约一致，4 个生成产物                                                                                                        |
-| `npm run typecheck`                                            | 0      | 根 TypeScript 类型检查通过                                                                                                    |
-| `npm run diagnosis:check`                                      | 0      | 20 文件 / 101 测试通过                                                                                                        |
-| `npm run diagnosis:eval:gate`                                  | 0      | 50/50，门禁 `ok=true`；反证适用 23 例，Top-1 适用 40 例                                                                       |
-| `npm run diagnosis:eval -- --mode live --split dev --limit 10` | 0      | 10/10 通过，全部指标 1.0；65 次模型调用，失败 0；mean 45.8s / p95 67.4s                                                       |
-| `npm test -- --run`                                            | 1      | 354 文件：323 通过 / 31 失败；2978 测试：2898 通过 / 57 失败 / 23 跳过；失败仍为 §5.1 的 Windows 平台用例，诊断 20 文件全通过 |
+| 命令                                                           | 退出码 | 结果                                                                                                                                                            |
+| -------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run diagnosis:sync-check`                                 | 0      | 契约一致，4 个生成产物                                                                                                                                          |
+| `npm run typecheck`                                            | 0      | 根 TypeScript 类型检查通过                                                                                                                                      |
+| `npm run diagnosis:check`                                      | 0      | 21 文件 / 107 测试通过                                                                                                                                          |
+| `npm run diagnosis:eval:gate`                                  | 0      | 50/50，门禁 `ok=true`；反证适用 23 例，Top-1 适用 40 例                                                                                                         |
+| `npm run diagnosis:eval -- --mode live --split dev --limit 10` | 0      | 10/10 通过，全部指标 1.0；65 次模型调用，失败 0；mean 45.8s / p95 67.4s                                                                                         |
+| `npm test -- --run`                                            | 1      | 354 文件：323 通过 / 31 失败；2978 测试：2898 通过 / 57 失败 / 23 跳过；失败仍为 §5.1 的 Windows 平台用例；诊断测试另见 `diagnosis:check`（21 文件 / 107 测试） |
 
 本轮新增：逐次模型调用审计表 `diagnosis_model_calls`（模型、角色、阶段、token、延迟、
 工具请求、失败原因、原始输出截断）、单例失败继续评测并保留 Trace、Top-1 / 工具选择准确率 /
 转人工准确率 / 任务成功率 / 延迟 / token 指标，以及 23 个真正要求保留反证的 gold 用例。
 与 §5.2 基线逐文件比较，当前 31 个失败文件没有新增；`frontend-product-terminology`
 的旧失败已消失。失败仍集中在 Windows 符号链接 `EPERM`、POSIX 路径、进程树终止和
-CardKit/streaming 环境差异，诊断 20 文件全部通过。
+CardKit/streaming 环境差异；诊断测试另见 `diagnosis:check`（21 文件 / 107 测试全部通过）。
 
 GitHub Actions 在 `7bc77df` 上两项工作流均通过：Diagnosis CI（run 42410313417）与
 CI（run 42410313357）；最终提交 `8ea4006` 上再次通过：Diagnosis CI（run
@@ -220,6 +220,8 @@ Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Liv
 供应商实际返回的 `model` 主要是 `deepseek-flash`；full-02 中 10 次失败调用返回
 `deepseek-chat`（空响应或非法 JSON），审计表按响应记录真实模型名。Key 仅保存在
 本机 `.env.diagnosis`（已被 `.gitignore` 忽略），没有写入 Trace、报告、前端或 Git。
+错误路径由 `tests/diagnosis/live-role-runner.test.ts` 覆盖：429/5xx 重试至 3 次、401
+不重试、空 200 响应保留原始 body、非法 JSON 不盲目重试、`max_tokens` 透传。
 
 先跑 10 例 dev 试点，分析失败并修正提示与编排语义，再跑全量。最终试点
 （`work/diagnosis/live-pilot-15`）结果：

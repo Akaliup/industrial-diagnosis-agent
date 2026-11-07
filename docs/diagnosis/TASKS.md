@@ -75,7 +75,7 @@
 
 ## M8 总体验收与交接 — PARTIAL（外部条件待补）
 
-- [x] 全量诊断测试 20 文件 / 101 测试、类型检查、构建、smoke、Eval、Trace replay、fresh data 演示
+- [x] 全量诊断测试 21 文件 / 107 测试、类型检查、构建、smoke、Eval、Trace replay、fresh data 演示
 - [x] 诊断 E2E 6/6、移动端 E2E 9/9，均使用隔离数据目录
 - [x] R1–R6 审计补修与四项残余风险检查（见 `ACCEPTANCE.md`）
 - [x] 本地 Git 提交准备与差异检查

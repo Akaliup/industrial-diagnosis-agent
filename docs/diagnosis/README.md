@@ -34,7 +34,7 @@ npm run diagnosis:server
 src/diagnosis/                        诊断服务、网关、编排、报告校验
 packages/industrial-diagnosis-mcp/    只读 MCP 服务与 adapter
 web/src/diagnosis/                    诊断 SPA
-tests/diagnosis/                      101 个诊断测试（20 文件）
+tests/diagnosis/                      107 个诊断测试（21 文件）
 evals/diagnosis/                      50 例输入与 gold
 fixtures/diagnosis/                   模拟设备/时序/报警/手册/案例
 scripts/diagnosis/                    种子、demo、Eval、Trace replay、smoke、隔离 E2E 服务
