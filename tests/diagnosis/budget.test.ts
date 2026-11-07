@@ -120,6 +120,7 @@ describe('run budget accounting', () => {
     const state = makeState(
       makeRun({
         ...DEFAULT_BUDGET,
+        max_output_tokens: 14_100,
         max_rounds_total: 20,
         max_rounds_per_stage: 20,
       }),
@@ -137,12 +138,12 @@ describe('run budget accounting', () => {
         await callRole(orchestrator, state, stage);
       }
     }
-    // 调查阶段单次最多 1200；剩余 3600 时只放行 600，保留 3000 给报告。
-    expect(seen).toEqual([1200, 1200, 1200, 1200, 1200, 1200, 1200, 600]);
-    expect(state.outputTokens).toBe(9000);
+    // 调查阶段单次最多 1200；8 次调查后剩 4500，报告阶段可用 4500。
+    expect(seen).toEqual([1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200]);
+    expect(state.outputTokens).toBe(9600);
     await callRole(orchestrator, state, 'produce_report', 'report_reviewer');
-    expect(seen.at(-1)).toBe(3000);
-    expect(state.outputTokens).toBe(12_000);
+    expect(seen.at(-1)).toBe(4500);
+    expect(state.outputTokens).toBe(14_100);
     await expect(
       callRole(orchestrator, state, 'produce_report', 'report_reviewer'),
     ).rejects.toBeInstanceOf(BudgetExceededError);

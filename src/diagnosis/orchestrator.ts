@@ -67,7 +67,7 @@ function failureText(error: unknown): string {
   );
 }
 
-const REPORT_OUTPUT_RESERVE = 3_000;
+const REPORT_OUTPUT_RESERVE = 4_500;
 
 function outputAllowance(stage: Stage, role: Role, remaining: number): number {
   const reserve = stage === 'produce_report' ? 0 : REPORT_OUTPUT_RESERVE;
@@ -79,7 +79,7 @@ function outputAllowance(stage: Stage, role: Role, remaining: number): number {
   }
   const cap =
     stage === 'produce_report'
-      ? 3_000
+      ? 4_500
       : role === 'hypothesis_verifier'
         ? 2_200
         : 1_200;
