@@ -270,23 +270,26 @@ MUL-04/05 的 `insufficient_evidence` 也会参与集合比较。已改为：`mu
 归因于“模型推理差”或“Prompt 不好”。真正的模型推理错误主要集中在机械判别（E）和部分
 多故障证据分离（M），其余是任务定义、规则设计和工程一致性问题。
 
-## 6. 修复后的独立验证方法
+## 6. 修复后的验证方法与实际状态
 
-| 修复                                                      | 离线验证                                                                                                      | 真实模型验证                                                        |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 结论标准 / 独立根因 / 数据质量 / 阈值 / 传感器 / 机械鉴别 | `tests/diagnosis/context-builder.test.ts`、`analysis-features.test.ts` 断言特征与规则文本；Fixture Eval 50/50 | Phase 3 pilot：2 机械 + 2 传感器 + 2 多故障 + 1 反证 + 1 单故障负例 |
-| 异常清单 / 动态复核                                       | `deriveTelemetryFeatures` / `deriveAnomalyLedger` 单测；orchestrator 复核路径                                 | 观察 pilot 的 model_calls / tokens / latency 与是否新增第二轮       |
-| 报告状态对账                                              | `orchestrator.test.ts` 的 `ReportStatusDriftRunner` 用例；`report-validator.test.ts`                          | 复验 MUL-10 / MUL-01                                                |
-| 占位码计分                                                | `eval-scorer.test.ts` 三个用例                                                                                | 复验 MUL-01 / MUL-02                                                |
-| 报告截断                                                  | targeted rerun 已有证据                                                                                       | 不再重复付费验证，保留 `targeted-budget-*.json`                     |
+| 修复                                                      | 离线验证                                                                                                      | 真实模型验证的实际状态                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 结论标准 / 独立根因 / 数据质量 / 阈值 / 传感器 / 机械鉴别 | `tests/diagnosis/context-builder.test.ts`、`analysis-features.test.ts` 断言特征与规则文本；Fixture Eval 50/50 | 机械 2/2 PASS；`mul-align-lube`、`mul-bearing-drift` 各 1/1 PASS；`mul-bearing-comm` 在 `full-2` PASS；传感器真实模型复验 `NOT_RUN` |
+| 异常清单 / 动态复核                                       | `deriveTelemetryFeatures` / `deriveAnomalyLedger` 单测；orchestrator 复核路径                                 | 在 `full-2` / 定向 Trace 中观察 model_calls、tokens、latency；未做独立 A/B，不能声称性能提升                                        |
+| 报告状态对账                                              | `orchestrator.test.ts` 的 `ReportStatusDriftRunner` 用例；`report-validator.test.ts`                          | MUL-10 / MUL-01 的付费复验 `NOT_RUN`（Provider 余额不足）                                                                           |
+| 占位码计分                                                | `eval-scorer.test.ts` 三个用例                                                                                | MUL-01 / MUL-02 的付费复验 `NOT_RUN`                                                                                                |
+| 报告截断                                                  | targeted rerun 已有证据                                                                                       | 不再重复付费验证，保留 `targeted-budget-*.json`                                                                                     |
+
+注意：真实模型列只记录实际跑过的运行；“PASS”指该定向运行通过，不等于全量或泛化通过。
 
 ## 7. 未解决与风险
 
 1. **场景可分辨性**：MUL-07/08 的 bearing_wear 证据弱，模型只判 comm 误报是合理的。后续
    新增独立场景时应保证每个注入故障都有至少两个独立测点证据，否则应放宽 gold 或标注歧义。
 2. **Provider 稳定性**：FA-01 的空响应仍可能随机出现；重试只能缓解，不能消除。
-3. **真实模型泛化**：本文的修复仍需要在未参与调试的 Phase 3 场景上单次复验；不能把
-   full-02 的回归当作泛化证据。
+3. **真实模型泛化**：本文的修复仍需要在一组未参与调试的新场景上单次复验；Phase 3 的
+   10 例已被用于调试，不能当作 holdout。不能把 full-02 的回归或 Phase 3 的定向 PASS
+   当作泛化证据。
 4. **手册覆盖**：misalignment / lubrication / sensor_range / sensor_stuck / sampling_gap
    在现有手册中没有明确条款，Prompt 只能给“鉴别方向”，不能伪装成手册结论；报告中必须
    保留这一限制。
