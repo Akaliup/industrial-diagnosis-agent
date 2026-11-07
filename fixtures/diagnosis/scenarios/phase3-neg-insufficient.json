@@ -1,0 +1,29 @@
+{
+  "scenario_id": "phase3-neg-insufficient",
+  "clock": "2026-12-12T00:30:00.000Z",
+  "telemetry": {
+    "EQ-DEMO-002": {
+      "bearing_temperature": [],
+      "vibration_rms": [],
+      "motor_current": [],
+      "flow_rate": [],
+      "discharge_pressure": []
+    }
+  },
+  "alarms": [
+    {
+      "source_id": "src-scada",
+      "source_alarm_id": "ALM-phase3-neg-insufficient",
+      "equipment_id": "EQ-DEMO-002",
+      "code": "DEMO-BRG-01",
+      "severity": "high",
+      "state": "active",
+      "raised_at": "2026-12-12T00:18:00.000Z",
+      "cleared_at": null,
+      "message": "2号循环泵轴承温度高"
+    }
+  ],
+  "replace_alarms": true,
+  "mes_events": [],
+  "work_orders": []
+}

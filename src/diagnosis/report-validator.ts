@@ -461,6 +461,16 @@ export function validateReport(input: {
         ),
       );
     }
+    if (hypothesis.code === 'multi_fault' && hypothesis.status === 'supported') {
+      errors.push(
+        issue(
+          'error',
+          'MULTI_FAULT_PLACEHOLDER',
+          `假设 ${hypothesis.id} 用 multi_fault 代替具体根因；多故障必须分别列出具体根因码`,
+          { hypothesis_id: hypothesis.id },
+        ),
+      );
+    }
     if (
       hypothesis.status === 'contradicted' &&
       hypothesis.contradicting_evidence_ids.length === 0

@@ -15,6 +15,9 @@ interface Args {
   gate: boolean;
   out: string | null;
   db: string | null;
+  evalDir: string | null;
+  fixturesDir: string | null;
+  cases: string[];
 }
 
 function parseArgs(argv: string[]): Args {
@@ -25,6 +28,9 @@ function parseArgs(argv: string[]): Args {
     gate: false,
     out: null,
     db: null,
+    evalDir: null,
+    fixturesDir: null,
+    cases: [],
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -45,6 +51,13 @@ function parseArgs(argv: string[]): Args {
       args.out = argv[++index] ?? null;
     } else if (arg === '--db') {
       args.db = argv[++index] ?? null;
+    } else if (arg === '--eval-dir') {
+      args.evalDir = argv[++index] ?? null;
+    } else if (arg === '--fixtures-dir') {
+      args.fixturesDir = argv[++index] ?? null;
+    } else if (arg === '--case') {
+      const value = argv[++index];
+      if (value) args.cases.push(value);
     }
   }
   return args;
@@ -56,9 +69,12 @@ async function main(): Promise<void> {
     const summary = await runEvalSuite({
       split: args.split,
       limit: args.limit,
+      caseIds: args.cases,
       mode: args.mode,
       outDir: args.out ?? undefined,
       dbFile: args.db ?? undefined,
+      evalDir: args.evalDir ?? undefined,
+      fixturesDir: args.fixturesDir ?? undefined,
       onCase: (result) => {
         console.log(
           `${result.case_id} ${result.passed ? 'PASS' : 'FAIL'}${

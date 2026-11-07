@@ -57,5 +57,15 @@
 
 - `pilot-15-summary.json`：修复后的最终 10 例 dev 试点，10/10 通过，全部指标 1.0。
 
+## Phase 3 失败复核
+
+- `docs/diagnosis/FAILURE_ANALYSIS.md`：对 full-02 的 27 条失败逐条分类，区分任务定义/
+  证据标准、多故障/互斥、采样缺口、阈值优先、传感器子类型、机械判别、反证/报告状态、
+  工程/Provider 与评测口径；并单独记录已修复的报告截断问题。
+- 该分析不读取 gold 生成规则，也不把 `case_id` / `expected_root_causes` 注入模型上下文。
+- Phase 3 独立 10 例的真实模型复验 Trace 与最终 `NOT_RUN` 记录见
+  `docs/diagnosis/artifacts/phase3-live/`；`full-2` 是最终三项修复前的完整尝试，
+  不能当作最终代码通过率。
+
 Trace 中的设备、遥测、报警、手册与工单均为仓库内 Fixture 模拟数据；不包含企业数据。
 模型 API Key 只存在本机 `.env.diagnosis`，没有写入这些 Trace、摘要或报告。

@@ -1,0 +1,19 @@
+{
+  "case_id": "phase3-mec-align",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-08T00:00:00.000Z",
+      "end": "2026-12-08T00:30:00.000Z"
+    },
+    "symptom": "振动明显上升但轴承温升有限，电流变化小"
+  },
+  "source_snapshot": "phase3-mec-align",
+  "clock": "2026-12-08T00:30:00.000Z",
+  "fault_injections": [
+    "misalignment"
+  ]
+}

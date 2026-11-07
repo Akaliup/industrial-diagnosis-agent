@@ -1,0 +1,19 @@
+{
+  "case_id": "phase3-neg-bearing",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-10T00:00:00.000Z",
+      "end": "2026-12-10T00:30:00.000Z"
+    },
+    "symptom": "振动、温度与电流同步上升"
+  },
+  "source_snapshot": "phase3-neg-bearing",
+  "clock": "2026-12-10T00:30:00.000Z",
+  "fault_injections": [
+    "bearing_wear"
+  ]
+}

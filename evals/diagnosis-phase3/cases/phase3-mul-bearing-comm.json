@@ -1,0 +1,19 @@
+{
+  "case_id": "phase3-mul-bearing-comm",
+  "category": "multi_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-COMM-03",
+    "window": {
+      "start": "2026-12-05T00:00:00.000Z",
+      "end": "2026-12-05T00:30:00.000Z"
+    },
+    "symptom": "通讯报警与振动上升同时出现，温度与电流同向上升"
+  },
+  "source_snapshot": "phase3-mul-bearing-comm",
+  "clock": "2026-12-05T00:30:00.000Z",
+  "fault_injections": [
+    "multi_bearing_comm"
+  ]
+}

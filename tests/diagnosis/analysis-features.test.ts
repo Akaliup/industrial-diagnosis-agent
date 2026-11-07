@@ -1,0 +1,103 @@
+import { describe, expect, test } from 'vitest';
+import {
+  deriveAnomalyLedger,
+  deriveTelemetryFeatures,
+} from '../../src/diagnosis/analysis.js';
+import type { Evidence } from '../../src/diagnosis/contracts/domain.js';
+
+function series(
+  id: string,
+  metric: string,
+  values: number[],
+  quality: string[] = [],
+): Evidence {
+  return {
+    id,
+    workspace_id: 'ws',
+    run_id: 'run',
+    source_id: 'src-scada',
+    source_kind: 'scada',
+    data_mode: 'mock',
+    equipment_id: 'EQ-1',
+    observed_at: '2026-11-07T00:00:00.000Z',
+    fetched_at: '2026-11-07T00:00:00.000Z',
+    source_record_id: `${metric}:${id}`,
+    payload_hash: 'a'.repeat(64),
+    query_hash: 'b'.repeat(64),
+    locator: { kind: 'db', ref: id },
+    quality_flags: ['good'],
+    payload: {
+      kind: 'telemetry_series',
+      equipment_id: 'EQ-1',
+      metric,
+      unit: metric === 'bearing_temperature' ? '°C' : 'mm/s',
+      points: values.map((value, index) => ({
+        t: `2026-11-07T00:${String(index).padStart(2, '0')}:00.000Z`,
+        v: value,
+        q: quality[index] ?? 'good',
+      })),
+      stats: {
+        min: Math.min(...values),
+        max: Math.max(...values),
+        avg: values.reduce((sum, value) => sum + value, 0) / values.length,
+        count: values.length,
+        missing: quality.filter((item) => item !== 'good').length,
+      },
+    },
+  };
+}
+
+describe('telemetry feature derivation', () => {
+  test('flags a constant reading far outside the model normal range', () => {
+    const [feature] = deriveTelemetryFeatures(
+      [series('ev_range', 'bearing_temperature', Array(10).fill(250))],
+      'NP-200',
+    );
+    expect(feature.flags).toContain('constant');
+    expect(feature.flags).toContain('out_of_range');
+    expect(feature.flags).toContain('range_limit');
+    expect(feature.unique).toBe(1);
+    expect(feature.summary).toContain('正常范围 40–80');
+    expect(feature.summary).toContain('恒定在量程/物理边界');
+  });
+
+  test('uses the equipment-model limit instead of a universal threshold', () => {
+    const values = [60, 62, 64, 66, 68, 70, 72, 74, 76, 82];
+    const np200 = deriveTelemetryFeatures(
+      [series('ev_t', 'bearing_temperature', values)],
+      'NP-200',
+    )[0];
+    const np300 = deriveTelemetryFeatures(
+      [series('ev_t', 'bearing_temperature', values)],
+      'NP-300',
+    )[0];
+    expect(np200.flags).toContain('out_of_range');
+    expect(np200.flags).toContain('trend');
+    expect(np300.flags).not.toContain('out_of_range');
+    expect(np300.flags).toContain('trend');
+  });
+
+  test('separates support, contradiction and unexplained references', () => {
+    const features = deriveTelemetryFeatures(
+      [
+        series('ev_vib', 'vibration_rms', [2, 2.4, 3, 3.8, 4.6, 5.4]),
+        series('ev_temp', 'bearing_temperature', [65, 66, 67, 68, 69, 70]),
+      ],
+      'NP-200',
+    );
+    const ledger = deriveAnomalyLedger(features, [
+      {
+        code: 'bearing_wear',
+        status: 'supported',
+        supporting_evidence_ids: ['ev_vib'],
+        contradicting_evidence_ids: ['ev_temp'],
+      },
+    ]);
+    const vibration = ledger.find((item) => item.evidenceId === 'ev_vib')!;
+    const temperature = ledger.find((item) => item.evidenceId === 'ev_temp')!;
+    expect(vibration.unexplained).toBe(false);
+    expect(vibration.referencedAsSupport).toEqual(['bearing_wear']);
+    expect(temperature.unexplained).toBe(true);
+    expect(temperature.referencedAsContradiction).toEqual(['bearing_wear']);
+  });
+});

@@ -175,12 +175,31 @@ function validationValid(validation: unknown): boolean {
   );
 }
 
-function supportedCodes(report: Report | null): RootCauseCode[] {
-  return (
+function supportedCodes(
+  report: Report | null,
+  expected: RootCauseCode[],
+): RootCauseCode[] {
+  const codes =
     report?.hypotheses
       .filter((hypothesis) => hypothesis.status === 'supported')
-      .map((hypothesis) => hypothesis.code) ?? []
-  );
+      .map((hypothesis) => hypothesis.code) ?? [];
+  // multi_fault 是聚合标签，不是具体根因；除 gold 明确要求外不参与
+  // 根因集合匹配。insufficient_evidence / unknown 同理，只在其本身
+  // 就是任务期望结论时计数。
+  return [
+    ...new Set(
+      codes.filter((code) => {
+        if (code === 'multi_fault') return expected.includes(code);
+        if (
+          (code === 'insufficient_evidence' || code === 'unknown') &&
+          !expected.includes(code)
+        ) {
+          return false;
+        }
+        return true;
+      }),
+    ),
+  ];
 }
 
 function setEqual(a: string[], b: string[]): boolean {
@@ -194,8 +213,8 @@ function setEqual(a: string[], b: string[]): boolean {
 export function evaluateCase(input: CaseEvaluationInput): CaseEvaluation {
   const { gold, run, report, validation, evidence, toolCalls } = input;
   const failureReasons: string[] = [];
-  const predicted = supportedCodes(report);
   const expected = gold.expected_root_causes;
+  const predicted = supportedCodes(report, expected);
   const handoff = Boolean(report?.handoff_reason);
   const valid = validationValid(validation);
 

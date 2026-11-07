@@ -11,10 +11,11 @@ import {
 import { DiagnosisEventBus } from '../../src/diagnosis/events.js';
 import { FixtureRoleRunner } from '../../src/diagnosis/fixture-role-runner.js';
 import { DiagnosisOrchestrator } from '../../src/diagnosis/orchestrator.js';
-import type {
-  RoleCallInput,
-  RoleCallResult,
-  RoleRunner,
+import {
+  RoleRunnerError,
+  type RoleCallInput,
+  type RoleCallResult,
+  type RoleRunner,
 } from '../../src/diagnosis/role-runner.js';
 import { newId } from '../../src/diagnosis/util.js';
 import { DEFAULT_BUDGET } from '../../src/diagnosis/contracts/domain.js';
@@ -91,6 +92,61 @@ class ModelHandoffReasonRunner implements RoleRunner {
       }
     }
     return result;
+  }
+}
+
+class ReportStatusDriftRunner implements RoleRunner {
+  constructor(private readonly inner: FixtureRoleRunner) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    const result = await this.inner.run(input);
+    if (input.role === 'report_reviewer') {
+      const output = result.output as {
+        report?: {
+          hypotheses?: Array<{ status: string }>;
+        };
+      };
+      const target = output.report?.hypotheses?.find(
+        (hypothesis) => hypothesis.status === 'supported',
+      );
+      if (target) target.status = 'inconclusive';
+    }
+    return result;
+  }
+}
+
+class BudgetExhaustedVerifyRunner implements RoleRunner {
+  constructor(private readonly inner: FixtureRoleRunner) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    if (input.role === 'hypothesis_verifier' && input.stage === 'verify_evidence') {
+      const error = new RoleRunnerError(
+        '角色 hypothesis_verifier 输出不是合法 JSON：模拟截断',
+        'INVALID_OUTPUT',
+      );
+      // 第一次无效输出已消耗大量额度；修复调用只剩报告预留，
+      // 会触发 BudgetExceededError。已有 supported 根因时仍应生成报告。
+      error.usage = { inputTokens: 1_200, outputTokens: 7_000 };
+      error.rawOutput = '{"summary":"候选根因","hypotheses":[';
+      throw error;
+    }
+    return this.inner.run(input);
   }
 }
 
@@ -358,6 +414,126 @@ describe('diagnosis orchestrator', () => {
     expect(stored.report.handoff_reason).toBeNull();
     expect(finished.handoff_reason).toBeNull();
     expect(stored.report.conclusion_status).toBe('hypothesis');
+  }, 120_000);
+
+  test('a verifier budget failure with a supported diagnosis still produces a report', async () => {
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new BudgetExhaustedVerifyRunner(new FixtureRoleRunner()),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const finished = await orchestrator.execute(run.id, {
+      owner: 'test-worker',
+    });
+    const stored = context.repo.getReport(run.id)!;
+    expect(finished.status).toBe('awaiting_human');
+    expect(finished.handoff_reason).toBeNull();
+    expect(finished.stage).toBe('produce_report');
+    expect(stored.validation.valid).toBe(true);
+    expect(
+      stored.report.hypotheses
+        .filter((hypothesis) => hypothesis.status === 'supported')
+        .map((hypothesis) => hypothesis.code),
+    ).toContain('bearing_wear');
+    expect(stored.report.limitations.join(' ')).toContain('输出预算');
+    expect(
+      context.repo
+        .listModelCalls(run.id)
+        .some(
+          (call) =>
+            call.status === 'error' && call.stage === 'verify_evidence',
+        ),
+    ).toBe(true);
+    expect(
+      context.repo
+        .listEvents(run.id)
+        .some(
+          (event) =>
+            event.type === 'stage.changed' &&
+            event.payload.reason === 'budget_fallback',
+        ),
+    ).toBe(true);
+  }, 120_000);
+
+  test('report status drift is reconciled back to the verified hypothesis', async () => {
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new ReportStatusDriftRunner(new FixtureRoleRunner()),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    await orchestrator.execute(run.id, { owner: 'test-worker' });
+    const stored = context.repo.getReport(run.id)!;
+    expect(stored.validation.valid).toBe(true);
+    expect(
+      stored.report.hypotheses.some(
+        (hypothesis) =>
+          hypothesis.code === 'bearing_wear' &&
+          hypothesis.status === 'supported',
+      ),
+    ).toBe(true);
+    expect(
+      context.repo
+        .listEvents(run.id, 0, 500)
+        .some((event) => event.type === 'report.reconciled'),
+    ).toBe(true);
   }, 120_000);
 
   test('a pre-aborted run ends cancelled and keeps collected evidence', async () => {

@@ -151,6 +151,40 @@ describe('run budget accounting', () => {
     expect(seen).toHaveLength(9);
   });
 
+  test('does not start an optional second look without report output reserve', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_output_tokens: 12_000,
+      }),
+    );
+    state.stageRounds.verify_evidence = 1;
+    state.totalRounds = 1;
+    state.modelCalls = 5;
+    const canRunSecondLook = (
+      orchestrator as unknown as {
+        canRunSecondLook: (value: unknown) => boolean;
+      }
+    ).canRunSecondLook.bind(orchestrator);
+    state.outputTokens = 8_000; // 剩余 4,000，低于 4,500 + 400 预留
+    expect(canRunSecondLook(state)).toBe(false);
+    state.outputTokens = 0;
+    expect(canRunSecondLook(state)).toBe(true);
+  });
+
   test('records actual usage and rejects a model that ignores max_tokens', async () => {
     let calls = 0;
     const runner: RoleRunner = {

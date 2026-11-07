@@ -110,7 +110,19 @@ export class DiagnosisMcpClient {
       name: 'industrial-diagnosis',
       version: '0.1.0',
     });
-    await client.connect(transport);
+    try {
+      await client.connect(transport);
+    } catch (error) {
+      // 连接失败必须清理半开进程，否则下一次重试会复用坏连接。
+      try {
+        await transport.close();
+      } catch {
+        // 忽略关闭错误
+      }
+      this.client = null;
+      this.transport = null;
+      throw error;
+    }
     this.client = client;
     this.transport = transport;
   }
@@ -121,13 +133,13 @@ export class DiagnosisMcpClient {
     window: Window,
     options: { signal?: AbortSignal; timeoutMs?: number } = {},
   ): Promise<ToolResponseEnvelope> {
-    await this.ensureConnected();
     const timeoutMs = options.timeoutMs ?? this.options.timeoutMs;
     const signals: AbortSignal[] = [];
     if (options.signal) signals.push(options.signal);
     signals.push(AbortSignal.timeout(timeoutMs));
     const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0];
     try {
+      await this.ensureConnected();
       const result = await this.client!.callTool(
         { name, arguments: args },
         undefined,

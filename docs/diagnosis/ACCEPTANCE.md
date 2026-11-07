@@ -13,7 +13,7 @@
 | 维度     | 状态                          | 说明                                                                                                                                                                                                                                          |
 | -------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 工程版   | **PASS（附平台限制）**        | 诊断协议、工具网关、五阶段编排、预算、报告校验、知识检索、审批边界、UI、Eval、Trace replay、E2E、构建均通过；根测试的失败仍限定在 Windows 平台用例                                                                                            |
-| 真实模型 | **PASS（集成）/ 质量见 §6.1** | 已用已授权 DeepSeek 兼容端点完成 10 例 dev 试点（10/10）和全量 50 例（23/50，dev 14/29、holdout 9/21）；全量暴露机械故障鉴别、多故障与反证保留的真实弱点，未把分数外推为企业现场精度。Key 只存在本机 `.env.diagnosis`，未写入 Trace/报告/前端 |
+| 真实模型 | **PASS（集成）/ 质量见 §6.1、§6.2** | 已用已授权 DeepSeek 兼容端点完成 10 例 dev 试点（10/10）和全量 50 例（23/50，dev 14/29、holdout 9/21）；Phase 3 独立 10 例中，最后一次完整尝试为 6/10（最终修复前），修复后的机械/多故障定向复验通过；最终 10 例复验因 HTTP 402 余额不足为 `NOT_RUN`。未把分数外推为企业现场精度。Key 只存在本机 `.env.diagnosis`，未写入 Trace/报告/前端 |
 | 企业接入 | **UNCONFIGURED**              | SCADA/MES/工单/RootCloud 均无企业文档、地址、账号或授权；本地假 REST 只验证配置链路                                                                                                                                                           |
 | 控制执行 | **DISABLED**                  | 所有模式 `control_execution: disabled`；审批只确认建议意图，不执行设备控制                                                                                                                                                                    |
 
@@ -173,6 +173,30 @@ GitHub Actions 在 `7bc77df` 上两项工作流均通过：Diagnosis CI（run 42
 CI（run 42410313357）；最终提交 `8ea4006` 上再次通过：Diagnosis CI（run
 42410992913）与 CI（run 42410993044）。此前 `7b02f24` 的 CI 因根测试先于诊断 MCP
 安装/构建而失败，已由 `a2c467f` 修复并复验。
+
+### 5.4 Phase 3 最终回归（2026-11-08）
+
+| 命令 | 退出码 | 结果 |
+| --- | --- | --- |
+| `npm run diagnosis:check` | 0 | 22 文件 / 120 测试通过；契约 hash 一致 |
+| `npm run diagnosis:eval:gate` | 0 | 50/50，门禁 `ok=true` |
+| `npm run diagnosis:replay` | 0 | `replayed=50 inconsistent=0 inference_calls=0 tool_calls=0` |
+| `npm run diagnosis:smoke` | 0 | 五阶段流水线 + MCP 工具 smoke 通过 |
+| `npm run diagnosis:e2e` | 1 → 0 | 默认浏览器 revision 缺失时 6 failed；使用已安装 Chromium 1248 的 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 后 6/6 PASS |
+| `npm run build` | 0 | 根 TypeScript 构建通过 |
+| `npm run build:web` | 0 | Vite 构建通过（仅 chunk 体积警告） |
+| `npm run diagnosis:build:mcp` | 0 | MCP 包构建通过 |
+| `npm test -- --run` | 1 | 356 文件：325 通过 / 31 失败；2997 测试：2917 通过 / 57 失败 / 23 跳过；失败均为 §5.1 的 Windows 平台用例，未新增诊断失败 |
+| Phase 3 Fixture（10 例） | 0 | 10/10 PASS；多故障 coverage/precision 1.0（非真实模型） |
+| Phase 3 定向真实模型 | 0 | 机械 2/2、`mul-align-lube` 1/1、`mul-bearing-drift` 1/1 |
+| Phase 3 完整真实模型 `full-2` | 1 | 6/10（最终三项修复前）；多故障 coverage 0.833 / precision 1.0 |
+| Phase 3 最终 10 例真实复验 | 2 | `NOT_RUN`：第一次模型调用 HTTP 402，余额不足，按预算约束停止 |
+
+安全与恢复定向测试：`workspace-scope`、`report-validator`、`policy`、`tool-gateway`、
+`crash-consistency`、`worker`、`live-role-runner`、`approvals`、`repeat-guard`、
+`mcp-client` 共 52 测试通过。覆盖跨 Workspace 越权、不适用手册引用、伪造引用、高风险控制
+阻断、自审批禁止、Worker 崩溃恢复、重复工具调用、取消后迟到回执、Provider 空响应/非法 JSON
+与 MCP 连接失败。
 
 ## 6. 50 例 Fixture Eval
 
@@ -342,6 +366,33 @@ evidence_coverage、top3_hit、counter_evidence_retained、unnecessary_handoff�
 错误，重试上限 3 次，不把外部故障算作模型诊断错误。Holdout 用例包含在全量运行中，不单独
 声称 holdout-only 精度。
 
+### 6.2 Phase 3 独立 10 例复验
+
+评测集：`evals/diagnosis-phase3/`（2 机械、3 多故障、2 传感器、3 负例/数据不足），
+与原始 50 例分开，gold 不进入模型上下文。产物与逐例 Trace 见
+`docs/diagnosis/artifacts/phase3-live/`。
+
+| 运行 | 范围 | 结果 | 说明 |
+| --- | --- | --- | --- |
+| Fixture 回归 | 10 例 | **10/10 PASS** | 只证明回归，不是真实模型结果 |
+| `targeted-1` | `mec-align`、`mec-lube` | **2/2 PASS** | 机械鉴别；57.1s、14 次调用、147,458 tokens |
+| `targeted-5` | `mul-align-lube` | **1/1 PASS** | 多故障 coverage/precision 1.0 |
+| `targeted-drift-4` | `mul-bearing-drift` | **1/1 PASS** | 预算恢复后；65.4s、7 次调用、76,299 tokens |
+| `full-2` | 10 例完整尝试 | **6/10 PASS** | 最终三项修复前；42.5s、57 次调用、545,406 tokens；coverage 0.833 / precision 1.0 |
+| 最终 10 例 | 10 例 | **NOT_RUN** | 第一次模型调用 HTTP 402；未继续付费请求 |
+
+`full-2` 的 4 个失败：
+
+1. `mul-bearing-drift`：验证修复调用耗尽报告预留，`execute` 无条件转人工
+   （`UNNECESSARY_HANDOFF`）——已修复，定向 PASS；
+2. `sen-gap`、`sen-range`：MCP 连接阶段异常穿透，Run 被标为 failed——已修复，
+   `mcp-client.test.ts` 覆盖；真实模型复验 `NOT_RUN`；
+3. `neg-single-sensor`：模型把持续温度趋势判为 `false_alarm_threshold`，`sensor_drift`
+   降为 inconclusive——未解决，保留为失败样本。
+
+结论边界：不能把 `full-2` 的 6/10 表述为最终代码的 10 例结果；最终完整复验因余额不足
+未运行。三项修复分别有单测和定向真实模型 PASS，但不能外推为企业现场精度。
+
 ## 7. E2E 与截图
 
 诊断 E2E（隔离数据目录，端口 3199）：
@@ -420,8 +471,10 @@ work/diagnosis/logs/
 ## 11. 未完成 / 外部条件
 
 1. **真实模型**：已有本机授权的 DeepSeek 兼容端点，完成 10 例 dev 试点（10/10）与全量
-   50 例（23/50，dev 14/29、holdout 9/21）；全量失败类别与 Trace 见 §6.1，不把分数
-   声明为企业现场准确率。生产级密钥托管、配额/限流与数据合规仍未配置。
+   50 例（23/50，dev 14/29、holdout 9/21）；Phase 3 完整尝试 6/10（最终修复前），
+   修复后的定向复验通过；最终 10 例复验因 HTTP 402 为 `NOT_RUN`。全量失败类别与 Trace
+   见 §6.1、§6.2，不把分数声明为企业现场准确率。生产级密钥托管、配额/限流与数据合规
+   仍未配置。
 2. **企业来源**：SCADA、MES、工单、RootCloud 均缺接口文档、地址、认证、字段样例、
    资产映射、时区/单位/限流说明和只读测试账号；状态 `UNCONFIGURED`。
 3. **Docker/Container**：未验证容器隔离与容器内 Runner；本版使用 Host 本地运行。
@@ -434,6 +487,8 @@ work/diagnosis/logs/
 
 工程版可以本地启动、从报警跑到带引用报告、复核、审批、Eval、真实 Trace replay 与导出；
 R1–R6 与四项残余风险均有代码、自动化测试和实测命令支撑。真实模型链路已用授权
-DeepSeek 兼容端点跑通 10 例 dev 试点（10/10）和全量 50 例（23/50）；全量结果暴露的
-机械故障鉴别、多故障覆盖与反证保留差距已如实记录，不声明企业现场精度。企业实时接入、
+DeepSeek 兼容端点跑通 10 例 dev 试点（10/10）和全量 50 例（23/50）；Phase 3 新增了
+独立 10 例、异常清单、多故障独立根因、传感器/机械鉴别、预算恢复与 MCP 重连，机械与
+多故障定向复验通过。最终 10 例完整复验因 HTTP 402 为 `NOT_RUN`，`neg-single-sensor`
+的阈值误报仍暴露模型推理差距；这些结果均如实记录，不声明企业现场精度。企业实时接入、
 生产级模型配额与数据合规、容器隔离和签名安装包仍需外部条件，未计入工程版 PASS。

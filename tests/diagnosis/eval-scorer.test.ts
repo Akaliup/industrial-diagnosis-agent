@@ -250,6 +250,50 @@ describe('eval scorer', () => {
     expect(top1Right.result.metrics.top1_hit).toBe(1);
   });
 
+  test('does not count multi_fault or incidental insufficient_evidence as root causes', () => {
+    const result = evaluate({
+      report: reportWith([
+        'sensor_drift',
+        'multi_fault',
+        'insufficient_evidence',
+      ]),
+      gold: gold({ expected_root_causes: ['sensor_drift'] }),
+    });
+    expect(result.passed).toBe(true);
+    expect(result.result.predicted_root_causes).toEqual([
+      'sensor_drift',
+    ]);
+  });
+
+  test('still counts insufficient_evidence when it is the expected conclusion', () => {
+    const result = evaluate({
+      report: {
+        ...reportWith(['insufficient_evidence']),
+        handoff_reason: '关键来源缺失',
+      },
+      gold: gold({
+        expected_root_causes: ['insufficient_evidence'],
+        must_handoff: true,
+      }),
+    });
+    expect(result.result.predicted_root_causes).toEqual([
+      'insufficient_evidence',
+    ]);
+  });
+
+  test('multi-fault precision ignores the aggregate multi_fault label', () => {
+    const result = evaluate({
+      report: reportWith(['bearing_wear', 'sensor_drift', 'multi_fault']),
+      gold: gold({
+        category: 'multi_fault',
+        expected_root_causes: ['bearing_wear', 'sensor_drift'],
+      }),
+    });
+    expect(result.result.metrics.multi_fault_applicable).toBe(1);
+    expect(result.result.metrics.multi_fault_precision).toBe(1);
+    expect(result.result.metrics.multi_fault_coverage).toBe(1);
+  });
+
   test('scores tool selection against required and forbidden families', () => {
     const correct = evaluate({
       gold: gold({

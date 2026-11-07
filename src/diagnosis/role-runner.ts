@@ -108,8 +108,54 @@ export function stripJsonFences(raw: string): string {
   return trimmed;
 }
 
+/**
+ * 报告/验证角色偶尔会自造 `status_note_placeholder` 一类的注解字段。
+ * 这些字段不参与证据与状态判定，但会触发严格 Schema 失败并迫使整篇
+ * 报告重写（长报告重写又可能被 Provider 截断）。这里只归一化
+ * `status_note*` 注解：有字符串值则收敛到 status_note，占位/null 直接丢弃；
+ * 其他未知字段仍由严格 Schema 拒绝。
+ */
+function normalizeHypothesisNotes(hypotheses: unknown): void {
+  if (!Array.isArray(hypotheses)) return;
+  for (const hypothesis of hypotheses) {
+    if (!hypothesis || typeof hypothesis !== 'object') continue;
+    const item = hypothesis as Record<string, unknown>;
+    for (const key of Object.keys(item)) {
+      if (key === 'status_note' || !/^status_note(_|$)/.test(key)) continue;
+      const value = item[key];
+      if (
+        typeof value === 'string' &&
+        value.trim() &&
+        item.status_note === undefined
+      ) {
+        item.status_note = value.slice(0, 300);
+      }
+      delete item[key];
+    }
+    if (typeof item.status_note === 'string') {
+      item.status_note = item.status_note.slice(0, 300);
+    } else if (item.status_note !== undefined) {
+      delete item.status_note;
+    }
+  }
+}
+
+function normalizeRoleOutput(role: Role, value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value;
+  const root = value as Record<string, unknown>;
+  if (role === 'hypothesis_verifier') {
+    normalizeHypothesisNotes(root.hypotheses);
+  } else if (role === 'report_reviewer') {
+    const report = root.report;
+    if (report && typeof report === 'object') {
+      normalizeHypothesisNotes((report as Record<string, unknown>).hypotheses);
+    }
+  }
+  return value;
+}
+
 export function parseRoleOutput(role: Role, value: unknown): unknown {
-  const parsed = schemaFor(role).safeParse(value);
+  const parsed = schemaFor(role).safeParse(normalizeRoleOutput(role, value));
   if (!parsed.success) {
     const message = parsed.error.issues
       .slice(0, 6)

@@ -17,8 +17,16 @@ import {
   type Run,
   type Stage,
 } from './contracts/domain.js';
-import { detectControlIntent } from './analysis.js';
-import { buildRoleContext, type BuiltContext } from './context-builder.js';
+import {
+  deriveAnomalyLedger,
+  deriveTelemetryFeatures,
+  detectControlIntent,
+} from './analysis.js';
+import {
+  buildRoleContext,
+  summarizeToolArgs,
+  type BuiltContext,
+} from './context-builder.js';
 import {
   AlreadyFinishedError,
   BudgetExceededError,
@@ -65,6 +73,15 @@ function failureText(error: unknown): string {
     0,
     2_000,
   );
+}
+
+function sameStringSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const left = new Set(a);
+  const right = new Set(b);
+  if (left.size !== right.size) return false;
+  for (const item of left) if (!right.has(item)) return false;
+  return true;
 }
 
 const REPORT_OUTPUT_RESERVE = 4_500;
@@ -339,17 +356,30 @@ export class DiagnosisOrchestrator {
     error_code: string | null;
     policy_decision: string;
     args_hash: string;
+    args_summary: string;
     at: string;
   }> {
-    return this.options.repo.listToolCalls(state.run.id).map((row) => ({
-      tool: String(row.tool),
-      role: String(row.role),
-      status: String(row.status),
-      error_code: (row.error_code as string | null) ?? null,
-      policy_decision: String(row.policy_decision),
-      args_hash: String(row.args_hash),
-      at: String(row.started_at),
-    }));
+    return this.options.repo.listToolCalls(state.run.id).map((row) => {
+      let args: Record<string, unknown> = {};
+      try {
+        const parsed = JSON.parse(String(row.args_json));
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          args = parsed as Record<string, unknown>;
+        }
+      } catch {
+        // 历史脏数据不应阻断上下文构建；退化为只显示 args hash。
+      }
+      return {
+        tool: String(row.tool),
+        role: String(row.role),
+        status: String(row.status),
+        error_code: (row.error_code as string | null) ?? null,
+        policy_decision: String(row.policy_decision),
+        args_hash: String(row.args_hash),
+        args_summary: summarizeToolArgs(String(row.tool), args),
+        at: String(row.started_at),
+      };
+    });
   }
 
   private currentRun(state: RunState): Run {
@@ -371,7 +401,11 @@ export class DiagnosisOrchestrator {
     state: RunState,
     role: Role,
     stage: Stage,
-    options: { repairIssues?: string[]; signal?: AbortSignal } = {},
+    options: {
+      repairIssues?: string[];
+      focusAnomalies?: string[];
+      signal?: AbortSignal;
+    } = {},
   ): Promise<unknown> {
     const nextRound = (state.stageRounds[stage] ?? 0) + 1;
     if (nextRound > state.run.budget.max_rounds_per_stage) {
@@ -413,6 +447,7 @@ export class DiagnosisOrchestrator {
       modelWindow: this.options.modelWindow ?? null,
       symptom: state.run.symptom,
       manualWithdrawn,
+      focusAnomalies: options.focusAnomalies,
     });
     if (
       state.inputTokens + context.manifest.estimated_tokens >
@@ -682,7 +717,31 @@ export class DiagnosisOrchestrator {
     handoff: boolean,
     declared?: Hypothesis['status'],
   ): Hypothesis['status'] {
-    if (declared) return declared;
+    if (declared) {
+      // 存储层先做一致性归一化：声明 supported 但仍有未处理反证，
+      // 或声明 contradicted 却没有任何反证，都不能作为可复核状态落库。
+      // 这样报告层复述状态时不会把无效状态带进最终报告。
+      if (
+        declared === 'supported' &&
+        hypothesis.code !== 'insufficient_evidence' &&
+        hypothesis.supporting_evidence_ids.length === 0
+      ) {
+        return 'inconclusive';
+      }
+      if (
+        declared === 'supported' &&
+        hypothesis.contradicting_evidence_ids.length > 0
+      ) {
+        return 'inconclusive';
+      }
+      if (
+        declared === 'contradicted' &&
+        hypothesis.contradicting_evidence_ids.length === 0
+      ) {
+        return 'inconclusive';
+      }
+      return declared;
+    }
     if (hypothesis.code === 'insufficient_evidence') {
       // 有反证时不能声称“证据不足”已成立；保留为不确定，
       // 但仍作为残余风险进入报告。
@@ -781,6 +840,73 @@ export class DiagnosisOrchestrator {
     return this.storeHypotheses(state, drafts, true);
   }
 
+  /**
+   * 报告层只能复述已验证假设。模型改写状态或删掉反证/竞争假设时，
+   * 以假设库为准恢复，并记录纠正事件；不改变模型对现象的文字描述。
+   */
+  private reconcileReportHypotheses(
+    state: RunState,
+    draftHypotheses: Hypothesis[],
+  ): Hypothesis[] {
+    const stored = this.options.repo.listHypotheses(state.run.id);
+    const byId = new Map(stored.map((hypothesis) => [hypothesis.id, hypothesis]));
+    const reconciled: Hypothesis[] = [];
+    const corrections: Array<{ hypothesis_id: string; fields: string[] }> = [];
+    for (const draft of draftHypotheses) {
+      const source = byId.get(draft.id);
+      if (!source) {
+        reconciled.push(draft);
+        continue;
+      }
+      const next: Hypothesis = { ...draft };
+      const fields: string[] = [];
+      if (next.status !== source.status) {
+        next.status = source.status;
+        fields.push('status');
+      }
+      if (
+        !sameStringSet(
+          next.supporting_evidence_ids,
+          source.supporting_evidence_ids,
+        )
+      ) {
+        next.supporting_evidence_ids = [...source.supporting_evidence_ids];
+        fields.push('supporting_evidence_ids');
+      }
+      if (
+        !sameStringSet(
+          next.contradicting_evidence_ids,
+          source.contradicting_evidence_ids,
+        )
+      ) {
+        next.contradicting_evidence_ids = [
+          ...source.contradicting_evidence_ids,
+        ];
+        fields.push('contradicting_evidence_ids');
+      }
+      if (fields.length > 0) {
+        corrections.push({ hypothesis_id: draft.id, fields });
+      }
+      reconciled.push(next);
+    }
+    const present = new Set(reconciled.map((hypothesis) => hypothesis.id));
+    for (const source of stored) {
+      if (present.has(source.id)) continue;
+      if (reconciled.length >= 5) break;
+      reconciled.push(source);
+      corrections.push({
+        hypothesis_id: source.id,
+        fields: ['added_from_verified'],
+      });
+    }
+    if (corrections.length > 0) {
+      state.checkpoint.report_reconciliations = corrections;
+      this.emit(state.run.id, 'report.reconciled', { corrections });
+      this.persist(state);
+    }
+    return reconciled;
+  }
+
   private buildFullReport(
     state: RunState,
     draft: ReportDraft,
@@ -794,7 +920,7 @@ export class DiagnosisOrchestrator {
       raised_at: state.run.created_at,
       message: '人工发起诊断，无绑定报警',
     };
-    const hypotheses = draft.hypotheses;
+    const hypotheses = this.reconcileReportHypotheses(state, draft.hypotheses);
     const supportedDiagnostic = hypotheses.some(
       (hypothesis) =>
         hypothesis.status === 'supported' &&
@@ -807,6 +933,14 @@ export class DiagnosisOrchestrator {
         (hypothesis) => hypothesis.code === 'insufficient_evidence',
       );
     const limitations = [...draft.limitations];
+    if (
+      state.checkpoint.budget_skipped_final_verify &&
+      !limitations.some((item) => /最后一次复核|输出预算/.test(item))
+    ) {
+      limitations.push(
+        '验证阶段的最后一次复核因输出预算保留而跳过；结论基于已入库证据，需人工复核。',
+      );
+    }
     if (
       state.run.data_mode === 'mock' &&
       !limitations.some((item) => /Mock|模拟/.test(item))
@@ -1187,6 +1321,62 @@ export class DiagnosisOrchestrator {
     return 'advance';
   }
 
+  /**
+   * 找出尚未被任何 supported 诊断假设作为支持证据的异常。
+   * 只用于决定是否做一次有界复核，不改变任何状态或证据。
+   */
+  private unexplainedAnomalies(state: RunState): string[] {
+    const hypotheses = this.options.repo.listHypotheses(state.run.id);
+    const supportedDiagnostic = hypotheses.filter(
+      (hypothesis) =>
+        hypothesis.status === 'supported' &&
+        hypothesis.code !== 'insufficient_evidence' &&
+        hypothesis.code !== 'unknown',
+    );
+    if (supportedDiagnostic.length > 1) return [];
+    const features = deriveTelemetryFeatures(
+      this.options.repo.listEvidence(state.run.id),
+      this.equipmentSnapshot(state).model,
+    );
+    return deriveAnomalyLedger(features, hypotheses)
+      .filter(
+        (item) =>
+          item.unexplained &&
+          item.flags.some((flag) => flag !== 'quality'),
+      )
+      .slice(0, 5)
+      .map((item) => item.summary);
+  }
+
+  private reportOutputReserveAvailable(state: RunState): boolean {
+    return (
+      state.run.budget.max_output_tokens - state.outputTokens >=
+      REPORT_OUTPUT_RESERVE + 400
+    );
+  }
+
+  private hasSupportedDiagnostic(state: RunState): boolean {
+    return this.options.repo.listHypotheses(state.run.id).some(
+      (hypothesis) =>
+        hypothesis.status === 'supported' &&
+        hypothesis.code !== 'insufficient_evidence' &&
+        hypothesis.code !== 'unknown',
+    );
+  }
+
+  private canRunSecondLook(state: RunState): boolean {
+    return (
+      !state.checkpoint.second_look_done &&
+      (state.stageRounds.verify_evidence ?? 0) <
+        state.run.budget.max_rounds_per_stage &&
+      state.totalRounds < state.run.budget.max_rounds_total &&
+      state.modelCalls < state.run.budget.max_model_calls - 2 &&
+      // 二次复核是可选动作，不能吃掉报告阶段的输出预留；否则
+      // BudgetExceededError 会把已有 supported 根因的 Run 直接转人工。
+      this.reportOutputReserveAvailable(state)
+    );
+  }
+
   private async runVerifyStage(
     state: RunState,
     gateway: ToolGateway,
@@ -1238,18 +1428,89 @@ export class DiagnosisOrchestrator {
       }
       if (stored.length === 0) return 'handoff';
     }
+    let didFinalCall = false;
+    if (
+      state.checkpoint.verify_needs_final_call &&
+      !this.reportOutputReserveAvailable(state) &&
+      this.hasSupportedDiagnostic(state)
+    ) {
+      // 已有可支持结论时，最后一步复核不是必须的；保住报告输出额度，
+      // 把未完成的复核写入检查点，由报告限制/人工复核承接。
+      delete state.checkpoint.verify_needs_final_call;
+      state.checkpoint.second_look_done = true;
+      state.checkpoint.budget_skipped_final_verify = true;
+      this.persist(state);
+      this.log(
+        state.run.id,
+        'skip final verify to preserve report output reserve',
+      );
+    }
     if (state.checkpoint.verify_needs_final_call) {
+      const focus = this.unexplainedAnomalies(state);
       await this.assertRunnable(state, options.owner, options.signal);
       const output = (await this.callRole(
         state,
         'hypothesis_verifier',
         'verify_evidence',
-        { signal: options.signal },
+        {
+          signal: options.signal,
+          focusAnomalies: focus.length > 0 ? focus : undefined,
+        },
       )) as HypothesisVerifierOutput;
       const control = detectControlIntent(state.run.symptom);
       this.storeHypotheses(state, output.hypotheses, control);
       delete state.checkpoint.verify_needs_final_call;
+      state.checkpoint.second_look_done = true;
+      didFinalCall = true;
       this.persist(state);
+    }
+
+    if (!didFinalCall && this.canRunSecondLook(state)) {
+      const focus = this.unexplainedAnomalies(state);
+      if (focus.length > 0) {
+        state.checkpoint.second_look_done = true;
+        this.persist(state);
+        await this.assertRunnable(state, options.owner, options.signal);
+        const output = (await this.callRole(
+          state,
+          'hypothesis_verifier',
+          'verify_evidence',
+          { signal: options.signal, focusAnomalies: focus },
+        )) as HypothesisVerifierOutput;
+        const control = detectControlIntent(state.run.symptom);
+        this.storeHypotheses(state, output.hypotheses, control);
+        if (output.next_checks.length > 0) {
+          state.checkpoint.pending_checks = output.next_checks;
+          this.persist(state);
+          await this.executeQueries(
+            state,
+            'hypothesis_verifier',
+            'verify_evidence',
+            output.next_checks,
+            gateway,
+            options,
+          );
+          delete state.checkpoint.pending_checks;
+          if (this.reportOutputReserveAvailable(state)) {
+            await this.assertRunnable(state, options.owner, options.signal);
+            const finalOutput = (await this.callRole(
+              state,
+              'hypothesis_verifier',
+              'verify_evidence',
+              { signal: options.signal, focusAnomalies: focus },
+            )) as HypothesisVerifierOutput;
+            this.storeHypotheses(state, finalOutput.hypotheses, control);
+          } else {
+            state.checkpoint.budget_skipped_final_verify = true;
+            this.persist(state);
+            this.log(
+              state.run.id,
+              'skip optional second-look final verify to preserve report output reserve',
+            );
+          }
+        }
+        this.persist(state);
+      }
     }
 
     const hypotheses = this.options.repo.listHypotheses(state.run.id);
@@ -1566,6 +1827,40 @@ export class DiagnosisOrchestrator {
         return this.options.repo.getRun(runId) ?? state.run;
       }
       if (error instanceof BudgetExceededError) {
+        // 验证阶段的修复调用可能耗尽“报告预留之外”的输出额度。若已有
+        // supported 诊断假设，报告阶段本身仍可使用预留额度；此时不应把
+        // 一个已有可核查结论的 Run 直接转人工。报告仍进入人工复核，并把
+        // 跳过的最后复核写入 limitations。
+        const remainingOutput =
+          state.run.budget.max_output_tokens - state.outputTokens;
+        if (
+          state.stage !== 'produce_report' &&
+          remainingOutput > 0 &&
+          this.hasSupportedDiagnostic(state)
+        ) {
+          const from = state.stage;
+          state.stage = 'produce_report';
+          state.checkpoint.budget_skipped_final_verify = true;
+          this.persist(state);
+          this.emit(runId, 'stage.changed', {
+            from,
+            to: 'produce_report',
+            reason: 'budget_fallback',
+          });
+          this.log(
+            runId,
+            `budget exhausted during ${from}; generating report with supported hypotheses`,
+          );
+          try {
+            await this.runReportStage(state, options);
+            return this.options.repo.getRun(runId) ?? state.run;
+          } catch (reportError) {
+            this.log(
+              runId,
+              `report fallback after budget error failed: ${failureText(reportError)}`,
+            );
+          }
+        }
         return await this.handoff(state, error.message, {
           owner: options.owner,
         });

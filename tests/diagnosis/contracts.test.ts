@@ -7,6 +7,7 @@ import {
   DEFAULT_BUDGET,
   EquipmentQueryInputSchema,
   EvidenceSchema,
+  HypothesisDraftSchema,
   ToolResponseEnvelopeSchema,
 } from '../../src/diagnosis/contracts/domain.js';
 import { TOOL_POLICY } from '../../src/diagnosis/policy.js';
@@ -146,6 +147,29 @@ describe('diagnosis contracts', () => {
         equipment_id: 'EQ-OTHER',
       }).success,
     ).toBe(true);
+  });
+
+  test('hypothesis draft accepts status_note but still rejects unknown fields', () => {
+    const draft = {
+      code: 'bearing_wear',
+      title: '轴承磨损',
+      description: '振动与温度同步上升',
+      confidence: 'medium',
+      status: 'supported',
+      rationale: '振动 RMS 与轴承温度同向上升',
+      supporting_evidence_ids: ['ev_1'],
+      contradicting_evidence_ids: [],
+      missing_evidence: ['频谱确认'],
+      next_check: null,
+      status_note: '现场确认前维持中等置信度',
+    };
+    expect(HypothesisDraftSchema.safeParse(draft).success).toBe(true);
+    expect(
+      HypothesisDraftSchema.safeParse({
+        ...draft,
+        custom_annotation: 'schema 外字段仍应拒绝',
+      }).success,
+    ).toBe(false);
   });
 
   test('default budget keeps read-only diagnosis bounds', () => {
