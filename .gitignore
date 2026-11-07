@@ -27,6 +27,8 @@ industrial-diagnosis-backup-*.tar.gz
 # Environment variables (may contain API keys and secrets)
 .env
 .env.*
+# Safe, empty template used by docs and CI path filters.
+!.env.diagnosis.example
 
 # Secrets — catch-all for key/cert files that may appear anywhere
 *.key

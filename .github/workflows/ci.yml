@@ -31,6 +31,7 @@ jobs:
           npm ci
           npm --prefix web ci
           npm --prefix container/agent-runner ci
+          npm --prefix packages/industrial-diagnosis-mcp ci
 
       - name: Install Playwright Chromium
         working-directory: web
@@ -49,6 +50,9 @@ jobs:
 
       - name: Typecheck
         run: make typecheck
+
+      - name: Build diagnosis MCP server
+        run: npm run diagnosis:build:mcp
 
       - name: Test
         run: npm test -- --run
