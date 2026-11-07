@@ -165,6 +165,13 @@ npm run diagnosis:server
 本轮新增：逐次模型调用审计表 `diagnosis_model_calls`（模型、角色、阶段、token、延迟、
 工具请求、失败原因、原始输出截断）、单例失败继续评测并保留 Trace、Top-1 / 工具选择准确率 /
 转人工准确率 / 任务成功率 / 延迟 / token 指标，以及 23 个真正要求保留反证的 gold 用例。
+与 §5.2 基线逐文件比较，当前 31 个失败文件没有新增；`frontend-product-terminology`
+的旧失败已消失。失败仍集中在 Windows 符号链接 `EPERM`、POSIX 路径、进程树终止和
+CardKit/streaming 环境差异，诊断 20 文件全部通过。
+
+GitHub Actions 在同一提交 `7bc77df` 上两项工作流均通过：Diagnosis CI（run
+42410313417）与 CI（run 42410313357）。此前 `7b02f24` 的 CI 因根测试先于诊断 MCP
+安装/构建而失败，已由 `a2c467f` 修复并复验。
 
 ## 6. 50 例 Fixture Eval
 
@@ -243,6 +250,12 @@ Fixture 的 token 是估算值，不是供应商账单；真实 token 只在 Liv
 7. 模型自拟 `handoff_reason` 把正常结论标成转人工：有 supported 结论时清空该字段。
 8. 误报子类混淆（comm / recovered / threshold / time）：把鉴别优先级写入提示，并要求
    反驳机械故障时引用 `vibration_rms` 的 `telemetry_series` 证据本身。
+
+提示只包含根因码的通用鉴别条件和工具 Schema，不包含 `case_id`、gold 根因或按用例
+硬编码的分支；模型上下文仍由当前 Run 的设备、证据和手册组成，评分由独立 gold 文件驱动。
+失败样本的输入、模型调用、工具轨迹、报告、评分原因与摘要保存在
+`docs/diagnosis/artifacts/live-failures/`，最终通过批次的摘要保存在同一目录的
+`pilot-15-summary.json`。
 
 全量 50 例（dev 29 + holdout 21）曾以 `--split all` 启动（`work/diagnosis/live-full-01`），
 但在外部端点延迟升高到约 4 分钟/例后停止，只完成 FA-01..FA-05（5/5 通过，Trace 已保留），
