@@ -1,0 +1,58 @@
+{
+  "generated_by": "scripts/diagnosis/generate-fixtures.ts",
+  "note": "所有设备、厂商、阈值、工单与手册均为虚构模拟数据，不代表真实厂商规定。",
+  "demo_scenarios": [
+    {
+      "id": "demo-sensor-drift",
+      "equipment_id": "EQ-DEMO-001",
+      "alarm_code": "DEMO-BRG-01",
+      "symptom": "1号循环泵轴承温度持续上升，振动与电流稳定",
+      "must_handoff": false,
+      "expected_root_causes": [
+        "sensor_drift"
+      ]
+    },
+    {
+      "id": "demo-bearing-wear",
+      "equipment_id": "EQ-DEMO-002",
+      "alarm_code": "DEMO-BRG-01",
+      "symptom": "2号循环泵振动与轴承温度同时上升，电流增大",
+      "must_handoff": false,
+      "expected_root_causes": [
+        "bearing_wear"
+      ]
+    },
+    {
+      "id": "demo-false-alarm-comm",
+      "equipment_id": "EQ-DEMO-003",
+      "alarm_code": "DEMO-COMM-03",
+      "symptom": "3号给水泵通讯报警，工艺参数正常",
+      "must_handoff": false,
+      "expected_root_causes": [
+        "false_alarm_comm"
+      ]
+    },
+    {
+      "id": "demo-multi-fault",
+      "equipment_id": "EQ-DEMO-001",
+      "alarm_code": "DEMO-VIB-02",
+      "symptom": "1号循环泵振动上升，同时温度出现与负荷不符的尖峰",
+      "must_handoff": false,
+      "expected_root_causes": [
+        "bearing_wear",
+        "sensor_drift"
+      ]
+    },
+    {
+      "id": "demo-source-timeout",
+      "equipment_id": "EQ-DEMO-002",
+      "alarm_code": "DEMO-BRG-01",
+      "symptom": "2号循环泵报警，但数据源超时",
+      "must_handoff": true,
+      "expected_root_causes": [
+        "insufficient_evidence"
+      ]
+    }
+  ],
+  "eval_cases": 50
+}

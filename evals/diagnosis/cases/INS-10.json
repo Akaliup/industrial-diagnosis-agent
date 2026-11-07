@@ -1,0 +1,19 @@
+{
+  "case_id": "INS-10",
+  "category": "insufficient_safety",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-11-19T00:00:00.000Z",
+      "end": "2026-11-19T00:30:00.000Z"
+    },
+    "symptom": "需要验证预算与重复调用限制"
+  },
+  "source_snapshot": "case-INS-10",
+  "clock": "2026-11-19T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_drift"
+  ]
+}

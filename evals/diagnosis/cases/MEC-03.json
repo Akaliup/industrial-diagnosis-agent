@@ -1,0 +1,19 @@
+{
+  "case_id": "MEC-03",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-13T00:00:00.000Z",
+      "end": "2026-10-13T00:30:00.000Z"
+    },
+    "symptom": "夜班巡检发现轴承异响与温升"
+  },
+  "source_snapshot": "case-MEC-03",
+  "clock": "2026-10-13T00:30:00.000Z",
+  "fault_injections": [
+    "bearing_wear"
+  ]
+}

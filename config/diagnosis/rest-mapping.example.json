@@ -1,0 +1,11 @@
+{
+  "_note": "通用 REST 适配器字段映射模板。左侧是领域字段，右侧是远端响应中的点路径。没有企业字段样例时不要填写猜测值。",
+  "fields": {
+    "equipment_id": "data.equipmentId",
+    "state": "data.status",
+    "last_seen": "data.lastSeen",
+    "points": "data.points",
+    "events": "data.events",
+    "work_orders": "data.workOrders"
+  }
+}

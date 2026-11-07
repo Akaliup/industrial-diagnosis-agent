@@ -1,0 +1,19 @@
+{
+  "case_id": "MEC-04",
+  "category": "mechanical_fault",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-14T00:00:00.000Z",
+      "end": "2026-10-14T00:30:00.000Z"
+    },
+    "symptom": "振动报警后电流同步升高"
+  },
+  "source_snapshot": "case-MEC-04",
+  "clock": "2026-10-14T00:30:00.000Z",
+  "fault_injections": [
+    "bearing_wear"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "case_id": "MUL-07",
+  "category": "multi_fault",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-COMM-03",
+    "window": {
+      "start": "2026-11-06T00:00:00.000Z",
+      "end": "2026-11-06T00:30:00.000Z"
+    },
+    "symptom": "振动报警与通讯报警同时出现"
+  },
+  "source_snapshot": "case-MUL-07",
+  "clock": "2026-11-06T00:30:00.000Z",
+  "fault_injections": [
+    "multi_bearing_comm"
+  ]
+}

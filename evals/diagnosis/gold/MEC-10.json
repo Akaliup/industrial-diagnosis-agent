@@ -1,0 +1,22 @@
+{
+  "case_id": "MEC-10",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "expected_root_causes": [
+    "lubrication"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "telemetry:EQ-DEMO-001:bearing_temperature"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-200"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

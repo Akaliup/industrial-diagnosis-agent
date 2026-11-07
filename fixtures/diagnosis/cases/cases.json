@@ -1,0 +1,94 @@
+{
+  "cases": [
+    {
+      "case_id": "CASE-H-001",
+      "title": "NP-200 轴承温度漂移",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-11-02T02:00:00.000Z",
+      "root_cause_code": "sensor_drift",
+      "summary": "温度上升但振动与电流稳定，传感器对比偏差 8°C。"
+    },
+    {
+      "case_id": "CASE-H-002",
+      "title": "NP-200 驱动端轴承磨损",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-08-12T01:00:00.000Z",
+      "root_cause_code": "bearing_wear",
+      "summary": "振动与电流同步上升，BPFO 特征频率明显。"
+    },
+    {
+      "case_id": "CASE-H-003",
+      "title": "NP-300 通讯中断假报警",
+      "equipment_model": "NP-300",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-09-20T03:00:00.000Z",
+      "root_cause_code": "false_alarm_comm",
+      "summary": "交换机维护期间采集缺失，工艺值正常。"
+    },
+    {
+      "case_id": "CASE-H-004",
+      "title": "NP-200 联轴器不对中",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-06-18T02:00:00.000Z",
+      "root_cause_code": "misalignment",
+      "summary": "振动高但温升有限，径向偏差 0.18mm。"
+    },
+    {
+      "case_id": "CASE-H-005",
+      "title": "NP-200 润滑不良",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-10-05T01:00:00.000Z",
+      "root_cause_code": "lubrication",
+      "summary": "振动升高、温度中度升高，补充润滑脂后恢复。"
+    },
+    {
+      "case_id": "CASE-H-006",
+      "title": "NP-300 旧阈值误报",
+      "equipment_model": "NP-300",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-12-01T02:00:00.000Z",
+      "root_cause_code": "false_alarm_threshold",
+      "summary": "使用 v1 手册 75°C 阈值，v2 阈值为 80°C。"
+    },
+    {
+      "case_id": "CASE-H-007",
+      "title": "NP-200 传感器卡值",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-03-08T02:00:00.000Z",
+      "root_cause_code": "sensor_stuck",
+      "summary": "温度连续 30 分钟恒定在 72.0°C，无正常波动。"
+    },
+    {
+      "case_id": "CASE-H-008",
+      "title": "NP-300 振动探头量程错误",
+      "equipment_model": "NP-300",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-08-30T02:00:00.000Z",
+      "root_cause_code": "sensor_range",
+      "summary": "振动读数 99 mm/s，超出探头量程。"
+    },
+    {
+      "case_id": "CASE-H-009",
+      "title": "NP-200 采样缺口",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-05-09T02:00:00.000Z",
+      "root_cause_code": "sampling_gap",
+      "summary": "采集卡缓存溢出导致 10 分钟数据缺口。"
+    },
+    {
+      "case_id": "CASE-H-010",
+      "title": "NP-200 轴承磨损合并温度传感器漂移",
+      "equipment_model": "NP-200",
+      "asset_category": "centrifugal_pump",
+      "occurred_at": "2025-10-18T02:00:00.000Z",
+      "root_cause_code": "multi_fault",
+      "summary": "振动与电流上升，同时温度出现与负荷不符的尖峰。"
+    }
+  ]
+}

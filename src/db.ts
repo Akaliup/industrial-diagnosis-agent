@@ -14483,6 +14483,17 @@ export function tryIncrementRedeemCodeUsage(
 }
 
 /**
+ * 供同一进程内的领域模块（设备智诊）复用主数据库连接。
+ * 不改变既有 Schema 或迁移顺序；调用方必须先 initDatabase()。
+ */
+export function getDatabaseInstance(): InstanceType<typeof Database> {
+  if (!db) {
+    throw new Error('Database is not initialized; call initDatabase() first');
+  }
+  return db;
+}
+
+/**
  * Close the database connection.
  * Should be called during graceful shutdown.
  */

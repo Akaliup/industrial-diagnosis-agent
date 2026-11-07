@@ -1,0 +1,19 @@
+{
+  "case_id": "MUL-04",
+  "category": "multi_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-VIB-02",
+    "window": {
+      "start": "2026-11-03T00:00:00.000Z",
+      "end": "2026-11-03T00:30:00.000Z"
+    },
+    "symptom": "振动恶化且温度尖峰频繁"
+  },
+  "source_snapshot": "case-MUL-04",
+  "clock": "2026-11-03T00:30:00.000Z",
+  "fault_injections": [
+    "multi_bearing_drift"
+  ]
+}

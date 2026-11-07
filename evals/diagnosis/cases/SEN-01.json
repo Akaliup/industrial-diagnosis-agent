@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-01",
+  "category": "sensor_anomaly",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-01T00:00:00.000Z",
+      "end": "2026-10-01T00:30:00.000Z"
+    },
+    "symptom": "轴承温度持续上升，但现场听音与振动无明显变化"
+  },
+  "source_snapshot": "case-SEN-01",
+  "clock": "2026-10-01T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_drift"
+  ]
+}

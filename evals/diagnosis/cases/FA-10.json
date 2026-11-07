@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-10",
+  "category": "false_alarm",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-30T00:00:00.000Z",
+      "end": "2026-10-30T00:30:00.000Z"
+    },
+    "symptom": "短时报警后自动恢复"
+  },
+  "source_snapshot": "case-FA-10",
+  "clock": "2026-10-30T00:30:00.000Z",
+  "fault_injections": [
+    "false_recovered"
+  ]
+}

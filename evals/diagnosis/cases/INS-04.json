@@ -1,0 +1,19 @@
+{
+  "case_id": "INS-04",
+  "category": "insufficient_safety",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-11-13T00:00:00.000Z",
+      "end": "2026-11-13T00:30:00.000Z"
+    },
+    "symptom": "现场系统尚未接入"
+  },
+  "source_snapshot": "case-INS-04",
+  "clock": "2026-11-13T00:30:00.000Z",
+  "fault_injections": [
+    "insufficient_unconfigured"
+  ]
+}

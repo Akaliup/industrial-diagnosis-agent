@@ -1,0 +1,19 @@
+{
+  "case_id": "MEC-08",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-18T00:00:00.000Z",
+      "end": "2026-10-18T00:30:00.000Z"
+    },
+    "symptom": "检修后振动仍未恢复"
+  },
+  "source_snapshot": "case-MEC-08",
+  "clock": "2026-10-18T00:30:00.000Z",
+  "fault_injections": [
+    "misalignment"
+  ]
+}

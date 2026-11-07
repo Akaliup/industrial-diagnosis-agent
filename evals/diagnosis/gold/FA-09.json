@@ -1,0 +1,22 @@
+{
+  "case_id": "FA-09",
+  "category": "false_alarm",
+  "split": "dev",
+  "expected_root_causes": [
+    "false_alarm_recovered"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "alarm:ALM-FA-09"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-300"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

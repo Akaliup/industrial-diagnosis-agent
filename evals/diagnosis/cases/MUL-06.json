@@ -1,0 +1,19 @@
+{
+  "case_id": "MUL-06",
+  "category": "multi_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-VIB-02",
+    "window": {
+      "start": "2026-11-05T00:00:00.000Z",
+      "end": "2026-11-05T00:30:00.000Z"
+    },
+    "symptom": "检修后振动仍高，润滑状态未知"
+  },
+  "source_snapshot": "case-MUL-06",
+  "clock": "2026-11-05T00:30:00.000Z",
+  "fault_injections": [
+    "multi_align_lube"
+  ]
+}

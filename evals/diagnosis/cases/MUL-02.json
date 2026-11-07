@@ -1,0 +1,19 @@
+{
+  "case_id": "MUL-02",
+  "category": "multi_fault",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-VIB-02",
+    "window": {
+      "start": "2026-11-01T00:00:00.000Z",
+      "end": "2026-11-01T00:30:00.000Z"
+    },
+    "symptom": "振动和温度同时异常，但两者趋势不一致"
+  },
+  "source_snapshot": "case-MUL-02",
+  "clock": "2026-11-01T00:30:00.000Z",
+  "fault_injections": [
+    "multi_bearing_drift"
+  ]
+}

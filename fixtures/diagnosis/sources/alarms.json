@@ -1,0 +1,59 @@
+{
+  "alarms": [
+    {
+      "source_id": "src-scada",
+      "source_alarm_id": "ALM-demo-sensor-drift",
+      "equipment_id": "EQ-DEMO-001",
+      "code": "DEMO-BRG-01",
+      "severity": "high",
+      "state": "active",
+      "raised_at": "2026-11-07T00:18:00.000Z",
+      "cleared_at": null,
+      "message": "轴承温度高"
+    },
+    {
+      "source_id": "src-scada",
+      "source_alarm_id": "ALM-demo-bearing-wear",
+      "equipment_id": "EQ-DEMO-002",
+      "code": "DEMO-BRG-01",
+      "severity": "high",
+      "state": "active",
+      "raised_at": "2026-11-07T00:18:00.000Z",
+      "cleared_at": null,
+      "message": "轴承温度高"
+    },
+    {
+      "source_id": "src-scada",
+      "source_alarm_id": "ALM-demo-false-alarm-comm",
+      "equipment_id": "EQ-DEMO-003",
+      "code": "DEMO-COMM-03",
+      "severity": "medium",
+      "state": "cleared",
+      "raised_at": "2026-11-07T00:18:00.000Z",
+      "cleared_at": "2026-11-07T00:20:00.000Z",
+      "message": "现场总线通讯中断"
+    },
+    {
+      "source_id": "src-scada",
+      "source_alarm_id": "ALM-demo-multi-fault",
+      "equipment_id": "EQ-DEMO-001",
+      "code": "DEMO-VIB-02",
+      "severity": "high",
+      "state": "active",
+      "raised_at": "2026-11-07T01:18:00.000Z",
+      "cleared_at": null,
+      "message": "泵组振动超标"
+    },
+    {
+      "source_id": "src-scada",
+      "source_alarm_id": "ALM-demo-source-timeout",
+      "equipment_id": "EQ-DEMO-002",
+      "code": "DEMO-BRG-01",
+      "severity": "high",
+      "state": "active",
+      "raised_at": "2026-11-07T02:18:00.000Z",
+      "cleared_at": null,
+      "message": "轴承温度高"
+    }
+  ]
+}

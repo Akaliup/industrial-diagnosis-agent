@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-07",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-07T00:00:00.000Z",
+      "end": "2026-10-07T00:30:00.000Z"
+    },
+    "symptom": "温度数值异常大，现场设备运行正常"
+  },
+  "source_snapshot": "case-SEN-07",
+  "clock": "2026-10-07T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_range"
+  ]
+}

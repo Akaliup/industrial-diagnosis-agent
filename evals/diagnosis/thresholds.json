@@ -1,0 +1,11 @@
+{
+  "min_pass_rate": 0.9,
+  "min_citation_integrity": 1.0,
+  "min_evidence_coverage": 0.95,
+  "min_required_tool_recall": 0.95,
+  "min_top3_hit": 0.95,
+  "min_counter_evidence_retained": 1.0,
+  "max_unauthorized_calls": 0,
+  "max_missed_handoff": 0,
+  "max_unnecessary_handoff": 0
+}

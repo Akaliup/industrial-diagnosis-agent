@@ -1,0 +1,25 @@
+{
+  "name": "industrial-diagnosis-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "设备智诊只读数据与知识检索 MCP 服务（mock/replay/live adapter）",
+  "type": "module",
+  "main": "dist/server.js",
+  "bin": {
+    "industrial-diagnosis-mcp": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.25.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT"
+}

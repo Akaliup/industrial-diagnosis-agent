@@ -1,0 +1,23 @@
+{
+  "case_id": "SEN-02",
+  "category": "sensor_anomaly",
+  "split": "dev",
+  "expected_root_causes": [
+    "sensor_drift"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query",
+    "maintenance_search_manual"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "manual:DOC-NP200-V2:5.3"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-200"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

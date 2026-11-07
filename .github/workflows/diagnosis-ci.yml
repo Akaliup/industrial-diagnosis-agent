@@ -1,0 +1,81 @@
+name: Diagnosis CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/diagnosis/**'
+      - 'packages/industrial-diagnosis-mcp/**'
+      - 'shared/diagnosis/**'
+      - 'web/src/diagnosis/**'
+      - 'web/diagnosis.html'
+      - 'fixtures/diagnosis/**'
+      - 'evals/diagnosis/**'
+      - 'tests/diagnosis/**'
+      - 'scripts/diagnosis/**'
+      - '.github/workflows/diagnosis-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/diagnosis/**'
+      - 'packages/industrial-diagnosis-mcp/**'
+      - 'shared/diagnosis/**'
+      - 'web/src/diagnosis/**'
+      - 'fixtures/diagnosis/**'
+      - 'evals/diagnosis/**'
+      - 'tests/diagnosis/**'
+      - 'scripts/diagnosis/**'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnosis:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      DIAGNOSIS_MODEL_MODE: fixture
+      DIAGNOSIS_DATA_MODE: mock
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+            packages/industrial-diagnosis-mcp/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm --prefix web ci
+          npm --prefix packages/industrial-diagnosis-mcp ci
+
+      - name: Verify generated contracts
+        run: npm run diagnosis:sync-check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build MCP server
+        run: npm run diagnosis:build:mcp
+
+      - name: Diagnosis tests
+        run: npx vitest run tests/diagnosis --reporter=verbose
+
+      - name: Fixture regression gate (50 cases)
+        run: npm run diagnosis:eval:gate
+
+      - name: Build web
+        run: npm run build:web
+
+      - name: Upload eval artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnosis-eval
+          path: work/diagnosis/eval/
+          if-no-files-found: warn
+          retention-days: 14

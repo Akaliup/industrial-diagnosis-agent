@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-03",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-03T00:00:00.000Z",
+      "end": "2026-10-03T00:30:00.000Z"
+    },
+    "symptom": "夜班发现轴承温度缓慢爬升"
+  },
+  "source_snapshot": "case-SEN-03",
+  "clock": "2026-10-03T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_drift"
+  ]
+}

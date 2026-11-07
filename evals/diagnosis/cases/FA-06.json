@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-06",
+  "category": "false_alarm",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-26T00:00:00.000Z",
+      "end": "2026-10-26T00:30:00.000Z"
+    },
+    "symptom": "报警时间戳提前 30 分钟"
+  },
+  "source_snapshot": "case-FA-06",
+  "clock": "2026-10-26T00:30:00.000Z",
+  "fault_injections": [
+    "false_time"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "case_id": "SEN-09",
+  "category": "sensor_anomaly",
+  "split": "dev",
+  "expected_root_causes": [
+    "sampling_gap"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "telemetry:EQ-DEMO-002:vibration_rms"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-200"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

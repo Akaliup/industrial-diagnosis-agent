@@ -31,6 +31,27 @@ Miniclaw 是一个面向个人与团队的自托管 AI Agent 工作台。它不�
 
 Miniclaw 采用本地优先和显式集成的思路：数据库、工作区元数据、会话状态和配置由自己的服务管理；模型、消息渠道、Docker 与外部工具都作为可配置边界接入。
 
+## 设备智诊（Industrial Diagnosis）
+
+本仓库同时包含一条独立的“设备报警 → 统一查询 → 五阶段诊断 → 引用报告 → 人工复核”链路，
+入口为 `/diagnosis`，与原有 Miniclaw 聊天/渠道入口并行：
+
+```bash
+npm run diagnosis:setup
+npm run diagnosis:server
+# http://127.0.0.1:3100/diagnosis
+```
+
+- 六个只读 MCP 工具，独立 PolicyGateway；不恢复通用 Agent 工具权限。
+- 五阶段编排、预算、证据缺口转人工、报告引用校验、人工复核与建议审批。
+- 默认 `fixture` 模型 + `mock` 数据；真实模型与企业来源未配置时明确标记
+  `NOT_RUN` / `UNCONFIGURED`，不静默回退。
+- 控制执行始终禁用；审批只确认建议意图。
+
+详见 [docs/diagnosis/README.md](docs/diagnosis/README.md)、
+[架构](docs/diagnosis/ARCHITECTURE.md)、[演示步骤](docs/diagnosis/DEMO.md) 与
+[验收报告](docs/diagnosis/ACCEPTANCE.md)。
+
 ## 界面与体验
 
 工作台围绕 `Agent → Workspace → Runtime Session` 组织信息。左侧导航提供工作台、智能体、能力库、任务、用量、账单和设置入口；进入工作台后，可以在同一个界面中切换 Agent、Workspace 和对话上下文。

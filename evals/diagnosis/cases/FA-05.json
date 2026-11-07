@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-05",
+  "category": "false_alarm",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-25T00:00:00.000Z",
+      "end": "2026-10-25T00:30:00.000Z"
+    },
+    "symptom": "报警时间与趋势数据对不上"
+  },
+  "source_snapshot": "case-FA-05",
+  "clock": "2026-10-25T00:30:00.000Z",
+  "fault_injections": [
+    "false_time"
+  ]
+}

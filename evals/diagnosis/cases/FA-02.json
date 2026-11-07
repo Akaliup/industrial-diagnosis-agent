@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-02",
+  "category": "false_alarm",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-COMM-03",
+    "window": {
+      "start": "2026-10-22T00:00:00.000Z",
+      "end": "2026-10-22T00:30:00.000Z"
+    },
+    "symptom": "报警期间数据大量缺失"
+  },
+  "source_snapshot": "case-FA-02",
+  "clock": "2026-10-22T00:30:00.000Z",
+  "fault_injections": [
+    "false_comm"
+  ]
+}

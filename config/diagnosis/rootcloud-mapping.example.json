@@ -1,0 +1,11 @@
+{
+  "_note": "根云专有适配器字段映射占位模板。本版本没有企业接口文档、签名规则和授权账号，RootCloudAdapter 会返回 UNCONFIGURED，不会读取本文件发请求。",
+  "endpoint": null,
+  "signature": null,
+  "fields": {
+    "equipment_id": "data.deviceId",
+    "state": "data.status",
+    "points": "data.metrics",
+    "events": "data.events"
+  }
+}

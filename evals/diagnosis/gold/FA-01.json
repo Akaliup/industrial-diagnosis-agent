@@ -1,0 +1,24 @@
+{
+  "case_id": "FA-01",
+  "category": "false_alarm",
+  "split": "dev",
+  "expected_root_causes": [
+    "false_alarm_comm"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query",
+    "maintenance_search_manual"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "manual:DOC-NP300-V1:7.1",
+    "telemetry:EQ-DEMO-003:vibration_rms"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-300"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

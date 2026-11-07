@@ -7,6 +7,13 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'crypto';
+import {
+  DiagnosisRuntime,
+  dataModeFromEnv,
+  modelModeFromEnv,
+} from './diagnosis/runtime.js';
+import { createDiagnosisRoutes } from './diagnosis/routes.js';
+import { attachDiagnosisWebSocket } from './diagnosis/ws.js';
 import { TerminalManager } from './terminal-manager.js';
 import { resolveFeishuCliBoundAccountId } from './feishu-cli-runtime.js';
 
@@ -88,6 +95,7 @@ import {
   updateChatName,
   listQueuedFollowUps,
   setMessageFollowUp,
+  getDatabaseInstance,
 } from './db.js';
 import { getGroupAllowedUserIds } from './group-broadcast-acl.js';
 import {
@@ -1389,6 +1397,9 @@ function setupWebSocket(server: any): WebSocketServer {
   server.on('upgrade', (request: any, socket: any, head: any) => {
     const { pathname } = new URL(request.url, `http://${request.headers.host}`);
 
+    // 诊断域 WebSocket 由 attachDiagnosisWebSocket 独立处理；这里放行，
+    // 不能 destroy，否则第二个 upgrade 监听器收不到连接。
+    if (pathname === '/ws/diagnosis') return;
     if (pathname !== '/ws') {
       socket.destroy();
       return;
@@ -3242,6 +3253,8 @@ function broadcastStatus(): void {
 let statusInterval: ReturnType<typeof setInterval> | null = null;
 let httpServer: ReturnType<typeof serve> | null = null;
 let wss: WebSocketServer | null = null;
+let diagnosisRuntime: DiagnosisRuntime | null = null;
+let diagnosisWss: WebSocketServer | null = null;
 
 /**
  * Test-only factory: wires the given `WebDeps` into module + route state and
@@ -3282,6 +3295,31 @@ export function startWebServer(webDeps: WebDeps): void {
     broadcastDockerPullComplete,
   });
 
+  // 设备智诊：独立领域表、PolicyGateway 与 Worker；不改变普通 Agent 能力。
+  if (!diagnosisRuntime) {
+    try {
+      diagnosisRuntime = new DiagnosisRuntime(getDatabaseInstance(), {
+        fixturesDir:
+          process.env.DIAGNOSIS_FIXTURES_DIR ?? 'fixtures/diagnosis',
+        modelMode: modelModeFromEnv(),
+        dataMode: dataModeFromEnv(),
+        startWorker: true,
+        workerConcurrency: Number(
+          process.env.DIAGNOSIS_WORKER_CONCURRENCY ?? 2,
+        ),
+        leaseMs: Number(process.env.DIAGNOSIS_LEASE_MS ?? 30_000),
+        logDir: process.env.DIAGNOSIS_LOG_DIR ?? 'work/diagnosis/logs',
+      });
+      app.route('/api/diagnosis', createDiagnosisRoutes(diagnosisRuntime));
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'Diagnosis runtime failed to initialize; /api/diagnosis is unavailable',
+      );
+      diagnosisRuntime = null;
+    }
+  }
+
   httpServer = serve(
     {
       fetch: app.fetch,
@@ -3304,6 +3342,12 @@ export function startWebServer(webDeps: WebDeps): void {
   );
 
   wss = setupWebSocket(httpServer);
+  if (diagnosisRuntime) {
+    diagnosisWss = attachDiagnosisWebSocket(
+      httpServer as unknown as import('node:http').Server,
+      diagnosisRuntime,
+    );
+  }
 
   // Register container exit callback for terminal cleanup
   webDeps.queue.setOnContainerExit((groupJid: string) => {
@@ -3359,6 +3403,14 @@ export async function shutdownWebServer(): Promise<void> {
   if (wss) {
     wss.close();
     wss = null;
+  }
+  if (diagnosisWss) {
+    diagnosisWss.close();
+    diagnosisWss = null;
+  }
+  if (diagnosisRuntime) {
+    await diagnosisRuntime.close();
+    diagnosisRuntime = null;
   }
   // Close HTTP server
   if (httpServer) {

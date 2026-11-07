@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-03",
+  "category": "false_alarm",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-COMM-03",
+    "window": {
+      "start": "2026-10-23T00:00:00.000Z",
+      "end": "2026-10-23T00:30:00.000Z"
+    },
+    "symptom": "网络维护后出现通讯报警"
+  },
+  "source_snapshot": "case-FA-03",
+  "clock": "2026-10-23T00:30:00.000Z",
+  "fault_injections": [
+    "false_comm"
+  ]
+}

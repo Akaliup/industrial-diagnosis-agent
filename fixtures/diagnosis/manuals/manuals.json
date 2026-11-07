@@ -1,0 +1,218 @@
+{
+  "documents": [
+    {
+      "document_id": "DOC-NP200-V1",
+      "title": "NP-200 Centrifugal Pump Maintenance Manual",
+      "vendor": "Northwind Pumps",
+      "model": "NP-200",
+      "manual_version": "v1",
+      "effective_date": "2022-03-01",
+      "file_hash": "075321231fbf8bd7b0201137c81332c718eb3e4ae93b28f3f02ce802e60a30b9",
+      "file": "manuals/doc-np200-v1.pdf",
+      "withdrawn": false
+    },
+    {
+      "document_id": "DOC-NP200-V2",
+      "title": "NP-200 Centrifugal Pump Maintenance Manual",
+      "vendor": "Northwind Pumps",
+      "model": "NP-200",
+      "manual_version": "v2",
+      "effective_date": "2024-07-01",
+      "file_hash": "40c320809971f22732cd9df03e7e04b3e8b7631ccd6ef54705d6c3639a01e503",
+      "file": "manuals/doc-np200-v2.pdf",
+      "withdrawn": false
+    },
+    {
+      "document_id": "DOC-NP300-V1",
+      "title": "NP-300 Feed Pump Maintenance Manual",
+      "vendor": "Northwind Pumps",
+      "model": "NP-300",
+      "manual_version": "v1",
+      "effective_date": "2023-01-01",
+      "file_hash": "e8b73a1ec91189ee9319b230f027637c8dc4f9b25d9435e5259b44cba06f7ef7",
+      "file": "manuals/doc-np300-v1.pdf",
+      "withdrawn": false
+    },
+    {
+      "document_id": "DOC-NP200-V2-ZH",
+      "title": "NP-200 循环泵维护手册（v2 中文摘要）",
+      "vendor": "Northwind Pumps",
+      "model": "NP-200",
+      "manual_version": "v2",
+      "effective_date": "2024-07-01",
+      "file_hash": "6338d10ca7b72d6b263ffdf307da1e86c80157c910a6145e1ca4deeea877929a",
+      "file": "manuals/np200-v2-zh.md",
+      "withdrawn": false
+    }
+  ],
+  "chunks": [
+    {
+      "document_id": "DOC-NP200-V1",
+      "chunk_id": "NP200-V1-5.2",
+      "page": 2,
+      "printed_page": "5-2",
+      "section": "5.2 Bearing temperature monitoring",
+      "text": "The bearing temperature alarm threshold is 75 C. A sustained reading above 75 C requires inspection.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v1"
+    },
+    {
+      "document_id": "DOC-NP200-V1",
+      "chunk_id": "NP200-V1-6.1",
+      "page": 3,
+      "printed_page": "6-1",
+      "section": "6.1 Vibration limits",
+      "text": "Vibration RMS above 4.5 mm/s indicates an abnormal mechanical condition. Check coupling alignment and bearing condition.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v1"
+    },
+    {
+      "document_id": "DOC-NP200-V1",
+      "chunk_id": "NP200-V1-7.3",
+      "page": 4,
+      "printed_page": "7-3",
+      "section": "7.3 Communication alarms",
+      "text": "Verify gateway power and network link before replacing any instrument.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v1"
+    },
+    {
+      "document_id": "DOC-NP200-V2",
+      "chunk_id": "NP200-V2-5.2",
+      "page": 2,
+      "printed_page": "5-2",
+      "section": "5.2 Bearing temperature monitoring",
+      "text": "The bearing temperature alarm threshold is 80 C. Use the 30-minute trend; a single spike is not sufficient for a mechanical conclusion.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP200-V2",
+      "chunk_id": "NP200-V2-5.3",
+      "page": 3,
+      "printed_page": "5-3",
+      "section": "5.3 Temperature sensor drift check",
+      "text": "If bearing temperature rises while vibration RMS and motor current remain stable, compare the reading with a handheld thermometer. A difference above 5 C indicates sensor drift; replace the sensor.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP200-V2",
+      "chunk_id": "NP200-V2-6.1",
+      "page": 4,
+      "printed_page": "6-1",
+      "section": "6.1 Vibration limits",
+      "text": "RMS above 4.5 mm/s indicates an abnormal mechanical condition. A rising trend with increased motor current indicates bearing wear. Verify with oil analysis and vibration spectrum.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP200-V2",
+      "chunk_id": "NP200-V2-7.1",
+      "page": 5,
+      "printed_page": "7-1",
+      "section": "7.1 Communication and sampling faults",
+      "text": "Missing samples, out-of-order timestamps, or a cleared communication alarm with normal process values indicate a data-path fault, not a mechanical fault. Do not replace mechanical parts based on communication alarms alone.",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP300-V1",
+      "chunk_id": "NP300-V1-5.2",
+      "page": 2,
+      "printed_page": "5-2",
+      "section": "5.2 Bearing temperature monitoring",
+      "text": "The NP-300 bearing temperature alarm threshold is 85 C. NP-300 uses a different bearing cartridge.",
+      "models": [
+        "NP-300"
+      ],
+      "version": "v1"
+    },
+    {
+      "document_id": "DOC-NP300-V1",
+      "chunk_id": "NP300-V1-6.1",
+      "page": 3,
+      "printed_page": "6-1",
+      "section": "6.1 Vibration limits",
+      "text": "The NP-300 vibration RMS limit is 3.5 mm/s. Confirm the probe range before judging the reading.",
+      "models": [
+        "NP-300"
+      ],
+      "version": "v1"
+    },
+    {
+      "document_id": "DOC-NP300-V1",
+      "chunk_id": "NP300-V1-7.1",
+      "page": 4,
+      "printed_page": "7-1",
+      "section": "7.1 Communication and sampling faults",
+      "text": "Missing samples, out-of-order timestamps, or a cleared communication alarm with normal process values indicate a data-path fault, not a mechanical fault. Do not replace mechanical parts based on communication alarms alone.",
+      "models": [
+        "NP-300"
+      ],
+      "version": "v1"
+    },
+    {
+      "document_id": "DOC-NP200-V2-ZH",
+      "chunk_id": "ZH-5.2",
+      "page": 1,
+      "printed_page": "中文摘要 p1",
+      "section": "5.2 轴承温度监测",
+      "text": "报警阈值为 80 °C。应观察 30 分钟趋势，单点尖峰不足以判定机械故障。",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP200-V2-ZH",
+      "chunk_id": "ZH-5.3",
+      "page": 2,
+      "printed_page": "中文摘要 p2",
+      "section": "5.3 温度传感器漂移检查",
+      "text": "若轴承温度上升而振动有效值和电机电流保持稳定，应使用手持测温仪对比。偏差超过 5 °C 表明传感器漂移，应更换传感器。",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP200-V2-ZH",
+      "chunk_id": "ZH-6.1",
+      "page": 3,
+      "printed_page": "中文摘要 p3",
+      "section": "6.1 振动限值",
+      "text": "振动有效值超过 4.5 mm/s 表明机械状态异常。振动上升并伴随电机电流上升提示轴承磨损，应结合油液分析与振动频谱确认。",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    },
+    {
+      "document_id": "DOC-NP200-V2-ZH",
+      "chunk_id": "ZH-7.1",
+      "page": 4,
+      "printed_page": "中文摘要 p4",
+      "section": "7.1 通讯与采样故障",
+      "text": "采样缺失、时间戳乱序，或通讯报警已恢复且工艺值正常，表明数据链路故障，不应据此更换机械部件。",
+      "models": [
+        "NP-200"
+      ],
+      "version": "v2"
+    }
+  ]
+}

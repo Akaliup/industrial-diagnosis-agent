@@ -1,0 +1,19 @@
+{
+  "case_id": "MUL-01",
+  "category": "multi_fault",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-VIB-02",
+    "window": {
+      "start": "2026-10-31T00:00:00.000Z",
+      "end": "2026-10-31T00:30:00.000Z"
+    },
+    "symptom": "振动上升，同时温度出现与负荷不符的尖峰"
+  },
+  "source_snapshot": "case-MUL-01",
+  "clock": "2026-10-31T00:30:00.000Z",
+  "fault_injections": [
+    "multi_bearing_drift"
+  ]
+}

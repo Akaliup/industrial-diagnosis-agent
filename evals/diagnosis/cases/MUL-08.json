@@ -1,0 +1,19 @@
+{
+  "case_id": "MUL-08",
+  "category": "multi_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-COMM-03",
+    "window": {
+      "start": "2026-11-07T00:00:00.000Z",
+      "end": "2026-11-07T00:30:00.000Z"
+    },
+    "symptom": "通讯中断期间仍有振动异常"
+  },
+  "source_snapshot": "case-MUL-08",
+  "clock": "2026-11-07T00:30:00.000Z",
+  "fault_injections": [
+    "multi_bearing_comm"
+  ]
+}

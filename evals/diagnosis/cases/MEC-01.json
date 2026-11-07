@@ -1,0 +1,19 @@
+{
+  "case_id": "MEC-01",
+  "category": "mechanical_fault",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-11T00:00:00.000Z",
+      "end": "2026-10-11T00:30:00.000Z"
+    },
+    "symptom": "振动和轴承温度同时上升，电流增大"
+  },
+  "source_snapshot": "case-MEC-01",
+  "clock": "2026-10-11T00:30:00.000Z",
+  "fault_injections": [
+    "bearing_wear"
+  ]
+}

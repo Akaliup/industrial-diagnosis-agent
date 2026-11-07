@@ -1,0 +1,166 @@
+/* 设备智诊：白色主界面、黑色文字、蓝色交互；红色仅用于危险与失败。 */
+.diagnosis-app {
+  color-scheme: light;
+  --diag-blue: #1d4ed8;
+  --diag-blue-soft: #eff6ff;
+  --diag-ink: #111827;
+  --diag-muted: #6b7280;
+  --diag-line: #e5e7eb;
+  --diag-danger: #b91c1c;
+  --diag-warn: #b45309;
+  --diag-ok: #047857;
+  background: #ffffff;
+  color: var(--diag-ink);
+}
+
+.diagnosis-app ::selection {
+  background: #dbeafe;
+}
+
+.diag-page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #f8fbff 0%, transparent 60%),
+    #ffffff;
+}
+
+.diag-card {
+  border: 1px solid var(--diag-line);
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.03);
+}
+
+.diag-card-hover {
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.diag-card-hover:hover {
+  transform: translateY(-1px);
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 24px rgb(29 78 216 / 0.08);
+}
+
+.diag-fade-up {
+  animation: diag-fade-up 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.diag-fade-in {
+  animation: diag-fade-in 140ms ease-out both;
+}
+
+.diag-slide-in {
+  animation: diag-slide-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.diag-stagger > * {
+  animation: diag-fade-up 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.diag-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.diag-stagger > *:nth-child(2) {
+  animation-delay: 24ms;
+}
+.diag-stagger > *:nth-child(3) {
+  animation-delay: 48ms;
+}
+.diag-stagger > *:nth-child(4) {
+  animation-delay: 72ms;
+}
+.diag-stagger > *:nth-child(5) {
+  animation-delay: 96ms;
+}
+.diag-stagger > *:nth-child(n + 6) {
+  animation-delay: 120ms;
+}
+
+.diag-pulse-dot {
+  animation: diag-pulse 1.6s ease-in-out infinite;
+}
+
+.diag-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+.diag-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.diag-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+.diag-code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.78rem;
+}
+
+.diag-grid-lines {
+  background-image:
+    linear-gradient(to right, rgb(17 24 39 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(17 24 39 / 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@keyframes diag-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes diag-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes diag-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes diag-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diag-fade-up,
+  .diag-fade-in,
+  .diag-slide-in,
+  .diag-stagger > *,
+  .diag-pulse-dot {
+    animation: none !important;
+  }
+  .diag-card-hover,
+  .diagnosis-app * {
+    transition-duration: 0.01ms !important;
+  }
+}

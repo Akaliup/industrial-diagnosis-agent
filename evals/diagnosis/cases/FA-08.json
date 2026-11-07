@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-08",
+  "category": "false_alarm",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-THR-05",
+    "window": {
+      "start": "2026-10-28T00:00:00.000Z",
+      "end": "2026-10-28T00:30:00.000Z"
+    },
+    "symptom": "报警阈值似乎来自旧版手册"
+  },
+  "source_snapshot": "case-FA-08",
+  "clock": "2026-10-28T00:30:00.000Z",
+  "fault_injections": [
+    "false_threshold"
+  ]
+}

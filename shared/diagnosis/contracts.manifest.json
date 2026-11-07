@@ -1,0 +1,11 @@
+{
+  "source": "src/diagnosis/contracts/domain.ts",
+  "source_sha256": "5de03f11bf6a70ec875954e1211258530d627e85e14b78f9aa8dfcd9dd6af460",
+  "generated": {
+    "shared/diagnosis/contracts.ts": "a8c1ba3fd4f7f98190ad7074553d176793b3e0e5a5d7c73f44a3ba561acfff49",
+    "packages/industrial-diagnosis-mcp/src/contracts/domain.ts": "a8c1ba3fd4f7f98190ad7074553d176793b3e0e5a5d7c73f44a3ba561acfff49",
+    "web/src/diagnosis/contracts.generated.ts": "a8c1ba3fd4f7f98190ad7074553d176793b3e0e5a5d7c73f44a3ba561acfff49",
+    "packages/industrial-diagnosis-mcp/src/contracts/generated/schemas.json": "9c05dfe77d88f99d38eff2aff69f9babbb938b2a58f5f8e5a469f22e83ea55b4"
+  },
+  "generator": "scripts/diagnosis/sync-contracts.ts"
+}

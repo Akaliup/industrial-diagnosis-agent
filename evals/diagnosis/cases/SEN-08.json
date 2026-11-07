@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-08",
+  "category": "sensor_anomaly",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-08T00:00:00.000Z",
+      "end": "2026-10-08T00:30:00.000Z"
+    },
+    "symptom": "趋势图中间缺失约 10 分钟数据"
+  },
+  "source_snapshot": "case-SEN-08",
+  "clock": "2026-10-08T00:30:00.000Z",
+  "fault_injections": [
+    "sampling_gap"
+  ]
+}

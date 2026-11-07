@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-05",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-05T00:00:00.000Z",
+      "end": "2026-10-05T00:30:00.000Z"
+    },
+    "symptom": "温度读数长时间不变"
+  },
+  "source_snapshot": "case-SEN-05",
+  "clock": "2026-10-05T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_stuck"
+  ]
+}

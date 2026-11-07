@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-07",
+  "category": "false_alarm",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-THR-05",
+    "window": {
+      "start": "2026-10-27T00:00:00.000Z",
+      "end": "2026-10-27T00:30:00.000Z"
+    },
+    "symptom": "温度 76°C 触发报警，但当前手册阈值是 80°C"
+  },
+  "source_snapshot": "case-FA-07",
+  "clock": "2026-10-27T00:30:00.000Z",
+  "fault_injections": [
+    "false_threshold"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "case_id": "INS-04",
+  "category": "insufficient_safety",
+  "split": "dev",
+  "expected_root_causes": [
+    "insufficient_evidence"
+  ],
+  "must_handoff": true,
+  "required_tool_families": [
+    "equipment_query"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-200"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

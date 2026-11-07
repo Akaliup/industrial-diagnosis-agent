@@ -1,0 +1,19 @@
+{
+  "case_id": "MEC-10",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-001",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-20T00:00:00.000Z",
+      "end": "2026-10-20T00:30:00.000Z"
+    },
+    "symptom": "轴承温度缓慢上升，振动轻度超标"
+  },
+  "source_snapshot": "case-MEC-10",
+  "clock": "2026-10-20T00:30:00.000Z",
+  "fault_injections": [
+    "lubrication"
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "equipment": [
+    {
+      "equipment_id": "EQ-DEMO-001",
+      "name": "1号循环泵",
+      "vendor": "Northwind Pumps",
+      "model": "NP-200",
+      "serial": "NP200-2023-001",
+      "asset_category": "centrifugal_pump",
+      "manual_document_id": "DOC-NP200-V2",
+      "manual_version": "v2",
+      "source_ids": {
+        "scada": "EQ-DEMO-001",
+        "mes": "MES-ASSET-001",
+        "work_order": "ASSET-001",
+        "rootcloud": "RC-EQ-001"
+      },
+      "metrics": {
+        "bearing_temperature": {
+          "unit": "°C",
+          "normal_range": [
+            40,
+            80
+          ]
+        },
+        "vibration_rms": {
+          "unit": "mm/s",
+          "normal_range": [
+            0,
+            4.5
+          ]
+        },
+        "discharge_pressure": {
+          "unit": "MPa",
+          "normal_range": [
+            0.5,
+            0.75
+          ]
+        },
+        "flow_rate": {
+          "unit": "m3/h",
+          "normal_range": [
+            90,
+            140
+          ]
+        },
+        "motor_current": {
+          "unit": "A",
+          "normal_range": [
+            35,
+            60
+          ]
+        }
+      }
+    },
+    {
+      "equipment_id": "EQ-DEMO-002",
+      "name": "2号循环泵",
+      "vendor": "Northwind Pumps",
+      "model": "NP-200",
+      "serial": "NP200-2023-002",
+      "asset_category": "centrifugal_pump",
+      "manual_document_id": "DOC-NP200-V2",
+      "manual_version": "v2",
+      "source_ids": {
+        "scada": "EQ-DEMO-002",
+        "mes": "MES-ASSET-002",
+        "work_order": "ASSET-002",
+        "rootcloud": "RC-EQ-002"
+      },
+      "metrics": {
+        "bearing_temperature": {
+          "unit": "°C",
+          "normal_range": [
+            40,
+            80
+          ]
+        },
+        "vibration_rms": {
+          "unit": "mm/s",
+          "normal_range": [
+            0,
+            4.5
+          ]
+        },
+        "discharge_pressure": {
+          "unit": "MPa",
+          "normal_range": [
+            0.5,
+            0.75
+          ]
+        },
+        "flow_rate": {
+          "unit": "m3/h",
+          "normal_range": [
+            90,
+            140
+          ]
+        },
+        "motor_current": {
+          "unit": "A",
+          "normal_range": [
+            35,
+            60
+          ]
+        }
+      }
+    },
+    {
+      "equipment_id": "EQ-DEMO-003",
+      "name": "3号给水泵",
+      "vendor": "Northwind Pumps",
+      "model": "NP-300",
+      "serial": "NP300-2022-014",
+      "asset_category": "centrifugal_pump",
+      "manual_document_id": "DOC-NP300-V1",
+      "manual_version": "v1",
+      "source_ids": {
+        "scada": "EQ-DEMO-003",
+        "mes": "MES-ASSET-003",
+        "work_order": "ASSET-003",
+        "rootcloud": "RC-EQ-003"
+      },
+      "metrics": {
+        "bearing_temperature": {
+          "unit": "°C",
+          "normal_range": [
+            40,
+            85
+          ]
+        },
+        "vibration_rms": {
+          "unit": "mm/s",
+          "normal_range": [
+            0,
+            3.5
+          ]
+        },
+        "discharge_pressure": {
+          "unit": "MPa",
+          "normal_range": [
+            0.7,
+            1
+          ]
+        },
+        "flow_rate": {
+          "unit": "m3/h",
+          "normal_range": [
+            150,
+            210
+          ]
+        },
+        "motor_current": {
+          "unit": "A",
+          "normal_range": [
+            60,
+            90
+          ]
+        },
+        "motor_winding_temperature": {
+          "unit": "°C",
+          "normal_range": [
+            50,
+            110
+          ]
+        }
+      }
+    }
+  ]
+}

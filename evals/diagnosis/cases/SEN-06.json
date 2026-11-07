@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-06",
+  "category": "sensor_anomaly",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-06T00:00:00.000Z",
+      "end": "2026-10-06T00:30:00.000Z"
+    },
+    "symptom": "温度读数 250°C，明显超出量程"
+  },
+  "source_snapshot": "case-SEN-06",
+  "clock": "2026-10-06T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_range"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "case_id": "SEN-04",
+  "category": "sensor_anomaly",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-10-04T00:00:00.000Z",
+      "end": "2026-10-04T00:30:00.000Z"
+    },
+    "symptom": "温度曲线完全平直，怀疑测点卡死"
+  },
+  "source_snapshot": "case-SEN-04",
+  "clock": "2026-10-04T00:30:00.000Z",
+  "fault_injections": [
+    "sensor_stuck"
+  ]
+}

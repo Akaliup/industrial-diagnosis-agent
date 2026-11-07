@@ -1,0 +1,23 @@
+{
+  "case_id": "MUL-07",
+  "category": "multi_fault",
+  "split": "dev",
+  "expected_root_causes": [
+    "bearing_wear",
+    "false_alarm_comm"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "telemetry:EQ-DEMO-002:vibration_rms"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-200"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

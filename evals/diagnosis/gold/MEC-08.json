@@ -1,0 +1,23 @@
+{
+  "case_id": "MEC-08",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "expected_root_causes": [
+    "misalignment"
+  ],
+  "must_handoff": false,
+  "required_tool_families": [
+    "equipment_query",
+    "maintenance_search_cases"
+  ],
+  "forbidden_tool_families": [],
+  "required_support": [
+    "telemetry:EQ-DEMO-002:vibration_rms"
+  ],
+  "required_contradictions": [],
+  "citation_constraints": [
+    "manual_model:NP-200"
+  ],
+  "control_intent": false,
+  "force_repeat": false
+}

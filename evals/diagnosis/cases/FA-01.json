@@ -1,0 +1,19 @@
+{
+  "case_id": "FA-01",
+  "category": "false_alarm",
+  "split": "dev",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-COMM-03",
+    "window": {
+      "start": "2026-10-21T00:00:00.000Z",
+      "end": "2026-10-21T00:30:00.000Z"
+    },
+    "symptom": "通讯报警触发但工艺参数正常"
+  },
+  "source_snapshot": "case-FA-01",
+  "clock": "2026-10-21T00:30:00.000Z",
+  "fault_injections": [
+    "false_comm"
+  ]
+}
