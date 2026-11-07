@@ -7,6 +7,7 @@
  * 用法：npm run diagnosis:setup
  * 环境变量：DIAGNOSIS_SETUP_WORKSPACE（默认 web:main）
  */
+import '../../src/diagnosis/load-env.js';
 import {
   closeDatabase,
   getDatabaseInstance,

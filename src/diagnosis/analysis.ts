@@ -73,6 +73,7 @@ export interface Findings {
   manualVersionConflict: boolean;
   manualMissing: boolean;
   manualPrimaryMissing: boolean;
+  manualRegistrationMissing: boolean;
   sourceFailures: string[];
   allMetricsNormal: boolean;
 }
@@ -97,16 +98,6 @@ export const NORMAL_RANGES: Record<
     motor_winding_temperature: { unit: '°C', min: 50, max: 110 },
   },
 };
-
-export function expectedManualVersion(model: string): string {
-  if (model === 'NP-300') return 'v1';
-  return 'v2';
-}
-
-export function expectedManualDocument(model: string): string {
-  if (model === 'NP-300') return 'DOC-NP300-V1';
-  return 'DOC-NP200-V2';
-}
 
 export function manualMetric(metric: string): string | null {
   if (metric === 'bearing_temperature') return 'temperature';
@@ -242,13 +233,18 @@ export function collectFindings(input: {
     (sum, item) => sum + item.missing,
     0,
   );
-  const expectedVersion = expectedManualVersion(input.equipment.model);
+  // 适用版本以设备台账登记为准；没有登记时不能按机型猜一个版本来下结论。
+  const expectedVersion = input.equipment.manual_version ?? null;
+  const manualRegistrationMissing =
+    !input.equipment.manual_version || !input.equipment.manual_document_id;
   const manualVersionConflict =
+    expectedVersion !== null &&
     manuals.length > 0 &&
     manuals.every((manual) => manual.version !== expectedVersion);
   const manualMissing = manuals.length === 0;
-  const primaryManualDocument = expectedManualDocument(input.equipment.model);
+  const primaryManualDocument = input.equipment.manual_document_id ?? null;
   const manualPrimaryMissing =
+    primaryManualDocument !== null &&
     manuals.length > 0 &&
     !manuals.some((manual) => manual.documentId === primaryManualDocument);
   const sourceFailures = [
@@ -286,6 +282,7 @@ export function collectFindings(input: {
     manualVersionConflict,
     manualMissing,
     manualPrimaryMissing,
+    manualRegistrationMissing,
     sourceFailures,
     allMetricsNormal,
   };
@@ -351,12 +348,12 @@ export function inferRootCauses(input: {
   );
   const tempRange = normalRange(equipment.model, 'bearing_temperature');
   const vibrationRange = normalRange(equipment.model, 'vibration_rms');
-  const currentVersion = expectedManualVersion(equipment.model);
-  const currentManuals = findings.manuals.filter(
-    (manual) => manual.version === currentVersion,
-  );
-  const manualPool =
-    currentManuals.length > 0 ? currentManuals : findings.manuals;
+  const currentVersion = equipment.manual_version ?? null;
+  const currentManuals = currentVersion
+    ? findings.manuals.filter((manual) => manual.version === currentVersion)
+    : [];
+  // 未登记版本时不回退到“任意版本”的手册，避免用错误版本推断阈值。
+  const manualPool = currentManuals;
   const manualTempThreshold = manualPool.find((manual) =>
     manual.section?.startsWith('5.2'),
   );
@@ -419,6 +416,17 @@ export function inferRootCauses(input: {
     };
   }
 
+  if (!equipment.manual_document_id || !equipment.manual_version) {
+    return {
+      codes: ['insufficient_evidence'],
+      primary: 'insufficient_evidence',
+      handoff: true,
+      handoffReason:
+        '设备台账未登记适用手册与版本，无法确认判定阈值与维修条款；需要工程师确认有效手册后再下结论。',
+      notes: [...notes, '设备未登记适用手册，已阻止形成确定根因'],
+    };
+  }
+
   if (input.controlIntent) {
     const base = inferRootCauses({
       ...input,
@@ -431,6 +439,17 @@ export function inferRootCauses(input: {
       handoffReason:
         '请求包含设备控制/复位意图；本版只提供只读诊断，控制必须由工程师按规程现场执行。',
       notes: [...base.notes, '检测到控制意图，已拒绝执行'],
+    };
+  }
+
+  if (findings.manualRegistrationMissing) {
+    return {
+      codes: ['insufficient_evidence'],
+      primary: 'insufficient_evidence',
+      handoff: true,
+      handoffReason:
+        '设备台账未登记适用的手册文档/版本，无法确认当前阈值与判定条款；需要工程师确认有效手册后再下结论。',
+      notes: [...notes, '手册登记缺失，不能按机型猜测版本'],
     };
   }
 

@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { DataMode, DiagnosisSource } from './contracts/domain.js';
 import type { KnowledgeService } from './knowledge.js';
 import type { DiagnosisRepository } from './repository.js';
-import { sha256 } from './util.js';
+import { stableScopedId } from './util.js';
 
 interface EquipmentFixture {
   equipment_id: string;
@@ -175,7 +175,7 @@ export async function seedDiagnosis(input: {
     for (const item of parsed.alarms) {
       const idempotencyKey = `${item.source_id}|${item.source_alarm_id}|${item.raised_at}`;
       input.repo.upsertAlarm({
-        id: `alm_${sha256(idempotencyKey).slice(0, 20)}`,
+        id: stableScopedId('alm', input.workspaceId, idempotencyKey),
         workspaceId: input.workspaceId,
         sourceId: item.source_id,
         sourceAlarmId: item.source_alarm_id,

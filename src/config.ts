@@ -30,7 +30,11 @@ export const MOUNT_ALLOWLIST_PATH = path.resolve(
   'config',
   'mount-allowlist.json',
 );
-export const DATA_DIR = path.resolve(PROJECT_ROOT, 'data');
+// 测试/CI 可通过 MINICLAW_DATA_DIR 把全部运行时数据隔离到临时目录；
+// 未设置时保持原有的仓库 data/ 布局。
+export const DATA_DIR = process.env.MINICLAW_DATA_DIR
+  ? path.resolve(PROJECT_ROOT, process.env.MINICLAW_DATA_DIR)
+  : path.resolve(PROJECT_ROOT, 'data');
 export const STORE_DIR = path.join(DATA_DIR, 'db');
 export const GROUPS_DIR = path.join(DATA_DIR, 'groups');
 export const MAIN_GROUP_FOLDER = 'main';

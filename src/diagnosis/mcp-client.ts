@@ -201,6 +201,8 @@ export class DiagnosisMcpClient {
       signal?: AbortSignal;
       timeoutMs?: number;
       maxAttempts?: number;
+      /** 在每次真正发出请求前调用，用于先落库 inflight 日志。 */
+      onAttemptStart?: (attempt: number) => void;
       onAttempt?: (attempt: CallAttempt) => void;
     } = {},
   ): Promise<{ envelope: ToolResponseEnvelope; attempts: number }> {
@@ -219,6 +221,7 @@ export class DiagnosisMcpClient {
           attempts: attempt,
         };
       }
+      options.onAttemptStart?.(attempt);
       const started = Date.now();
       const envelope = await this.callRaw(name, args, window, options);
       last = envelope;

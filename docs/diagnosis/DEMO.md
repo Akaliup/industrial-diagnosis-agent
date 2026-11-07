@@ -52,13 +52,19 @@ npm run diagnosis:server
 1. 返回收件箱，打开 `2号循环泵` 的来源超时场景。
 2. 报告结论为 `insufficient_evidence`，明确“存在未解决的关键证据缺口”，不编造数值。
 3. 指出这是有意设计：来源超时/缺失时转人工，而不是回退 Mock。
+4. 在“数据与知识”页展示来源状态与“测试连接”：`live` 来源只有探测成功才会变成
+   `configured`；本机演示连接的是本地假 REST，不是企业系统。
 
 ### 2.6 评测与回放（约 45 秒）
 
 1. 进入“评测与回放”。
 2. 展示 50 例、通过 50、引用完整性 1.0、未授权调用 0、可解完成率 1.0。
 3. 打开任一用例的 Trace：五阶段、工具调用、证据、报告校验。
-4. 强调：Fixture Eval 是工程回归，不是真实模型精度；Live Eval 为 `NOT_RUN`。
+4. 指出工具轨迹会显示 `inflight`、`unknown`、`cancelled` 等状态；`unknown` 表示进程在
+   请求与回执之间崩溃，恢复时不会把它当成成功。
+5. 运行 `npm run diagnosis:replay`，展示 `inference_calls=0 tool_calls=0`：
+   这是只读 Trace 重放，不是重新调用模型。
+6. 强调：Fixture Eval 是工程回归，不是真实模型精度；Live Eval 为 `NOT_RUN`。
 
 ## 3. 报告导出
 

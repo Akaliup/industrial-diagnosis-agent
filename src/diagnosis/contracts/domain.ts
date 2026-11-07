@@ -667,6 +667,11 @@ export type Observation = z.infer<typeof ObservationSchema>;
 export const CheckSchema = z
   .object({
     id: z.string(),
+    /**
+     * diagnostic: 依据本次证据的诊断检查，必须引用证据；
+     * safety: 通用安全提醒/转人工步骤，允许不引用具体证据。
+     */
+    kind: z.enum(['diagnostic', 'safety']).default('diagnostic'),
     purpose: z.string().min(1).max(400),
     preconditions: z.array(z.string()).max(10),
     steps: z.array(z.string()).min(1).max(20),
@@ -682,6 +687,8 @@ export type Check = z.infer<typeof CheckSchema>;
 export const RecommendationSchema = z
   .object({
     id: z.string(),
+    /** repair: 针对根因的维修建议，必须引用证据；safety: 通用安全提醒。 */
+    kind: z.enum(['repair', 'safety']).default('repair'),
     text: z.string().min(1).max(800),
     evidence_ids: z.array(z.string()).max(20),
     conditions: z.array(z.string()).max(10),
@@ -698,6 +705,9 @@ export const EquipmentSnapshotSchema = z
     vendor: z.string(),
     model: z.string(),
     serial: z.string(),
+    /** 设备台账登记的适用手册；未知时不得形成确定性维修结论。 */
+    manual_document_id: z.string().nullable().optional(),
+    manual_version: z.string().nullable().optional(),
     source_ids: z.record(z.string(), z.string()),
   })
   .strict();
@@ -871,6 +881,7 @@ export const RunSchema = z
     finished_at: utcDateTime.nullable(),
     lease_owner: z.string().nullable(),
     lease_expires_at: utcDateTime.nullable(),
+    lease_token: z.number().int().nonnegative(),
   })
   .strict();
 export type Run = z.infer<typeof RunSchema>;
@@ -1059,7 +1070,10 @@ export const EvalMetricsSchema = z
     total: z.number().int(),
     passed: z.number().int(),
     citation_integrity: z.number(),
+    /** 已实际 dispatch 的未授权调用；被策略拦截的请求不计入。 */
     unauthorized_calls: z.number().int(),
+    /** 被网关/重复守卫正确拦截的尝试，用于证明安全机制生效。 */
+    blocked_attempts: z.number().int(),
     missed_handoff: z.number().int(),
     counter_evidence_retained: z.number(),
     evidence_coverage: z.number(),
@@ -1068,6 +1082,13 @@ export const EvalMetricsSchema = z
     unnecessary_handoff: z.number(),
     top3_hit: z.number().nullable(),
     multi_fault_coverage: z.number().nullable(),
+    multi_fault_precision: z.number().nullable(),
+    /** 各比例指标的分母；0 表示该指标在本批用例中为 N/A。 */
+    evidence_coverage_n: z.number().int(),
+    required_tool_recall_n: z.number().int(),
+    counter_evidence_n: z.number().int(),
+    top3_cases: z.number().int(),
+    multi_fault_cases: z.number().int(),
   })
   .strict();
 export type EvalMetrics = z.infer<typeof EvalMetricsSchema>;

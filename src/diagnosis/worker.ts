@@ -105,8 +105,9 @@ export class DiagnosisWorker {
       for (const run of queued) {
         if (this.active.size >= this.concurrency) break;
         if (this.active.has(run.id)) continue;
-        if (!this.repo.claimRun(run.id, this.owner, this.leaseMs)) continue;
-        this.launch(run.id);
+        const leaseToken = this.repo.claimRun(run.id, this.owner, this.leaseMs);
+        if (leaseToken === null) continue;
+        this.launch(run.id, leaseToken);
       }
     } catch (error) {
       this.onError?.('*', error);
@@ -121,15 +122,20 @@ export class DiagnosisWorker {
       if (this.active.has(run.id)) continue;
       if (this.active.size >= this.concurrency) break;
       // claimRun 的 WHERE 条件允许接管过期租约；失败说明其他实例先接管了。
-      if (!this.repo.claimRun(run.id, this.owner, this.leaseMs)) continue;
-      this.launch(run.id);
+      const leaseToken = this.repo.claimRun(run.id, this.owner, this.leaseMs);
+      if (leaseToken === null) continue;
+      this.launch(run.id, leaseToken);
     }
   }
 
-  private launch(runId: string): void {
+  private launch(runId: string, leaseToken: number): void {
     const controller = new AbortController();
     const promise = this.orchestrator
-      .execute(runId, { owner: this.owner, signal: controller.signal })
+      .execute(runId, {
+        owner: this.owner,
+        leaseToken,
+        signal: controller.signal,
+      })
       .then(() => undefined)
       .catch((error) => {
         this.onError?.(runId, error);

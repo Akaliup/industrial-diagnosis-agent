@@ -10,7 +10,7 @@ import type BetterSqlite3 from 'better-sqlite3';
 
 export type DiagnosisDb = InstanceType<typeof BetterSqlite3>;
 
-export const DIAGNOSIS_SCHEMA_VERSION = 1;
+export const DIAGNOSIS_SCHEMA_VERSION = 2;
 
 export interface DiagnosisMigrationOptions {
   /** 文件数据库升级前备份目录；内存库跳过。 */
@@ -169,7 +169,8 @@ CREATE TABLE IF NOT EXISTS diagnosis_runs (
   started_at TEXT,
   finished_at TEXT,
   lease_owner TEXT,
-  lease_expires_at TEXT
+  lease_expires_at TEXT,
+  lease_token INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_diag_runs_ws_created
   ON diagnosis_runs (workspace_id, created_at DESC);
@@ -405,6 +406,15 @@ export function migrateDiagnosis(
   let tokenizer: string | null = null;
   db.transaction(() => {
     db.exec(DDL_V1);
+    // v1→v2：租约写入栅栏。旧库通过 ALTER 补齐；新库已在建表语句中。
+    const runColumns = db
+      .prepare('PRAGMA table_info(diagnosis_runs)')
+      .all() as Array<{ name: string }>;
+    if (!runColumns.some((column) => column.name === 'lease_token')) {
+      db.exec(
+        'ALTER TABLE diagnosis_runs ADD COLUMN lease_token INTEGER NOT NULL DEFAULT 0',
+      );
+    }
     tokenizer = createFts(db);
     setMeta(db, 'schema_version', String(DIAGNOSIS_SCHEMA_VERSION));
     setMeta(db, 'fts_tokenizer', tokenizer ?? 'none');

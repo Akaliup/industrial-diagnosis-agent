@@ -135,14 +135,23 @@ export class LiveRoleRunner implements RoleRunner {
       model: this.options.model,
       temperature: 0.1,
       response_format: { type: 'json_object' },
+      // 让模型端也看到剩余输出预算；不依赖模型自行遵守。
+      ...(input.limits
+        ? { max_tokens: Math.max(1, input.limits.maxOutputTokens) }
+        : {}),
       messages: [
         { role: 'system', content: input.context.system },
         { role: 'user', content: `${input.context.user}${repair}` },
       ],
     };
-    const signals: AbortSignal[] = [
-      AbortSignal.timeout(this.options.timeoutMs),
-    ];
+    const remainingDeadline = input.limits
+      ? input.limits.deadlineAt - Date.now()
+      : this.options.timeoutMs;
+    const timeoutMs = Math.max(
+      1,
+      Math.min(this.options.timeoutMs, remainingDeadline),
+    );
+    const signals: AbortSignal[] = [AbortSignal.timeout(timeoutMs)];
     if (input.signal) signals.push(input.signal);
     const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0];
 
@@ -150,6 +159,10 @@ export class LiveRoleRunner implements RoleRunner {
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       if (input.signal?.aborted) {
         throw new RoleRunnerError('模型调用已取消', 'CANCELLED');
+      }
+      if (attempt > 1) {
+        // 重试也是一次真实模型请求，必须先由调用方在 Run 账本中预留。
+        input.limits?.onRequest?.();
       }
       try {
         const { payload, status } = await this.post(body, signal);
@@ -181,31 +194,63 @@ export class LiveRoleRunner implements RoleRunner {
         }
         const raw = contentOf(payload);
         if (!raw) {
-          throw new RoleRunnerError(
+          const error = new RoleRunnerError(
             '模型响应没有 choices[0].message.content',
             'MODEL_ERROR',
             false,
           );
+          error.usage = {
+            inputTokens: estimateTokens(
+              `${input.context.system}\n${input.context.user}`,
+            ),
+            outputTokens: 0,
+          };
+          error.attempts = attempt;
+          throw error;
         }
-        const output = parseRoleOutputText(input.role, raw);
-        const usage = usageOf(payload);
-        const fallback = {
-          inputTokens: estimateTokens(
+        const usage = usageOf(payload) ?? {
+          input: estimateTokens(
             `${input.context.system}\n${input.context.user}`,
           ),
-          outputTokens: estimateTokens(raw),
+          output: estimateTokens(raw),
         };
+        let output: unknown;
+        try {
+          output = parseRoleOutputText(input.role, raw);
+        } catch (error) {
+          if (error instanceof RoleRunnerError) {
+            error.usage = {
+              inputTokens: usage.input,
+              outputTokens: usage.output,
+            };
+            error.attempts = attempt;
+          }
+          throw error;
+        }
         return {
           output,
           mode: this.mode,
           model: this.options.model,
-          inputTokens: usage?.input ?? fallback.inputTokens,
-          outputTokens: usage?.output ?? fallback.outputTokens,
+          inputTokens: usage.input,
+          outputTokens: usage.output,
           latencyMs: Date.now() - started,
           raw,
+          attempts: attempt,
         };
       } catch (error) {
+        if (error && (error as { code?: string }).code === 'BUDGET_EXCEEDED') {
+          throw error;
+        }
         if (error instanceof RoleRunnerError) {
+          if (error.attempts === undefined) error.attempts = attempt;
+          if (!error.usage) {
+            error.usage = {
+              inputTokens: estimateTokens(
+                `${input.context.system}\n${input.context.user}`,
+              ),
+              outputTokens: 0,
+            };
+          }
           if (!error.retryable || attempt >= 2) throw error;
           lastError = error;
         } else if (input.signal?.aborted) {
@@ -218,6 +263,13 @@ export class LiveRoleRunner implements RoleRunner {
             'MODEL_ERROR',
             true,
           );
+          lastError.usage = {
+            inputTokens: estimateTokens(
+              `${input.context.system}\n${input.context.user}`,
+            ),
+            outputTokens: 0,
+          };
+          lastError.attempts = attempt;
           if (attempt >= 2) throw lastError;
         }
         await sleep(800, input.signal);

@@ -7,6 +7,7 @@ import {
   type TestContext,
 } from './helpers.js';
 import { validateReport } from '../../src/diagnosis/report-validator.js';
+import { canonicalJson, sha256 } from '../../src/diagnosis/util.js';
 import type {
   Evidence,
   Report,
@@ -29,6 +30,7 @@ function validate(
     evidence?: Evidence[];
     run?: Run;
     equipment?: Report['equipment_snapshot'];
+    documents?: ReturnType<TestContext['repo']['listDocuments']>;
   } = {},
 ) {
   return validateReport({
@@ -38,6 +40,8 @@ function validate(
     alarm: (overrides.report ?? report).alarm_context,
     evidence: overrides.evidence ?? evidence,
     hypotheses,
+    documents:
+      overrides.documents ?? context.repo.listDocuments(run.workspace_id),
     toolCalls: context.repo.listToolCalls(run.id).map((call) => ({
       tool: call.tool,
       status: call.status,
@@ -171,6 +175,116 @@ describe('report validator', () => {
     });
     expect(result.errors.map((item) => item.code)).toContain(
       'MANUAL_MODEL_MISMATCH',
+    );
+  });
+
+  test('rejects diagnostic checks and repair recommendations without citations', () => {
+    const uncited = clone(report);
+    for (const item of [...uncited.checks, ...uncited.recommendations]) {
+      item.evidence_ids = [];
+    }
+    const result = validate({ report: uncited });
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((item) => item.code)).toContain(
+      'CHECK_WITHOUT_CITATION',
+    );
+    expect(result.errors.map((item) => item.code)).toContain(
+      'RECOMMENDATION_WITHOUT_CITATION',
+    );
+  });
+
+  test('allows uncited safety notes but still rejects uncited repair advice', () => {
+    const safety = clone(report);
+    for (const item of safety.checks) {
+      item.kind = 'safety';
+      item.evidence_ids = [];
+    }
+    for (const item of safety.recommendations) {
+      item.kind = 'safety';
+      item.evidence_ids = [];
+    }
+    expect(validate({ report: safety }).valid).toBe(true);
+
+    const mixed = clone(safety);
+    if (mixed.recommendations.length > 0) {
+      mixed.recommendations[0].kind = 'repair';
+      const result = validate({ report: mixed });
+      expect(result.errors.map((item) => item.code)).toContain(
+        'RECOMMENDATION_WITHOUT_CITATION',
+      );
+    }
+  });
+
+  test('rejects obsolete, withdrawn, unknown and future manual versions', () => {
+    const manualEvidence = clone(evidence);
+    const manual = manualEvidence.find(
+      (item) => item.payload.kind === 'manual_chunk',
+    );
+    expect(manual).toBeDefined();
+    if (!manual || manual.payload.kind !== 'manual_chunk') return;
+
+    manual.payload.manual_version = 'OBSOLETE-v0';
+    manual.payload_hash = sha256(canonicalJson(manual.payload));
+    const obsolete = validate({ evidence: manualEvidence });
+    expect(obsolete.valid).toBe(false);
+    expect(obsolete.errors.map((item) => item.code)).toContain(
+      'MANUAL_VERSION_MISMATCH',
+    );
+
+    const withdrawn = clone(context.repo.listDocuments(run.workspace_id)).map(
+      (document) =>
+        document.document_id === manual.payload.document_id
+          ? { ...document, withdrawn: true }
+          : document,
+    );
+    const withdrawnResult = validate({ documents: withdrawn });
+    expect(withdrawnResult.errors.map((item) => item.code)).toContain(
+      'MANUAL_DOCUMENT_WITHDRAWN',
+    );
+
+    const unknown = clone(report);
+    unknown.equipment_snapshot.manual_document_id = null;
+    unknown.equipment_snapshot.manual_version = null;
+    const unknownResult = validate({
+      report: unknown,
+      equipment: unknown.equipment_snapshot,
+    });
+    expect(unknownResult.errors.map((item) => item.code)).toContain(
+      'MANUAL_REGISTRATION_MISSING',
+    );
+
+    const futureEvidence = clone(evidence);
+    const futureManual = futureEvidence.find(
+      (item) => item.payload.kind === 'manual_chunk',
+    );
+    if (!futureManual || futureManual.payload.kind !== 'manual_chunk') return;
+    futureManual.payload.effective_date = '2999-01-01';
+    futureManual.payload_hash = sha256(canonicalJson(futureManual.payload));
+    const futureResult = validate({ evidence: futureEvidence });
+    expect(futureResult.errors.map((item) => item.code)).toContain(
+      'MANUAL_NOT_EFFECTIVE',
+    );
+  });
+
+  test('rejects report hypotheses that drift from verified state', () => {
+    const statusDrift = clone(report);
+    const supported = statusDrift.hypotheses.find(
+      (item) => item.status === 'supported',
+    )!;
+    supported.status = 'proposed';
+    const statusResult = validate({ report: statusDrift });
+    expect(statusResult.errors.map((item) => item.code)).toContain(
+      'HYPOTHESIS_STATUS_DRIFT',
+    );
+
+    const supportDrift = clone(report);
+    const target = supportDrift.hypotheses.find(
+      (item) => item.status === 'supported',
+    )!;
+    target.supporting_evidence_ids = target.supporting_evidence_ids.slice(1);
+    const supportResult = validate({ report: supportDrift });
+    expect(supportResult.errors.map((item) => item.code)).toContain(
+      'HYPOTHESIS_SUPPORT_DRIFT',
     );
   });
 });

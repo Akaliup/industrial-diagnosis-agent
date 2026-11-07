@@ -86,7 +86,8 @@ export interface ToolCallRecordInput {
   evidenceCount: number;
   policyDecision: string;
   startedAt: string;
-  finishedAt: string;
+  /** inflight 日志在回执落库前为 null。 */
+  finishedAt: string | null;
 }
 
 export interface KnowledgeDocumentInput {
@@ -179,6 +180,7 @@ function mapRun(row: Record<string, unknown>): Run {
     finished_at: (row.finished_at as string | null) ?? null,
     lease_owner: (row.lease_owner as string | null) ?? null,
     lease_expires_at: (row.lease_expires_at as string | null) ?? null,
+    lease_token: Number(row.lease_token ?? 0),
   };
 }
 
@@ -386,6 +388,18 @@ export class DiagnosisRepository {
       last_test_ok: row.last_test_ok === null ? null : toBool(row.last_test_ok),
       notes: String(row.notes),
     }));
+  }
+
+  updateSourceStatus(
+    workspaceId: string,
+    sourceId: string,
+    status: DiagnosisSource['status'],
+  ): void {
+    this.db
+      .prepare(
+        'UPDATE diagnosis_sources SET status = ? WHERE workspace_id = ? AND id = ?',
+      )
+      .run(status, workspaceId, sourceId);
   }
 
   updateSourceTest(
@@ -663,35 +677,113 @@ export class DiagnosisRepository {
       .run(...values);
   }
 
-  claimRun(id: string, owner: string, leaseMs: number): boolean {
+  /**
+   * 仅当 Run 仍属于当前租约令牌时更新；用于 Worker 在长时间模型调用后
+   * 发现自己已被新 Worker 接管时放弃写入。
+   */
+  updateRunFenced(
+    id: string,
+    leaseToken: number,
+    patch: Partial<Parameters<DiagnosisRepository['updateRun']>[1]>,
+  ): boolean {
+    const columns: Record<string, { column: string; json?: boolean }> = {
+      status: { column: 'status' },
+      stage: { column: 'stage' },
+      stage_rounds: { column: 'stage_rounds_json', json: true },
+      total_rounds: { column: 'total_rounds' },
+      logical_calls: { column: 'logical_calls' },
+      model_calls: { column: 'model_calls' },
+      input_tokens: { column: 'input_tokens' },
+      output_tokens: { column: 'output_tokens' },
+      no_new_evidence_rounds: { column: 'no_new_evidence_rounds' },
+      checkpoint: { column: 'checkpoint_json', json: true },
+      error: { column: 'error' },
+      handoff_reason: { column: 'handoff_reason' },
+      review_status: { column: 'review_status' },
+      conclusion_status: { column: 'conclusion_status' },
+      started_at: { column: 'started_at' },
+      finished_at: { column: 'finished_at' },
+      lease_owner: { column: 'lease_owner' },
+      lease_expires_at: { column: 'lease_expires_at' },
+    };
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    for (const [key, spec] of Object.entries(columns)) {
+      if (!(key in patch)) continue;
+      sets.push(`${spec.column} = ?`);
+      const value = (patch as Record<string, unknown>)[key];
+      values.push(
+        spec.json ? (value === null ? null : JSON.stringify(value)) : value,
+      );
+    }
+    if (sets.length === 0) return true;
+    const result = this.db
+      .prepare(
+        `UPDATE diagnosis_runs SET ${sets.join(', ')}
+         WHERE id = ? AND lease_token = ?`,
+      )
+      .run(...values, id, leaseToken);
+    return result.changes > 0;
+  }
+
+  leaseTokenMatches(runId: string, leaseToken: number): boolean {
+    const row = this.db
+      .prepare('SELECT lease_token FROM diagnosis_runs WHERE id=?')
+      .get(runId) as { lease_token: number } | undefined;
+    return row ? Number(row.lease_token) === leaseToken : false;
+  }
+
+  /**
+   * CAS 领取 Run；成功时递增租约令牌并返回新令牌。
+   * 令牌即使租约被释放也不会回退，旧 Worker 的迟到写入因此无法命中。
+   */
+  claimRun(id: string, owner: string, leaseMs: number): number | null {
     const now = nowIso();
     const leaseUntil = new Date(Date.now() + leaseMs).toISOString();
     const result = this.db
       .prepare(
         `UPDATE diagnosis_runs
          SET status='running', lease_owner=?, lease_expires_at=?,
-             started_at=COALESCE(started_at, ?)
+             lease_token=lease_token+1, started_at=COALESCE(started_at, ?)
          WHERE id=? AND (
            status='queued' OR
            (status='running' AND (lease_expires_at IS NULL OR lease_expires_at < ?))
          )`,
       )
       .run(owner, leaseUntil, now, id, now);
-    return result.changes > 0;
+    if (result.changes === 0) return null;
+    const row = this.db
+      .prepare('SELECT lease_token FROM diagnosis_runs WHERE id=?')
+      .get(id) as { lease_token: number } | undefined;
+    return row ? Number(row.lease_token) : null;
   }
 
-  renewLease(id: string, owner: string, leaseMs: number): boolean {
+  renewLease(
+    id: string,
+    owner: string,
+    leaseToken: number,
+    leaseMs: number,
+  ): boolean {
     const leaseUntil = new Date(Date.now() + leaseMs).toISOString();
     const result = this.db
       .prepare(
         `UPDATE diagnosis_runs SET lease_expires_at=?
-         WHERE id=? AND lease_owner=? AND status='running'`,
+         WHERE id=? AND lease_owner=? AND lease_token=? AND status='running'`,
       )
-      .run(leaseUntil, id, owner);
+      .run(leaseUntil, id, owner, leaseToken);
     return result.changes > 0;
   }
 
-  releaseLease(id: string): void {
+  releaseLease(id: string, owner?: string, leaseToken?: number): void {
+    if (owner !== undefined && leaseToken !== undefined) {
+      this.db
+        .prepare(
+          `UPDATE diagnosis_runs SET lease_owner=NULL, lease_expires_at=NULL
+           WHERE id=? AND lease_owner=? AND lease_token=?`,
+        )
+        .run(id, owner, leaseToken);
+      return;
+    }
     this.db
       .prepare(
         'UPDATE diagnosis_runs SET lease_owner=NULL, lease_expires_at=NULL WHERE id=?',
@@ -784,7 +876,16 @@ export class DiagnosisRepository {
   // Evidence
   // -------------------------------------------------------------------------
 
-  ingestEvidence(draft: EvidenceDraft): { evidence: Evidence; isNew: boolean } {
+  ingestEvidence(
+    draft: EvidenceDraft,
+    leaseToken?: number,
+  ): { evidence: Evidence; isNew: boolean } | null {
+    if (
+      leaseToken !== undefined &&
+      !this.leaseTokenMatches(draft.run_id, leaseToken)
+    ) {
+      return null;
+    }
     const payloadHash = sha256(canonicalJson(draft.payload));
     const id = `ev_${sha256(
       `${draft.workspace_id}|${draft.run_id}|${draft.source_id}|${draft.source_record_id}|${payloadHash}`,
@@ -870,9 +971,23 @@ export class DiagnosisRepository {
   // Hypotheses
   // -------------------------------------------------------------------------
 
-  replaceHypotheses(runId: string, drafts: HypothesisDraft[]): Hypothesis[] {
+  replaceHypotheses(
+    runId: string,
+    drafts: HypothesisDraft[],
+    options: {
+      leaseToken?: number;
+      statusFor?: (hypothesis: Hypothesis) => Hypothesis['status'];
+    } = {},
+  ): Hypothesis[] | null {
+    let stored: Hypothesis[] | null = null;
     const now = nowIso();
     this.db.transaction(() => {
+      if (
+        options.leaseToken !== undefined &&
+        !this.leaseTokenMatches(runId, options.leaseToken)
+      ) {
+        return;
+      }
       this.db
         .prepare('DELETE FROM diagnosis_hypotheses WHERE run_id = ?')
         .run(runId);
@@ -900,8 +1015,18 @@ export class DiagnosisRepository {
           now,
         );
       }
+      stored = this.listHypotheses(runId);
+      if (options.statusFor) {
+        const update = this.db.prepare(
+          'UPDATE diagnosis_hypotheses SET status=?, updated_at=? WHERE id=?',
+        );
+        for (const hypothesis of stored) {
+          update.run(options.statusFor(hypothesis), now, hypothesis.id);
+        }
+        stored = this.listHypotheses(runId);
+      }
     })();
-    return this.listHypotheses(runId);
+    return stored;
   }
 
   listHypotheses(runId: string): Hypothesis[] {
@@ -961,6 +1086,91 @@ export class DiagnosisRepository {
       .all(runId) as Array<Record<string, unknown>>;
   }
 
+  /**
+   * 完成一条预先落库的 inflight 调用记录。
+   * 只更新仍处于 inflight 的行；恢复流程已标记 unknown 的记录不会被迟到回执覆盖。
+   * 传入 leaseToken 时同时校验 Run 的租约令牌，旧 Worker 无法写入新执行。
+   */
+  finishToolCall(
+    id: string,
+    patch: {
+      status: string;
+      errorCode: string | null;
+      durationMs: number;
+      evidenceCount: number;
+    },
+    leaseToken?: number,
+  ): boolean {
+    const finishedAt = nowIso();
+    const result =
+      leaseToken === undefined
+        ? this.db
+            .prepare(
+              `UPDATE diagnosis_tool_calls
+               SET status=?, error_code=?, duration_ms=?, evidence_count=?, finished_at=?
+               WHERE id=? AND status='inflight'`,
+            )
+            .run(
+              patch.status,
+              patch.errorCode,
+              patch.durationMs,
+              patch.evidenceCount,
+              finishedAt,
+              id,
+            )
+        : this.db
+            .prepare(
+              `UPDATE diagnosis_tool_calls
+               SET status=?, error_code=?, duration_ms=?, evidence_count=?, finished_at=?
+               WHERE id=? AND status='inflight'
+                 AND EXISTS (
+                   SELECT 1 FROM diagnosis_runs
+                   WHERE id = diagnosis_tool_calls.run_id AND lease_token = ?
+                 )`,
+            )
+            .run(
+              patch.status,
+              patch.errorCode,
+              patch.durationMs,
+              patch.evidenceCount,
+              finishedAt,
+              id,
+              leaseToken,
+            );
+    return result.changes > 0;
+  }
+
+  /**
+   * 恢复执行前，把上次崩溃遗留的 inflight 调用标记为 unknown。
+   * 请求可能已经发出，但回执没有落库，因此既不能当作成功，也不能当作未执行；
+   * 后续重新检索会以确定性的证据 ID 去重，不会重复推进结论。
+   */
+  markInflightToolCallsFenced(
+    runId: string,
+    leaseToken: number,
+    errorCode: string,
+  ): Array<{ id: string; logical_call_id: string }> {
+    let marked: Array<{ id: string; logical_call_id: string }> = [];
+    this.db.transaction(() => {
+      if (!this.leaseTokenMatches(runId, leaseToken)) return;
+      marked = this.db
+        .prepare(
+          `SELECT id, logical_call_id FROM diagnosis_tool_calls
+           WHERE run_id = ? AND status = 'inflight'`,
+        )
+        .all(runId) as Array<{ id: string; logical_call_id: string }>;
+      if (marked.length === 0) return;
+      this.db
+        .prepare(
+          `UPDATE diagnosis_tool_calls
+           SET status='unknown', error_code=?, finished_at=?
+           WHERE run_id = ? AND status='inflight'`,
+        )
+        .run(errorCode, nowIso(), runId);
+    })();
+    return marked;
+  }
+
   // -------------------------------------------------------------------------
   // Reports
   // -------------------------------------------------------------------------
@@ -984,6 +1194,22 @@ export class DiagnosisRepository {
         now,
         now,
       );
+  }
+
+  /** 仅在租约令牌仍有效时写入报告，避免迟到 Worker 覆盖新 Worker 的结论。 */
+  saveReportFenced(
+    runId: string,
+    leaseToken: number,
+    report: Report,
+    validation: unknown,
+  ): boolean {
+    let saved = false;
+    this.db.transaction(() => {
+      if (!this.leaseTokenMatches(runId, leaseToken)) return;
+      this.saveReport(runId, report, validation);
+      saved = true;
+    })();
+    return saved;
   }
 
   getReport(runId: string): { report: Report; validation: unknown } | null {

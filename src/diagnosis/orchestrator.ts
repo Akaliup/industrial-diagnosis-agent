@@ -19,6 +19,12 @@ import {
 } from './contracts/domain.js';
 import { detectControlIntent } from './analysis.js';
 import { buildRoleContext, type BuiltContext } from './context-builder.js';
+import {
+  AlreadyFinishedError,
+  BudgetExceededError,
+  LeaseLostError,
+  RunCancelledError,
+} from './errors.js';
 import type { DiagnosisEventBus } from './events.js';
 import type { KnowledgeService } from './knowledge.js';
 import { DiagnosisMcpClient } from './mcp-client.js';
@@ -46,37 +52,12 @@ const STAGES: Stage[] = [
   'produce_report',
 ];
 
-export class BudgetExceededError extends Error {
-  readonly code = 'BUDGET_EXCEEDED';
-  constructor(message: string) {
-    super(message);
-    this.name = 'BudgetExceededError';
-  }
-}
-
-export class RunCancelledError extends Error {
-  readonly code = 'CANCELLED';
-  constructor() {
-    super('Run 已取消');
-    this.name = 'RunCancelledError';
-  }
-}
-
-export class LeaseLostError extends Error {
-  readonly code = 'LEASE_LOST';
-  constructor() {
-    super('Run 租约已丢失');
-    this.name = 'LeaseLostError';
-  }
-}
-
-export class AlreadyFinishedError extends Error {
-  readonly code = 'ALREADY_FINISHED';
-  constructor() {
-    super('Run 已由其他执行者完成');
-    this.name = 'AlreadyFinishedError';
-  }
-}
+export {
+  AlreadyFinishedError,
+  BudgetExceededError,
+  LeaseLostError,
+  RunCancelledError,
+} from './errors.js';
 
 interface OrchestratorOptions {
   repo: DiagnosisRepository;
@@ -92,6 +73,8 @@ interface OrchestratorOptions {
 
 interface RunState {
   run: Run;
+  /** 当前 Worker 持有的租约令牌；0 表示无租约的直接执行。 */
+  leaseToken: number;
   stage: Stage;
   stageRounds: Record<string, number>;
   totalRounds: number;
@@ -157,6 +140,23 @@ export class DiagnosisOrchestrator {
     return state.checkpoint;
   }
 
+  /**
+   * 新检索必须同时排除数据库里已撤回的文档与场景回放声明的撤回文档；
+   * 历史报告中的旧引用仍由报告校验器保留。
+   */
+  private withdrawnDocuments(
+    workspaceId: string,
+    scenarioId: string | null,
+  ): string[] {
+    const fromRepo = this.options.repo
+      .listDocuments(workspaceId)
+      .filter((document) => document.withdrawn)
+      .map((document) => document.document_id);
+    return [
+      ...new Set([...fromRepo, ...this.scenarioWithdrawnDocuments(scenarioId)]),
+    ];
+  }
+
   private scenarioWithdrawnDocuments(scenarioId: string | null): string[] {
     if (!scenarioId) return [];
     try {
@@ -196,10 +196,16 @@ export class DiagnosisOrchestrator {
       throw new AlreadyFinishedError();
     }
     if (owner && fresh.lease_owner) {
-      if (fresh.lease_owner !== owner) throw new LeaseLostError();
+      if (
+        fresh.lease_owner !== owner ||
+        fresh.lease_token !== state.leaseToken
+      ) {
+        throw new LeaseLostError();
+      }
       const ok = this.options.repo.renewLease(
         state.run.id,
         owner,
+        state.leaseToken,
         this.options.leaseMs ?? 60_000,
       );
       if (!ok) throw new LeaseLostError();
@@ -228,7 +234,27 @@ export class DiagnosisOrchestrator {
       checkpoint: state.checkpoint,
       ...patch,
     };
-    this.options.repo.updateRun(state.run.id, runPatch);
+    const fresh = this.options.repo.getRun(state.run.id);
+    if (!fresh || fresh.lease_token !== state.leaseToken) {
+      throw new LeaseLostError();
+    }
+    if (fresh.status === 'cancelled' && state.run.status !== 'cancelled') {
+      throw new RunCancelledError();
+    }
+    if (
+      (fresh.status === 'awaiting_human' ||
+        fresh.status === 'completed' ||
+        fresh.status === 'failed') &&
+      state.run.status === 'running'
+    ) {
+      throw new AlreadyFinishedError();
+    }
+    const updated = this.options.repo.updateRunFenced(
+      state.run.id,
+      state.leaseToken,
+      runPatch,
+    );
+    if (!updated) throw new LeaseLostError();
     state.run = {
       ...state.run,
       ...runPatch,
@@ -250,6 +276,8 @@ export class DiagnosisOrchestrator {
       vendor: equipment.vendor,
       model: equipment.model,
       serial: equipment.serial,
+      manual_document_id: equipment.manual_document_id ?? null,
+      manual_version: equipment.manual_version ?? null,
       source_ids: equipment.source_ids,
     };
   }
@@ -367,9 +395,17 @@ export class DiagnosisOrchestrator {
       signal: options.signal,
     };
 
+    const deadlineAt = this.deadlineAt(state);
     let result: Awaited<ReturnType<RoleRunner['run']>> | null = null;
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      const remainingOutput =
+        state.run.budget.max_output_tokens - state.outputTokens;
+      if (remainingOutput <= 0) {
+        throw new BudgetExceededError('累计模型输出 token 预算已耗尽');
+      }
+      this.reserveModelCall(state);
+      let retryReserved = 0;
       try {
         result = await this.options.runner.run({
           ...callInput,
@@ -382,22 +418,52 @@ export class DiagnosisOrchestrator {
                     ? lastError.message
                     : '输出不符合角色 Schema，请严格按 Schema 返回 JSON。',
                 ],
+          limits: {
+            maxOutputTokens: remainingOutput,
+            deadlineAt,
+            onRequest: () => {
+              // 传输层重试同样占用 Run 的模型调用与时间预算。
+              retryReserved += 1;
+              this.reserveModelCall(state);
+            },
+          },
         });
-        state.modelCalls += 1;
+        this.settleUsage(state, result.inputTokens, result.outputTokens);
+        // 自定义 runner 若自行重试但没有回调，按报告的实际请求数补记账。
+        const unreportedRetries = Math.max(
+          0,
+          (result.attempts ?? 1) - 1 - retryReserved,
+        );
+        for (let index = 0; index < unreportedRetries; index += 1) {
+          this.reserveModelCall(state);
+        }
         break;
       } catch (error) {
-        if (
-          error instanceof RoleRunnerError &&
-          error.code === 'INVALID_OUTPUT' &&
-          attempt === 0
-        ) {
-          state.modelCalls += 1;
-          lastError = error;
-          this.log(
-            state.run.id,
-            `角色 ${role} 输出无效，进行 1 次修复调用：${error.message}`,
+        if (error instanceof BudgetExceededError) throw error;
+        if (error instanceof RoleRunnerError) {
+          if (error.usage) {
+            this.settleUsage(
+              state,
+              error.usage.inputTokens,
+              error.usage.outputTokens,
+            );
+          }
+          const unreportedRetries = Math.max(
+            0,
+            (error.attempts ?? 1) - 1 - retryReserved,
           );
-          continue;
+          for (let index = 0; index < unreportedRetries; index += 1) {
+            this.reserveModelCall(state);
+          }
+          if (error.code === 'INVALID_OUTPUT' && attempt === 0) {
+            lastError = error;
+            this.persist(state);
+            this.log(
+              state.run.id,
+              `角色 ${role} 输出无效，进行 1 次修复调用：${error.message}`,
+            );
+            continue;
+          }
         }
         throw error;
       }
@@ -407,11 +473,6 @@ export class DiagnosisOrchestrator {
         ? lastError
         : new Error('角色调用没有返回结果');
     }
-    if (result.outputTokens > state.run.budget.max_output_tokens) {
-      throw new BudgetExceededError('单次模型输出 token 超限');
-    }
-    state.inputTokens += result.inputTokens;
-    state.outputTokens += result.outputTokens;
     state.totalRounds += 1;
     state.stageRounds[stage] = nextRound;
     state.checkpoint.last_role = role;
@@ -422,6 +483,44 @@ export class DiagnosisOrchestrator {
       `role=${role} stage=${stage} round=${nextRound} tokens=${result.inputTokens}/${result.outputTokens} latency=${result.latencyMs}ms`,
     );
     return result.output;
+  }
+
+  private deadlineAt(state: RunState): number {
+    return (
+      Date.parse(state.run.started_at ?? state.run.created_at) +
+      state.run.budget.run_wall_clock_ms
+    );
+  }
+
+  private reserveModelCall(state: RunState): void {
+    if (state.modelCalls >= state.run.budget.max_model_calls) {
+      throw new BudgetExceededError('模型调用次数超限');
+    }
+    if (Date.now() > this.deadlineAt(state)) {
+      throw new BudgetExceededError('Run 墙钟时间超限');
+    }
+    state.modelCalls += 1;
+  }
+
+  private settleUsage(
+    state: RunState,
+    inputTokens: number,
+    outputTokens: number,
+  ): void {
+    state.inputTokens += Math.max(0, Math.trunc(inputTokens));
+    state.outputTokens += Math.max(0, Math.trunc(outputTokens));
+    if (
+      state.inputTokens > state.run.budget.max_input_tokens ||
+      state.outputTokens > state.run.budget.max_output_tokens
+    ) {
+      // 实际 usage 必须如实记账，即使模型端违反了请求中的上限。
+      this.persist(state);
+      throw new BudgetExceededError(
+        state.outputTokens > state.run.budget.max_output_tokens
+          ? '累计模型输出 token 预算超限'
+          : '累计模型输入 token 预算超限',
+      );
+    }
   }
 
   private async executeQueries(
@@ -463,6 +562,8 @@ export class DiagnosisOrchestrator {
         sourceAllowlist: options.sourceAllowlist,
         scenarioId: options.scenarioId,
         withdrawnDocuments: options.withdrawnDocuments,
+        timeoutMs: Math.max(1, this.deadlineAt(state) - Date.now()),
+        leaseToken: state.leaseToken,
       });
       state.logicalCalls += 1;
       if (
@@ -531,14 +632,12 @@ export class DiagnosisOrchestrator {
     drafts: HypothesisDraft[],
     handoff: boolean,
   ): Hypothesis[] {
-    const stored = this.options.repo.replaceHypotheses(state.run.id, drafts);
-    for (const hypothesis of stored) {
-      this.options.repo.updateHypothesisStatus(
-        hypothesis.id,
-        this.deriveStatus(hypothesis, handoff),
-      );
-    }
-    const updated = this.options.repo.listHypotheses(state.run.id);
+    const stored = this.options.repo.replaceHypotheses(state.run.id, drafts, {
+      leaseToken: state.leaseToken,
+      statusFor: (hypothesis) => this.deriveStatus(hypothesis, handoff),
+    });
+    if (!stored) throw new LeaseLostError();
+    const updated = stored;
     this.emit(state.run.id, 'hypothesis.updated', {
       count: updated.length,
       codes: updated.map((item) => item.code),
@@ -668,6 +767,7 @@ export class DiagnosisOrchestrator {
       checks: [
         {
           id: 'chk_handoff',
+          kind: 'safety',
           purpose: '补齐关键证据后重新诊断',
           preconditions: ['明确缺失来源'],
           steps: ['恢复关键只读来源', '确认适用手册版本', '补充现场检查记录'],
@@ -681,6 +781,7 @@ export class DiagnosisOrchestrator {
       recommendations: [
         {
           id: 'rec_handoff',
+          kind: 'safety',
           text: '当前证据不足或预算已耗尽，禁止据此安排更换或控制操作；先补齐证据。',
           evidence_ids: [],
           conditions: ['关键来源恢复'],
@@ -699,11 +800,13 @@ export class DiagnosisOrchestrator {
     validation: ReportValidationResult,
     options: { owner?: string; error?: string | null } = {},
   ): Run {
-    this.options.repo.saveReport(
+    const saved = this.options.repo.saveReportFenced(
       state.run.id,
+      state.leaseToken,
       report,
       validationSummary(validation),
     );
+    if (!saved) throw new LeaseLostError();
     state.run = {
       ...state.run,
       status: 'awaiting_human',
@@ -734,7 +837,13 @@ export class DiagnosisOrchestrator {
     this.emit(state.run.id, 'run.awaiting_human', {
       handoff_reason: report.handoff_reason,
     });
-    if (options.owner) this.options.repo.releaseLease(state.run.id);
+    if (options.owner) {
+      this.options.repo.releaseLease(
+        state.run.id,
+        options.owner,
+        state.leaseToken,
+      );
+    }
     this.log(
       state.run.id,
       `finished status=awaiting_human conclusion=${report.conclusion_status} handoff=${Boolean(report.handoff_reason)} validation_errors=${validation.errors.length}`,
@@ -759,6 +868,7 @@ export class DiagnosisOrchestrator {
       alarm: this.alarmContext(state),
       evidence: this.options.repo.listEvidence(state.run.id),
       hypotheses: this.options.repo.listHypotheses(state.run.id),
+      documents: this.options.repo.listDocuments(state.run.workspace_id),
       toolCalls: this.options.repo.listToolCalls(state.run.id).map((row) => ({
         tool: String(row.tool),
         status: String(row.status),
@@ -787,7 +897,9 @@ export class DiagnosisOrchestrator {
       finished_at: state.run.finished_at,
     });
     this.emit(state.run.id, 'run.failed', { error: message });
-    if (owner) this.options.repo.releaseLease(state.run.id);
+    if (owner) {
+      this.options.repo.releaseLease(state.run.id, owner, state.leaseToken);
+    }
     this.log(state.run.id, `failed: ${message}`);
     return this.options.repo.getRun(state.run.id) ?? state.run;
   }
@@ -803,7 +915,9 @@ export class DiagnosisOrchestrator {
       finished_at: state.run.finished_at,
     });
     this.emit(state.run.id, 'run.cancelled', {});
-    if (owner) this.options.repo.releaseLease(state.run.id);
+    if (owner) {
+      this.options.repo.releaseLease(state.run.id, owner, state.leaseToken);
+    }
     return this.options.repo.getRun(state.run.id) ?? state.run;
   }
 
@@ -1087,7 +1201,13 @@ export class DiagnosisOrchestrator {
         handoff_reason: existing.report.handoff_reason,
         finished_at: state.run.finished_at,
       });
-      if (options.owner) this.options.repo.releaseLease(state.run.id);
+      if (options.owner) {
+        this.options.repo.releaseLease(
+          state.run.id,
+          options.owner,
+          state.leaseToken,
+        );
+      }
       return 'finished';
     }
     await this.assertRunnable(state, options.owner, options.signal);
@@ -1108,6 +1228,7 @@ export class DiagnosisOrchestrator {
       alarm: this.alarmContext(state),
       evidence: this.options.repo.listEvidence(state.run.id),
       hypotheses: this.options.repo.listHypotheses(state.run.id),
+      documents: this.options.repo.listDocuments(state.run.workspace_id),
       toolCalls: this.options.repo.listToolCalls(state.run.id).map((row) => ({
         tool: String(row.tool),
         status: String(row.status),
@@ -1170,7 +1291,7 @@ export class DiagnosisOrchestrator {
 
   async execute(
     runId: string,
-    options: { owner?: string; signal?: AbortSignal } = {},
+    options: { owner?: string; signal?: AbortSignal; leaseToken?: number } = {},
   ): Promise<Run> {
     const run = this.options.repo.getRun(runId);
     if (!run) throw new Error(`Run ${runId} 不存在`);
@@ -1182,6 +1303,7 @@ export class DiagnosisOrchestrator {
     ) {
       return run;
     }
+    let leaseToken = options.leaseToken ?? run.lease_token;
     if (run.status === 'queued') {
       if (options.owner) {
         const claimed = this.options.repo.claimRun(
@@ -1189,9 +1311,10 @@ export class DiagnosisOrchestrator {
           options.owner,
           this.options.leaseMs ?? 60_000,
         );
-        if (!claimed) {
+        if (claimed === null) {
           return this.options.repo.getRun(runId) ?? run;
         }
+        leaseToken = claimed;
       } else {
         this.options.repo.updateRun(runId, {
           status: 'running',
@@ -1209,9 +1332,26 @@ export class DiagnosisOrchestrator {
       // 同时避免续跑时重复插入。
       this.emit(runId, 'run.started', {});
     }
+    // 上次进程可能在“请求已发出、回执未落库”之间崩溃。恢复时把遗留的
+    // inflight 调用标记为 unknown，而不是成功或未执行；随后各阶段按检查点
+    // 重新检索，证据使用确定性 ID 去重。
+    const recoveredCalls = this.options.repo.markInflightToolCallsFenced(
+      runId,
+      leaseToken,
+      'RECEIPT_UNKNOWN',
+    );
+    for (const call of recoveredCalls) {
+      this.emit(runId, 'tool.finished', {
+        logical_call_id: call.logical_call_id,
+        status: 'unknown',
+        error_code: 'RECEIPT_UNKNOWN',
+        recovered: true,
+      });
+    }
     const fresh = this.options.repo.getRun(runId)!;
     const state: RunState = {
       run: fresh,
+      leaseToken,
       stage: fresh.stage,
       stageRounds: initialStageRounds(fresh),
       totalRounds: fresh.total_rounds,
@@ -1256,7 +1396,10 @@ export class DiagnosisOrchestrator {
       sourceAllowlist: Array.isArray(state.checkpoint.source_allowlist)
         ? (state.checkpoint.source_allowlist as string[])
         : null,
-      withdrawnDocuments: this.scenarioWithdrawnDocuments(scenarioId),
+      withdrawnDocuments: this.withdrawnDocuments(
+        state.run.workspace_id,
+        scenarioId,
+      ),
       owner: options.owner,
     };
 

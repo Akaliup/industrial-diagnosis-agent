@@ -4,6 +4,8 @@ const systemChromium = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // 诊断 E2E 需要独立服务与数据目录，由 playwright.diagnosis.config.ts 运行。
+  testIgnore: '**/diagnosis/**',
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

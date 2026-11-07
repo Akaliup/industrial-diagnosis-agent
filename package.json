@@ -26,6 +26,7 @@
     "diagnosis:sync-check": "tsx scripts/diagnosis/sync-contracts.ts --check",
     "diagnosis:eval": "tsx scripts/diagnosis/run-eval.ts",
     "diagnosis:eval:gate": "tsx scripts/diagnosis/run-eval.ts --split all --gate",
+    "diagnosis:replay": "tsx scripts/diagnosis/replay.ts",
     "diagnosis:build:mcp": "npm --prefix packages/industrial-diagnosis-mcp run build",
     "diagnosis:build": "npm run build && npm run build:web && npm run diagnosis:build:mcp",
     "diagnosis:check": "npm run diagnosis:sync-check && npm run typecheck && vitest run tests/diagnosis",
@@ -39,7 +40,9 @@
     "desktop:typecheck": "tsc --noEmit -p electron/tsconfig.json",
     "desktop:dev": "npm run desktop:build && electron electron",
     "desktop:package": "npm run build:all && npm run desktop:build && electron-builder --projectDir electron --config electron-builder.yml",
-    "desktop:package:dir": "npm run build:all && npm run desktop:build && electron-builder --dir --projectDir electron --config electron-builder.yml"
+    "desktop:package:dir": "npm run build:all && npm run desktop:build && electron-builder --dir --projectDir electron --config electron-builder.yml",
+    "diagnosis:e2e:server": "tsx scripts/diagnosis/e2e-server.ts",
+    "diagnosis:e2e": "npm --prefix web run test:e2e:diagnosis"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "0.84.2",

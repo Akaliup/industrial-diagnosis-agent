@@ -15,6 +15,18 @@ import {
 import type { BuiltContext, ToolHistoryItem } from './context-builder.js';
 import { estimateTokens } from './util.js';
 
+export interface RoleCallLimits {
+  /** 本次请求允许的最大输出 token；由 Run 剩余预算决定。 */
+  maxOutputTokens: number;
+  /** 整个 Run 的绝对截止时间（epoch ms）。 */
+  deadlineAt: number;
+  /**
+   * 在每次额外 HTTP 请求（重试）之前调用；调用方据此预留调用次数。
+   * 抛错时必须中止请求，不能继续消耗预算。
+   */
+  onRequest?: () => void;
+}
+
 export interface RoleCallInput {
   run: Run;
   role: Role;
@@ -28,6 +40,7 @@ export interface RoleCallInput {
   stageRound: number;
   repairIssues?: string[];
   signal?: AbortSignal;
+  limits?: RoleCallLimits;
 }
 
 export interface RoleCallResult<T = unknown> {
@@ -38,6 +51,8 @@ export interface RoleCallResult<T = unknown> {
   outputTokens: number;
   latencyMs: number;
   raw?: string;
+  /** 实际发出的 HTTP 请求数（含重试）；用于 Run 账本结算。 */
+  attempts?: number;
 }
 
 export interface RoleRunner {
@@ -48,13 +63,19 @@ export interface RoleRunner {
 }
 
 export class RoleRunnerError extends Error {
+  /** 失败请求已经产生的 token；无法精确获知时由调用方保守估算。 */
+  usage?: { inputTokens: number; outputTokens: number };
+  /** 实际发出的 HTTP 请求数（含重试）。 */
+  attempts?: number;
+
   constructor(
     message: string,
     readonly code:
       | 'UNCONFIGURED'
       | 'MODEL_ERROR'
       | 'INVALID_OUTPUT'
-      | 'CANCELLED',
+      | 'CANCELLED'
+      | 'BUDGET_EXCEEDED',
     readonly retryable = false,
   ) {
     super(message);

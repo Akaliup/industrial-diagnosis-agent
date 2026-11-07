@@ -57,6 +57,15 @@ export class RepeatGuard {
     }
   }
 
+  /** 取消/未执行的请求不构成“连续重复”，也不应留下可复用结果。 */
+  forget(key: string): void {
+    this.cache.delete(key);
+    if (this.lastKey === key) {
+      this.lastKey = null;
+      this.consecutive = 0;
+    }
+  }
+
   reset(): void {
     this.cache.clear();
     this.lastKey = null;

@@ -2074,6 +2074,14 @@
                 "id": {
                   "type": "string"
                 },
+                "kind": {
+                  "default": "diagnostic",
+                  "type": "string",
+                  "enum": [
+                    "diagnostic",
+                    "safety"
+                  ]
+                },
                 "purpose": {
                   "type": "string",
                   "minLength": 1,
@@ -2142,6 +2150,14 @@
               "properties": {
                 "id": {
                   "type": "string"
+                },
+                "kind": {
+                  "default": "repair",
+                  "type": "string",
+                  "enum": [
+                    "repair",
+                    "safety"
+                  ]
                 },
                 "text": {
                   "type": "string",
@@ -2253,6 +2269,26 @@
           },
           "serial": {
             "type": "string"
+          },
+          "manual_document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "manual_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "source_ids": {
             "type": "object",
@@ -2477,6 +2513,14 @@
             "id": {
               "type": "string"
             },
+            "kind": {
+              "default": "diagnostic",
+              "type": "string",
+              "enum": [
+                "diagnostic",
+                "safety"
+              ]
+            },
             "purpose": {
               "type": "string",
               "minLength": 1,
@@ -2545,6 +2589,14 @@
           "properties": {
             "id": {
               "type": "string"
+            },
+            "kind": {
+              "default": "repair",
+              "type": "string",
+              "enum": [
+                "repair",
+                "safety"
+              ]
             },
             "text": {
               "type": "string",
@@ -2938,6 +2990,11 @@
             "type": "null"
           }
         ]
+      },
+      "lease_token": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
       }
     },
     "required": [
@@ -2969,7 +3026,8 @@
       "started_at",
       "finished_at",
       "lease_owner",
-      "lease_expires_at"
+      "lease_expires_at",
+      "lease_token"
     ],
     "additionalProperties": false
   },

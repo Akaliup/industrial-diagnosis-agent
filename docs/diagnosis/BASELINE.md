@@ -85,3 +85,24 @@ Windows 平台用例，未新增诊断相关失败。由于基线 worktree 与�
 - Docker/Container 模式未运行；
 - Electron 安装包未签名、未制作安装器；
 - 企业实时来源、真实模型、根云接口均未配置，详见 `INTEGRATION_STATUS.md`。
+
+## 8. 审计补修记录（2026-11-07）
+
+补修基于同一基线 `71a6ffb` 与初次交付 `eea97ed`，不改写历史、不重置用户数据；
+补修提交在交付后单独创建，提交哈希以 `git log` 为准。
+
+| 项 | 补修后事实 |
+| --- | --- |
+| 依赖 | 未新增根依赖；E2E 使用 `web/` 已安装的 Playwright 1.62.1 |
+| 诊断 Schema | `DIAGNOSIS_SCHEMA_VERSION=2`，新增 `diagnosis_runs.lease_token` 迁移 |
+| 数据隔离 | 单测使用 `mkdtemp` 临时库；诊断 E2E 使用 `work/diagnosis/e2e-data` + `MINICLAW_DATA_DIR` + 端口 3199 |
+| 本地假服务 | 诊断 E2E 在本机随机端口启动假 REST，不访问企业或外部网络 |
+| 配置加载 | shell 环境变量 > `.env.diagnosis` > 代码默认值；无文件时静默使用默认值，非法值明确失败 |
+| 诊断测试 | 19 文件 / 92 测试通过 |
+| 诊断 E2E | 6/6 通过（隔离库） |
+| 移动端 E2E | 9/9 通过（与诊断隔离） |
+| 根测试 | 353 文件 / 2968 测试：321 文件通过、32 失败；2887 测试通过、58 失败、23 跳过；失败名称与初次交付完全一致，仍为 Windows 平台差异（见 `ACCEPTANCE.md` §5.1） |
+
+本机 Playwright 1.62.1 期望 ffmpeg revision 1011，而已安装为 1013；移动端 E2E 运行时
+把现有二进制复制到项目内 `work/diagnosis/pw-browsers/ffmpeg-1011`，未修改全局缓存。
+该目录属于运行产物，不进入 Git；CI 使用标准 Playwright 安装时不需要。

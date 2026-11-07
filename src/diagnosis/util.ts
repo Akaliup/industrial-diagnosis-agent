@@ -23,6 +23,20 @@ export function sha256(data: string | Uint8Array): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+/**
+ * 生成带 Workspace 作用域的稳定 ID。
+ *
+ * 报警、知识切片等表的全局主键必须在不同 Workspace 间唯一；幂等键仍是
+ * Workspace 内语义，两者不能混用。
+ */
+export function stableScopedId(
+  prefix: string,
+  workspaceId: string,
+  key: string,
+): string {
+  return `${prefix}_${sha256(`${workspaceId}|${key}`).slice(0, 20)}`;
+}
+
 export function nowIso(): string {
   return new Date().toISOString();
 }

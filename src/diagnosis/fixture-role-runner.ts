@@ -21,7 +21,6 @@ import {
 import {
   collectFindings,
   detectControlIntent,
-  expectedManualVersion,
   inferRootCauses,
   NORMAL_RANGES,
   type Findings,
@@ -121,8 +120,8 @@ function describeEvidence(evidence: Evidence): string | null {
 }
 
 function templateFor(code: RootCauseCode): {
-  check: Omit<Check, 'id' | 'evidence_ids'>;
-  recommendation: Omit<Recommendation, 'id' | 'evidence_ids'>;
+  check: Omit<Check, 'id' | 'evidence_ids' | 'kind'>;
+  recommendation: Omit<Recommendation, 'id' | 'evidence_ids' | 'kind'>;
 } {
   switch (code) {
     case 'sensor_drift':
@@ -548,14 +547,17 @@ export class FixtureRoleRunner implements RoleRunner {
     }
     const queries: QueryRequest[] = [];
     if (findings.manuals.length === 0) {
-      const version = expectedManualVersion(equipment.model);
+      // 只按台账登记版本检索；未登记时不猜版本，交由分析阶段转人工。
+      const versionArgs = equipment.manual_version
+        ? { manual_version: equipment.manual_version }
+        : {};
       queries.push(
         query(
           'maintenance_search_manual',
           {
             query: '轴承 温度 振动 传感器 漂移 通讯 阈值',
             equipment_model: equipment.model,
-            manual_version: version,
+            ...versionArgs,
             limit: 8,
           },
           null,
@@ -570,7 +572,7 @@ export class FixtureRoleRunner implements RoleRunner {
           {
             query: 'bearing temperature vibration sensor drift communication',
             equipment_model: equipment.model,
-            manual_version: version,
+            ...versionArgs,
             limit: 8,
           },
           null,
@@ -1173,11 +1175,13 @@ export class FixtureRoleRunner implements RoleRunner {
       const template = templateFor(hypothesis.code);
       checks.push({
         id: `chk_${hypothesis.code}`,
+        kind: 'diagnostic',
         ...template.check,
         evidence_ids: hypothesis.supporting_evidence_ids.slice(0, 8),
       });
       recommendations.push({
         id: `rec_${hypothesis.code}`,
+        kind: 'repair',
         ...template.recommendation,
         evidence_ids: hypothesis.supporting_evidence_ids.slice(0, 8),
       });

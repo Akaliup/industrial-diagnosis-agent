@@ -4,26 +4,52 @@ on:
   pull_request:
     paths:
       - 'src/diagnosis/**'
+      - 'src/config.ts'
+      - 'src/db.ts'
+      - 'src/routes/auth.ts'
       - 'packages/industrial-diagnosis-mcp/**'
       - 'shared/diagnosis/**'
-      - 'web/src/diagnosis/**'
+      - 'web/src/**'
       - 'web/diagnosis.html'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/playwright.config.ts'
+      - 'web/playwright.diagnosis.config.ts'
+      - 'web/tests/e2e/diagnosis/**'
       - 'fixtures/diagnosis/**'
       - 'evals/diagnosis/**'
       - 'tests/diagnosis/**'
       - 'scripts/diagnosis/**'
+      - 'config/diagnosis/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.env.diagnosis.example'
       - '.github/workflows/diagnosis-ci.yml'
   push:
     branches: [main]
     paths:
       - 'src/diagnosis/**'
+      - 'src/config.ts'
+      - 'src/db.ts'
+      - 'src/routes/auth.ts'
       - 'packages/industrial-diagnosis-mcp/**'
       - 'shared/diagnosis/**'
-      - 'web/src/diagnosis/**'
+      - 'web/src/**'
+      - 'web/diagnosis.html'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/playwright.config.ts'
+      - 'web/playwright.diagnosis.config.ts'
+      - 'web/tests/e2e/diagnosis/**'
       - 'fixtures/diagnosis/**'
       - 'evals/diagnosis/**'
       - 'tests/diagnosis/**'
       - 'scripts/diagnosis/**'
+      - 'config/diagnosis/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.env.diagnosis.example'
+      - '.github/workflows/diagnosis-ci.yml'
 
 permissions:
   contents: read
@@ -31,10 +57,11 @@ permissions:
 jobs:
   diagnosis:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
       DIAGNOSIS_MODEL_MODE: fixture
       DIAGNOSIS_DATA_MODE: mock
+      DIAGNOSIS_E2E_PORT: '3199'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -53,6 +80,10 @@ jobs:
           npm --prefix web ci
           npm --prefix packages/industrial-diagnosis-mcp ci
 
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
       - name: Verify generated contracts
         run: npm run diagnosis:sync-check
 
@@ -68,8 +99,14 @@ jobs:
       - name: Fixture regression gate (50 cases)
         run: npm run diagnosis:eval:gate
 
+      - name: Trace replay (no inference or tool calls)
+        run: npm run diagnosis:replay
+
       - name: Build web
         run: npm run build:web
+
+      - name: Diagnosis browser E2E (isolated temp data)
+        run: npm run diagnosis:e2e
 
       - name: Upload eval artifacts
         if: always()
@@ -77,5 +114,16 @@ jobs:
         with:
           name: diagnosis-eval
           path: work/diagnosis/eval/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload browser E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnosis-e2e
+          path: |
+            web/test-results/diagnosis/
+            docs/diagnosis/screenshots/
           if-no-files-found: warn
           retention-days: 14

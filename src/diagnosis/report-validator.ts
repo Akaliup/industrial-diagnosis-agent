@@ -6,8 +6,23 @@ import {
   type Report,
   type Run,
 } from './contracts/domain.js';
-import { expectedManualVersion } from './analysis.js';
 import { canonicalJson, sha256 } from './util.js';
+
+export interface ManualDocumentView {
+  document_id: string;
+  model: string;
+  manual_version: string;
+  effective_date: string | null;
+  withdrawn: boolean;
+}
+
+function sameStringSet(a: string[], b: string[]): boolean {
+  const setA = new Set(a);
+  const setB = new Set(b);
+  if (setA.size !== setB.size) return false;
+  for (const item of setA) if (!setB.has(item)) return false;
+  return true;
+}
 
 export interface ValidationIssue {
   code: string;
@@ -53,6 +68,8 @@ export function validateReport(input: {
   alarm: AlarmContext | null;
   evidence: Evidence[];
   hypotheses: Hypothesis[];
+  /** 当前 Workspace 的手册目录；用于校验版本、适用期与撤版状态。 */
+  documents?: ManualDocumentView[];
   toolCalls: Array<{
     tool: string;
     status: string;
@@ -195,12 +212,69 @@ export function validateReport(input: {
           ),
         );
       }
-      if (p.manual_version !== expectedManualVersion(equipment.model)) {
-        warnings.push(
+      // 版本适用性来自设备台账登记，而不是按演示机型硬编码。
+      if (!equipment.manual_document_id || !equipment.manual_version) {
+        errors.push(
           issue(
-            'warning',
-            'MANUAL_VERSION_MISMATCH',
-            `${context} 引用了手册版本 ${p.manual_version}，当前适用版本为 ${expectedManualVersion(equipment.model)}`,
+            'error',
+            'MANUAL_REGISTRATION_MISSING',
+            `${context} 引用了手册，但设备 ${equipment.equipment_id} 未登记适用手册与版本`,
+            { evidence_id: id, hypothesis_id: hypothesisId },
+          ),
+        );
+      } else {
+        // 同一版本可以有原版、中文摘要等多个文档；关键约束是版本与机型，
+        // 而不是强制只能引用登记的主文档 ID。
+        if (p.manual_version !== equipment.manual_version) {
+          errors.push(
+            issue(
+              'error',
+              'MANUAL_VERSION_MISMATCH',
+              `${context} 引用了手册版本 ${p.manual_version}，设备登记的适用版本为 ${equipment.manual_version}`,
+              { evidence_id: id, hypothesis_id: hypothesisId },
+            ),
+          );
+        }
+      }
+      const document = input.documents?.find(
+        (item) => item.document_id === p.document_id,
+      );
+      if (input.documents && !document) {
+        errors.push(
+          issue(
+            'error',
+            'MANUAL_DOCUMENT_UNKNOWN',
+            `${context} 引用了手册目录中不存在的文档 ${p.document_id}`,
+            { evidence_id: id, hypothesis_id: hypothesisId },
+          ),
+        );
+      }
+      if (document?.withdrawn) {
+        errors.push(
+          issue(
+            'error',
+            'MANUAL_DOCUMENT_WITHDRAWN',
+            `${context} 引用了已撤版手册 ${p.document_id}`,
+            { evidence_id: id, hypothesis_id: hypothesisId },
+          ),
+        );
+      }
+      if (document && document.manual_version !== p.manual_version) {
+        errors.push(
+          issue(
+            'error',
+            'MANUAL_VERSION_DRIFT',
+            `${context} 的证据版本 ${p.manual_version} 与手册目录 ${document.manual_version} 不一致`,
+            { evidence_id: id, hypothesis_id: hypothesisId },
+          ),
+        );
+      }
+      if (p.effective_date && Date.parse(p.effective_date) > asOf) {
+        errors.push(
+          issue(
+            'error',
+            'MANUAL_NOT_EFFECTIVE',
+            `${context} 引用的手册生效日期 ${p.effective_date} 晚于报告时间`,
             { evidence_id: id, hypothesis_id: hypothesisId },
           ),
         );
@@ -311,6 +385,48 @@ export function validateReport(input: {
           { hypothesis_id: hypothesis.id },
         ),
       );
+    } else {
+      // 报告只能复述已验证的假设状态与证据，不能自行把 proposed 升级为 supported。
+      if (source.status !== hypothesis.status) {
+        errors.push(
+          issue(
+            'error',
+            'HYPOTHESIS_STATUS_DRIFT',
+            `报告假设 ${hypothesis.code} 状态 ${hypothesis.status} 与已验证状态 ${source.status} 不一致`,
+            { hypothesis_id: hypothesis.id },
+          ),
+        );
+      }
+      if (
+        !sameStringSet(
+          source.supporting_evidence_ids,
+          hypothesis.supporting_evidence_ids,
+        )
+      ) {
+        errors.push(
+          issue(
+            'error',
+            'HYPOTHESIS_SUPPORT_DRIFT',
+            `报告假设 ${hypothesis.code} 的支持证据与已验证假设不一致`,
+            { hypothesis_id: hypothesis.id },
+          ),
+        );
+      }
+      if (
+        !sameStringSet(
+          source.contradicting_evidence_ids,
+          hypothesis.contradicting_evidence_ids,
+        )
+      ) {
+        errors.push(
+          issue(
+            'error',
+            'HYPOTHESIS_CONTRADICTION_DRIFT',
+            `报告假设 ${hypothesis.code} 的反证与已验证假设不一致`,
+            { hypothesis_id: hypothesis.id },
+          ),
+        );
+      }
     }
     for (const id of hypothesis.supporting_evidence_ids) {
       addCitation(id, `假设 ${hypothesis.code} 支持证据`, hypothesis.id);
@@ -366,6 +482,18 @@ export function validateReport(input: {
         issue('error', 'CHECK_WITHOUT_STEPS', `检查 ${check.id} 没有步骤`),
       );
     }
+    if (
+      (check.kind ?? 'diagnostic') === 'diagnostic' &&
+      check.evidence_ids.length === 0
+    ) {
+      errors.push(
+        issue(
+          'error',
+          'CHECK_WITHOUT_CITATION',
+          `诊断检查 ${check.id} 没有引用任何适用证据；通用安全提醒请标记 kind=safety`,
+        ),
+      );
+    }
     if (check.risk !== 'low' && !check.requires_human) {
       errors.push(
         issue(
@@ -385,6 +513,18 @@ export function validateReport(input: {
           'error',
           'CONTROL_EXECUTION_ENABLED',
           `建议 ${recommendation.id} 试图启用控制执行`,
+        ),
+      );
+    }
+    if (
+      (recommendation.kind ?? 'repair') === 'repair' &&
+      recommendation.evidence_ids.length === 0
+    ) {
+      errors.push(
+        issue(
+          'error',
+          'RECOMMENDATION_WITHOUT_CITATION',
+          `维修建议 ${recommendation.id} 没有引用任何适用证据；通用安全提醒请标记 kind=safety`,
         ),
       );
     }
@@ -413,6 +553,18 @@ export function validateReport(input: {
       hypothesis.code !== 'insufficient_evidence' &&
       hypothesis.code !== 'unknown',
   );
+  if (
+    definitive.length > 0 &&
+    (!equipment.manual_document_id || !equipment.manual_version)
+  ) {
+    errors.push(
+      issue(
+        'error',
+        'MANUAL_REGISTRATION_MISSING',
+        `设备 ${equipment.equipment_id} 未登记适用手册/版本，不能形成确定性维修结论`,
+      ),
+    );
+  }
   if (definitive.length > 0) {
     const citedManual = [...cited]
       .map((id) => evidenceById.get(id))

@@ -11,6 +11,7 @@ import {
   type ToolResult,
   type Window,
 } from './contracts/domain.js';
+import { LeaseLostError } from './errors.js';
 import type { DiagnosisEventBus } from './events.js';
 import type { KnowledgeService } from './knowledge.js';
 import type { CallAttempt, DiagnosisMcpClient } from './mcp-client.js';
@@ -38,6 +39,10 @@ export interface GatewayInput {
   sourceAllowlist: string[] | null;
   scenarioId: string | null;
   withdrawnDocuments?: string[];
+  /** 单次来源请求超时；由 Run 剩余墙钟时间进一步收紧。 */
+  timeoutMs?: number;
+  /** 当前 Worker 的租约令牌；证据落库前校验，防止迟到结果污染新执行。 */
+  leaseToken?: number;
 }
 
 export interface GatewayOutcome {
@@ -128,9 +133,12 @@ export class ToolGateway {
     evidenceCount: number;
     policyDecision: string;
     startedAt: string;
-  }): void {
+    id?: string;
+    finishedAt?: string | null;
+  }): string {
+    const id = input.id ?? newId('call');
     this.deps.repo.recordToolCall({
-      id: newId('call'),
+      id,
       runId: input.runId,
       logicalCallId: input.logicalCallId,
       attempt: input.attempt,
@@ -144,13 +152,96 @@ export class ToolGateway {
       evidenceCount: input.evidenceCount,
       policyDecision: input.policyDecision,
       startedAt: input.startedAt,
-      finishedAt: nowIso(),
+      finishedAt: input.finishedAt === undefined ? nowIso() : input.finishedAt,
     });
+    return id;
+  }
+
+  /**
+   * 在真正发出工具请求之前先落库 inflight 记录。
+   * 进程若在请求与回执之间崩溃，恢复流程会把它标记为 unknown，
+   * 而不是错误地当成成功或未执行。
+   */
+  private beginCall(input: {
+    runId: string;
+    logicalCallId: string;
+    attempt: number;
+    tool: string;
+    role: Role;
+    args: unknown;
+    policyDecision: string;
+    startedAt: string;
+    leaseToken?: number;
+  }): string {
+    if (
+      input.leaseToken !== undefined &&
+      !this.deps.repo.leaseTokenMatches(input.runId, input.leaseToken)
+    ) {
+      throw new LeaseLostError();
+    }
+    return this.recordCall({
+      ...input,
+      status: 'inflight',
+      errorCode: null,
+      durationMs: 0,
+      evidenceCount: 0,
+      finishedAt: null,
+    });
+  }
+
+  private finishCall(
+    id: string,
+    patch: {
+      status: string;
+      errorCode: string | null;
+      durationMs: number;
+      evidenceCount: number;
+    },
+    leaseToken?: number,
+  ): void {
+    this.deps.repo.finishToolCall(id, patch, leaseToken);
+  }
+
+  private isCancelled(runId: string, signal?: AbortSignal): boolean {
+    if (signal?.aborted) return true;
+    return this.deps.repo.getRun(runId)?.status === 'cancelled';
+  }
+
+  private cancelledOutcome(input: {
+    run: Run;
+    logicalCallId: string;
+    attempts: number;
+    policyDecision: string;
+  }): GatewayOutcome {
+    const error: ToolError = {
+      code: 'CANCELLED',
+      retryable: false,
+      safe_message: '调用已取消，迟到结果已丢弃',
+    };
+    return {
+      ok: false,
+      envelope: makeEnvelope({
+        dataMode: input.run.data_mode,
+        window: input.run.window,
+        status: 'error',
+        data: null,
+        evidence: [],
+        warnings: [],
+        error,
+        logicalCallId: input.logicalCallId,
+      }),
+      newEvidence: [],
+      logicalCallId: input.logicalCallId,
+      attempts: input.attempts,
+      policyDecision: input.policyDecision,
+      error,
+    };
   }
 
   private ingest(
     run: Run,
     drafts: EvidenceDraft[],
+    leaseToken?: number,
   ): {
     evidence: Evidence[];
     newEvidence: Evidence[];
@@ -167,7 +258,8 @@ export class ToolGateway {
         });
         continue;
       }
-      const ingested = this.deps.repo.ingestEvidence(draft);
+      const ingested = this.deps.repo.ingestEvidence(draft, leaseToken);
+      if (!ingested) throw new LeaseLostError();
       evidence.push(ingested.evidence);
       if (ingested.isNew) {
         newEvidence.push(ingested.evidence);
@@ -324,52 +416,104 @@ export class ToolGateway {
     let envelope: ToolResponseEnvelope;
     let attempts = 1;
     if (request.tool === 'evidence_get') {
-      const parsed = EvidenceGetInputSchema.parse(request.args);
-      const found = this.deps.repo.listEvidence(run.id, parsed.evidence_ids);
-      const missing = parsed.evidence_ids.filter(
-        (id) => !found.some((e) => e.id === id),
-      );
-      const result: ToolResult<{ evidence: Evidence[] }> = {
-        status:
-          found.length === 0
-            ? 'no_data'
-            : missing.length > 0
-              ? 'partial'
-              : 'success',
-        data: found.length > 0 ? { evidence: found } : null,
-        evidence: [],
-        coverage: emptyCoverage(run.window, missing),
-        warnings: missing.map((id) => ({
-          code: 'EVIDENCE_NOT_FOUND',
-          message: `证据 ${id} 不属于当前 Run`,
-        })),
-        error: null,
-        next_cursor: null,
-      };
-      envelope = fromToolResult(
-        result,
-        run.data_mode,
-        run.window,
-        logicalCallId,
-      );
-      this.recordCall({
+      const callId = this.beginCall({
         runId: run.id,
         logicalCallId,
         attempt: 1,
         tool: request.tool,
         role,
         args: request.args,
-        status: envelope.status,
-        errorCode: null,
-        durationMs: 0,
-        evidenceCount: 0,
         policyDecision: 'allowed',
         startedAt,
+        leaseToken: input.leaseToken,
       });
+      let result: ToolResult<{ evidence: Evidence[] }>;
+      try {
+        const parsed = EvidenceGetInputSchema.parse(request.args);
+        const found = this.deps.repo.listEvidence(run.id, parsed.evidence_ids);
+        const missing = parsed.evidence_ids.filter(
+          (id) => !found.some((e) => e.id === id),
+        );
+        result = {
+          status:
+            found.length === 0
+              ? 'no_data'
+              : missing.length > 0
+                ? 'partial'
+                : 'success',
+          data: found.length > 0 ? { evidence: found } : null,
+          evidence: [],
+          coverage: emptyCoverage(run.window, missing),
+          warnings: missing.map((id) => ({
+            code: 'EVIDENCE_NOT_FOUND',
+            message: `证据 ${id} 不属于当前 Run`,
+          })),
+          error: null,
+          next_cursor: null,
+        };
+      } catch (error) {
+        this.finishCall(
+          callId,
+          {
+            status: 'error',
+            errorCode: 'INVALID_ARGUMENT',
+            durationMs: 0,
+            evidenceCount: 0,
+          },
+          input.leaseToken,
+        );
+        throw error;
+      }
+      envelope = fromToolResult(
+        result,
+        run.data_mode,
+        run.window,
+        logicalCallId,
+      );
+      if (this.isCancelled(run.id, input.signal)) {
+        this.finishCall(
+          callId,
+          {
+            status: 'cancelled',
+            errorCode: 'CANCELLED',
+            durationMs: 0,
+            evidenceCount: 0,
+          },
+          input.leaseToken,
+        );
+        this.deps.repeatGuard.forget(key);
+        return this.cancelledOutcome({
+          run,
+          logicalCallId,
+          attempts: 1,
+          policyDecision: 'allowed',
+        });
+      }
+      this.finishCall(
+        callId,
+        {
+          status: envelope.status,
+          errorCode: envelope.error?.code ?? null,
+          durationMs: 0,
+          evidenceCount: 0,
+        },
+        input.leaseToken,
+      );
     } else if (
       toolFamily(request.tool) === 'manual' ||
       toolFamily(request.tool) === 'cases'
     ) {
+      const callId = this.beginCall({
+        runId: run.id,
+        logicalCallId,
+        attempt: 1,
+        tool: request.tool,
+        role,
+        args: request.args,
+        policyDecision: 'allowed',
+        startedAt,
+        leaseToken: input.leaseToken,
+      });
       const ctx = {
         workspaceId: run.workspace_id,
         runId: run.id,
@@ -378,15 +522,29 @@ export class ToolGateway {
         withdrawnDocuments: input.withdrawnDocuments,
       };
       let result: ToolResult<unknown>;
-      if (request.tool === 'maintenance_search_manual') {
-        result = this.deps.knowledge.searchManual(request.args as never, ctx);
-      } else if (request.tool === 'maintenance_get_manual_section') {
-        result = this.deps.knowledge.getManualSection(
-          request.args as never,
-          ctx,
+      try {
+        if (request.tool === 'maintenance_search_manual') {
+          result = this.deps.knowledge.searchManual(request.args as never, ctx);
+        } else if (request.tool === 'maintenance_get_manual_section') {
+          result = this.deps.knowledge.getManualSection(
+            request.args as never,
+            ctx,
+          );
+        } else {
+          result = this.deps.knowledge.searchCases(request.args as never, ctx);
+        }
+      } catch (error) {
+        this.finishCall(
+          callId,
+          {
+            status: 'error',
+            errorCode: 'SOURCE_UNAVAILABLE',
+            durationMs: 0,
+            evidenceCount: 0,
+          },
+          input.leaseToken,
         );
-      } else {
-        result = this.deps.knowledge.searchCases(request.args as never, ctx);
+        throw error;
       }
       envelope = fromToolResult(
         result,
@@ -394,23 +552,38 @@ export class ToolGateway {
         run.window,
         logicalCallId,
       );
-      const ingested = this.ingest(run, envelope.evidence);
+      if (this.isCancelled(run.id, input.signal)) {
+        this.finishCall(
+          callId,
+          {
+            status: 'cancelled',
+            errorCode: 'CANCELLED',
+            durationMs: 0,
+            evidenceCount: 0,
+          },
+          input.leaseToken,
+        );
+        this.deps.repeatGuard.forget(key);
+        return this.cancelledOutcome({
+          run,
+          logicalCallId,
+          attempts: 1,
+          policyDecision: 'allowed',
+        });
+      }
+      const ingested = this.ingest(run, envelope.evidence, input.leaseToken);
       envelope.evidence = ingested.evidence;
       envelope.warnings = [...envelope.warnings, ...ingested.warnings];
-      this.recordCall({
-        runId: run.id,
-        logicalCallId,
-        attempt: 1,
-        tool: request.tool,
-        role,
-        args: request.args,
-        status: envelope.status,
-        errorCode: envelope.error?.code ?? null,
-        durationMs: 0,
-        evidenceCount: ingested.newEvidence.length,
-        policyDecision: 'allowed',
-        startedAt,
-      });
+      this.finishCall(
+        callId,
+        {
+          status: envelope.status,
+          errorCode: envelope.error?.code ?? null,
+          durationMs: 0,
+          evidenceCount: ingested.newEvidence.length,
+        },
+        input.leaseToken,
+      );
       this.deps.repeatGuard.record(key, envelope);
       return {
         ok: envelope.status !== 'error',
@@ -422,38 +595,113 @@ export class ToolGateway {
         error: envelope.error ?? undefined,
       };
     } else {
-      const result = await this.deps.mcp.callWithRetry(
-        request.tool,
-        request.args,
-        run.window,
-        {
-          signal: input.signal,
-          timeoutMs: run.budget.source_timeout_ms,
-          maxAttempts: run.budget.max_attempts_per_call,
-          onAttempt: (attempt: CallAttempt) => {
-            this.recordCall({
-              runId: run.id,
-              logicalCallId,
-              attempt: attempt.attempt,
-              tool: request.tool,
-              role,
-              args: request.args,
-              status: attempt.envelope.status,
-              errorCode: attempt.envelope.error?.code ?? null,
-              durationMs: attempt.durationMs,
-              evidenceCount: attempt.envelope.evidence.length,
-              policyDecision: 'allowed',
-              startedAt,
-            });
+      const attemptCalls = new Map<number, string>();
+      let dispatched = false;
+      let result: { envelope: ToolResponseEnvelope; attempts: number };
+      try {
+        result = await this.deps.mcp.callWithRetry(
+          request.tool,
+          request.args,
+          run.window,
+          {
+            signal: input.signal,
+            timeoutMs: Math.max(
+              1,
+              Math.min(
+                run.budget.source_timeout_ms,
+                input.timeoutMs ?? run.budget.source_timeout_ms,
+              ),
+            ),
+            maxAttempts: run.budget.max_attempts_per_call,
+            onAttemptStart: (attempt) => {
+              attemptCalls.set(
+                attempt,
+                this.beginCall({
+                  runId: run.id,
+                  logicalCallId,
+                  attempt,
+                  tool: request.tool,
+                  role,
+                  args: request.args,
+                  policyDecision: 'allowed',
+                  startedAt,
+                  leaseToken: input.leaseToken,
+                }),
+              );
+              dispatched = true;
+            },
+            onAttempt: (attempt: CallAttempt) => {
+              const callId = attemptCalls.get(attempt.attempt);
+              if (!callId) return;
+              attemptCalls.delete(attempt.attempt);
+              // 回执到达时若已取消，回执只用于关闭日志，不进入证据与缓存。
+              const cancelled = this.isCancelled(run.id, input.signal);
+              this.finishCall(
+                callId,
+                {
+                  status: cancelled ? 'cancelled' : attempt.envelope.status,
+                  errorCode: cancelled
+                    ? 'CANCELLED'
+                    : (attempt.envelope.error?.code ?? null),
+                  durationMs: attempt.durationMs,
+                  evidenceCount: cancelled
+                    ? 0
+                    : attempt.envelope.evidence.length,
+                },
+                input.leaseToken,
+              );
+            },
           },
-        },
-      );
+        );
+      } catch (error) {
+        // 传输层在派发后抛出未包装异常时，回执状态未知；关闭日志后交给编排层失败处理。
+        for (const callId of attemptCalls.values()) {
+          this.finishCall(
+            callId,
+            {
+              status: 'unknown',
+              errorCode: 'RECEIPT_UNKNOWN',
+              durationMs: 0,
+              evidenceCount: 0,
+            },
+            input.leaseToken,
+          );
+        }
+        attemptCalls.clear();
+        throw error;
+      }
       envelope = {
         ...result.envelope,
         logical_call_id: logicalCallId,
       };
       attempts = result.attempts;
-      const ingested = this.ingest(run, envelope.evidence);
+      if (this.isCancelled(run.id, input.signal)) {
+        if (!dispatched) {
+          // 取消发生在首次派发之前：记录一条未执行的取消日志。
+          this.recordCall({
+            runId: run.id,
+            logicalCallId,
+            attempt: 1,
+            tool: request.tool,
+            role,
+            args: request.args,
+            status: 'cancelled',
+            errorCode: 'CANCELLED',
+            durationMs: 0,
+            evidenceCount: 0,
+            policyDecision: 'cancelled',
+            startedAt,
+          });
+        }
+        this.deps.repeatGuard.forget(key);
+        return this.cancelledOutcome({
+          run,
+          logicalCallId,
+          attempts,
+          policyDecision: 'allowed',
+        });
+      }
+      const ingested = this.ingest(run, envelope.evidence, input.leaseToken);
       envelope.evidence = ingested.evidence;
       envelope.warnings = [...envelope.warnings, ...ingested.warnings];
       this.deps.repeatGuard.record(key, envelope);
@@ -468,7 +716,7 @@ export class ToolGateway {
       };
     }
 
-    const ingested = this.ingest(run, envelope.evidence);
+    const ingested = this.ingest(run, envelope.evidence, input.leaseToken);
     envelope.evidence = ingested.evidence;
     envelope.warnings = [...envelope.warnings, ...ingested.warnings];
     this.deps.repeatGuard.record(key, envelope);

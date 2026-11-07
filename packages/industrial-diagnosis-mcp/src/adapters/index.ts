@@ -20,12 +20,16 @@ const DEFAULT_ENDPOINTS: RestEndpointConfig = {
 };
 
 function loadMapping(): RestMapping | undefined {
-  const file = process.env.DIAGNOSIS_REST_MAPPING;
-  if (!file) return undefined;
-  if (!fs.existsSync(file)) {
-    throw new Error(`DIAGNOSIS_REST_MAPPING 文件不存在：${file}`);
+  const configured = process.env.DIAGNOSIS_REST_MAPPING?.trim();
+  if (!configured) return undefined;
+  // 同时支持内联 JSON（模板/CI）与文件路径（企业部署）。
+  if (configured.startsWith('{')) {
+    return JSON.parse(configured) as RestMapping;
   }
-  return JSON.parse(fs.readFileSync(file, 'utf8')) as RestMapping;
+  if (!fs.existsSync(configured)) {
+    throw new Error(`DIAGNOSIS_REST_MAPPING 文件不存在：${configured}`);
+  }
+  return JSON.parse(fs.readFileSync(configured, 'utf8')) as RestMapping;
 }
 
 export function createAdapter(

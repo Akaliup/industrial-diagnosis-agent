@@ -2,6 +2,7 @@
  * MCP 真实 transport 冒烟：启动独立子进程，发现工具、调用工具、读取统一返回。
  * 用法：npx tsx scripts/diagnosis/mcp-smoke.ts [scenario]
  */
+import '../../src/diagnosis/load-env.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';

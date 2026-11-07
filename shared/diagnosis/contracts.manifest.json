@@ -1,11 +1,11 @@
 {
   "source": "src/diagnosis/contracts/domain.ts",
-  "source_sha256": "5de03f11bf6a70ec875954e1211258530d627e85e14b78f9aa8dfcd9dd6af460",
+  "source_sha256": "d4f316b6d3d4d866c3c107597f91c2b3600410efe3c2e3ffce9303d0ed7e3677",
   "generated": {
-    "shared/diagnosis/contracts.ts": "a8c1ba3fd4f7f98190ad7074553d176793b3e0e5a5d7c73f44a3ba561acfff49",
-    "packages/industrial-diagnosis-mcp/src/contracts/domain.ts": "a8c1ba3fd4f7f98190ad7074553d176793b3e0e5a5d7c73f44a3ba561acfff49",
-    "web/src/diagnosis/contracts.generated.ts": "a8c1ba3fd4f7f98190ad7074553d176793b3e0e5a5d7c73f44a3ba561acfff49",
-    "packages/industrial-diagnosis-mcp/src/contracts/generated/schemas.json": "9c05dfe77d88f99d38eff2aff69f9babbb938b2a58f5f8e5a469f22e83ea55b4"
+    "shared/diagnosis/contracts.ts": "ab8d57be6dace4cf193db8da80568a3c09627e22bd431aeba09df46200e67407",
+    "packages/industrial-diagnosis-mcp/src/contracts/domain.ts": "ab8d57be6dace4cf193db8da80568a3c09627e22bd431aeba09df46200e67407",
+    "web/src/diagnosis/contracts.generated.ts": "ab8d57be6dace4cf193db8da80568a3c09627e22bd431aeba09df46200e67407",
+    "packages/industrial-diagnosis-mcp/src/contracts/generated/schemas.json": "49edf36e48ebd3a5504d0820206bbf28fb3697e072095db87880b481349773b2"
   },
   "generator": "scripts/diagnosis/sync-contracts.ts"
 }

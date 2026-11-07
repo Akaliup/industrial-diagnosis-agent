@@ -123,7 +123,10 @@ describe('diagnosis knowledge service', () => {
       false,
     );
     const section = context.knowledge.getManualSection(
-      { document_id: 'DOC-NP200-V2-ZH', chunk_id: 'DOC-NP200-V2-ZH-P3-3' },
+      {
+        document_id: 'DOC-NP200-V2-ZH',
+        chunk_id: `${context.workspaceId}::DOC-NP200-V2-ZH-P3-3`,
+      },
       ctx({ withdrawnDocuments: ['DOC-NP200-V2-ZH'] }),
     );
     expect(section.status).toBe('no_data');

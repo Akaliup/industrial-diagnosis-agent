@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { Alarm } from './contracts/domain.js';
 import type { DiagnosisRuntime } from './runtime.js';
 import type { SeedSummary } from './seed.js';
-import { sha256 } from './util.js';
+import { stableScopedId } from './util.js';
 
 interface DemoManifest {
   demo_scenarios?: Array<{
@@ -62,7 +62,7 @@ export async function seedDemoWorkspace(
     // 基础种子已写入同一条报警；演示场景只补 scenario_id，避免收件箱重复。
     const idempotencyKey = `${alarm.source_id}|${alarm.source_alarm_id}|${alarm.raised_at}`;
     const stored = runtime.repo.upsertAlarm({
-      id: `alm_${sha256(idempotencyKey).slice(0, 20)}`,
+      id: stableScopedId('alm', workspaceId, idempotencyKey),
       workspaceId,
       sourceId: alarm.source_id,
       sourceAlarmId: alarm.source_alarm_id,

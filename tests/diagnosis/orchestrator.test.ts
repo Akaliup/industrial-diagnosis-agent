@@ -123,6 +123,33 @@ describe('diagnosis orchestrator', () => {
     expect(summarize(second.id)).toEqual(summarize(first.id));
   }, 120_000);
 
+  test('withdrawn manual documents are excluded from new retrieval', async () => {
+    context.repo.setDocumentWithdrawn(
+      context.workspaceId,
+      'DOC-NP200-V2',
+      true,
+    );
+    try {
+      const run = await runDemo(context, DEMO_SCENARIOS[0]);
+      const stored = context.repo.getReport(run.id)!;
+      expect(stored.validation.valid).toBe(true);
+      const cited = context.repo
+        .listEvidence(run.id)
+        .filter((item) => item.payload.kind === 'manual_chunk')
+        .map((item) =>
+          item.payload.kind === 'manual_chunk' ? item.payload.document_id : '',
+        );
+      expect(cited).not.toContain('DOC-NP200-V2');
+      expect(cited).toContain('DOC-NP200-V2-ZH');
+    } finally {
+      context.repo.setDocumentWithdrawn(
+        context.workspaceId,
+        'DOC-NP200-V2',
+        false,
+      );
+    }
+  }, 60_000);
+
   test('a pre-aborted run ends cancelled and keeps collected evidence', async () => {
     const alarm = context.repo
       .listAlarms(context.workspaceId)

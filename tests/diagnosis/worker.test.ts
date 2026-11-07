@@ -6,8 +6,13 @@ import {
   type TestContext,
 } from './helpers.js';
 import { DiagnosisWorker } from '../../src/diagnosis/worker.js';
+import { DiagnosisOrchestrator } from '../../src/diagnosis/orchestrator.js';
+import { DiagnosisEventBus } from '../../src/diagnosis/events.js';
+import { FixtureRoleRunner } from '../../src/diagnosis/fixture-role-runner.js';
+import type { RoleRunner } from '../../src/diagnosis/role-runner.js';
 import { DEFAULT_BUDGET } from '../../src/diagnosis/contracts/domain.js';
 import { newId } from '../../src/diagnosis/util.js';
+import { FIXTURES } from './helpers.js';
 
 const contexts: TestContext[] = [];
 
@@ -114,6 +119,72 @@ describe('DiagnosisWorker leases', () => {
         .listEvents(run.id, 0, 500)
         .some((event) => event.type === 'run.started'),
     ).toBe(false);
+  }, 30_000);
+
+  test('a worker that loses its lease during a long model call cannot write results', async () => {
+    const context = await createSeededContext('diagnosis-worker-fence');
+    contexts.push(context);
+    const run = await createRun(context);
+
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fixture = new FixtureRoleRunner();
+    const slowRunner: RoleRunner = {
+      mode: 'fixture',
+      model: 'slow-fixture',
+      run: async (input) => {
+        await gate;
+        return fixture.run(input);
+      },
+    };
+    const orchestratorA = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: slowRunner,
+      fixturesDir: FIXTURES,
+    });
+    const workerA = new DiagnosisWorker({
+      repo: context.repo,
+      orchestrator: orchestratorA,
+      concurrency: 1,
+      pollIntervalMs: 50,
+      leaseMs: 5_000,
+    });
+    workerA.start();
+    await waitFor(
+      () => context.repo.getRun(run.id)?.lease_owner === workerA.ownerId,
+    );
+
+    // 模型调用期间租约到期，另一个 Worker 接管并完成 Run。
+    context.repo.updateRun(run.id, {
+      lease_expires_at: new Date(Date.now() - 1_000).toISOString(),
+    });
+    const tokenB = context.repo.claimRun(run.id, 'worker-b', 5_000);
+    expect(tokenB).not.toBeNull();
+    const finishedByB = await context.orchestrator.execute(run.id, {
+      owner: 'worker-b',
+      leaseToken: tokenB!,
+    });
+    expect(finishedByB.status).toBe('awaiting_human');
+    const reportByB = JSON.stringify(context.repo.getReport(run.id)!.report);
+
+    release();
+    await waitFor(() => workerA.activeCount === 0, 15_000);
+    await workerA.stop();
+
+    // 迟到的 Worker A 不得覆盖 B 的报告或把 Run 改回 running。
+    expect(context.repo.getRun(run.id)?.status).toBe('awaiting_human');
+    expect(JSON.stringify(context.repo.getReport(run.id)!.report)).toBe(
+      reportByB,
+    );
+    expect(
+      context.repo
+        .listEvents(run.id, 0, 500)
+        .filter((event) => event.type === 'run.started'),
+    ).toHaveLength(1);
   }, 30_000);
 
   test('two workers claim a queued run at most once', async () => {

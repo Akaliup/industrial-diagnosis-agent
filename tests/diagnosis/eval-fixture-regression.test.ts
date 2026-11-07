@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { runEvalSuite } from '../../src/diagnosis/eval-runner.js';
 
-describe('50-case fixture replay', () => {
+describe('50-case fixture regression', () => {
   test('all evaluation cases pass the regression thresholds and leave traces', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'diagnosis-eval-'));
     try {

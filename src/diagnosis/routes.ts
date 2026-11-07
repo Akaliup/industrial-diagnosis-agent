@@ -25,12 +25,19 @@ import type { DiagnosisRuntime } from './runtime.js';
 import { seedDemoWorkspace } from './demo.js';
 import { EvalNotRunError, evalTracePath, runEvalSuite } from './eval-runner.js';
 import { aggregateMetrics } from './eval.js';
+import { liveSourcesReady, testLiveSource } from './source-health.js';
 import {
   approvalExpired,
   CONTROL_EXECUTION,
   selfApprovalForbidden,
 } from './approval-policy.js';
-import { canonicalJson, newId, nowIso, sha256 } from './util.js';
+import {
+  canonicalJson,
+  newId,
+  nowIso,
+  sha256,
+  stableScopedId,
+} from './util.js';
 
 const DEMO_SCENARIOS = [
   'demo-sensor-drift',
@@ -446,7 +453,7 @@ export function createDiagnosisRoutes(
     if (!equipment) fail(404, 'EQUIPMENT_NOT_FOUND', '设备不存在');
     const idempotencyKey = `webhook|${body.source_id}|${body.source_alarm_id}|${body.raised_at}`;
     const stored = runtime.repo.upsertAlarm({
-      id: `alm_${sha256(idempotencyKey).slice(0, 20)}`,
+      id: stableScopedId('alm', body.workspace_id, idempotencyKey),
       workspaceId: body.workspace_id,
       sourceId: body.source_id,
       sourceAlarmId: body.source_alarm_id,
@@ -604,12 +611,7 @@ export function createDiagnosisRoutes(
 
     const dataMode: DataMode = body.data_mode ?? 'mock';
     if (dataMode === 'live') {
-      const liveSources = runtime.repo
-        .listSources(workspaceId)
-        .filter(
-          (source) =>
-            source.data_mode === 'live' && source.status === 'configured',
-        );
+      const liveSources = liveSourcesReady(runtime.repo, workspaceId);
       if (liveSources.length === 0) {
         fail(
           409,
@@ -1008,7 +1010,7 @@ export function createDiagnosisRoutes(
     );
   });
 
-  routes.post('/sources/:id/test', (c) => {
+  routes.post('/sources/:id/test', async (c) => {
     const user = userOf(c);
     requireAdmin(user);
     const workspaceId = resolveWorkspace(user, c.req.query('workspace_id'));
@@ -1016,6 +1018,37 @@ export function createDiagnosisRoutes(
       .listSources(workspaceId)
       .find((item) => item.id === c.req.param('id'));
     if (!source) fail(404, 'SOURCE_NOT_FOUND', '来源不存在');
+    if (source.data_mode === 'live') {
+      // 设备台账的 source_ids 按来源类型（scada/mes/...）记录外部设备号；
+      // 用来源类型找到一台已登记设备作为只读健康检查的查询目标。
+      const equipment = runtime.repo
+        .listEquipment(workspaceId)
+        .find((item) => Boolean(item.source_ids?.[source.kind]));
+      const health = await testLiveSource({
+        source,
+        equipmentId: equipment?.equipment_id ?? null,
+      });
+      runtime.repo.updateSourceTest(
+        workspaceId,
+        source.id,
+        health.ok,
+        health.message,
+      );
+      runtime.repo.updateSourceStatus(
+        workspaceId,
+        source.id,
+        health.ok ? 'configured' : 'unconfigured',
+      );
+      return c.json(
+        {
+          ok: health.ok,
+          mode: source.data_mode,
+          code: health.code,
+          message: health.message,
+        },
+        health.ok ? 200 : 409,
+      );
+    }
     if (source.status === 'unconfigured') {
       runtime.repo.updateSourceTest(
         workspaceId,
@@ -1059,21 +1092,7 @@ export function createDiagnosisRoutes(
         message: '回放来源可用；数据来自固定快照。',
       });
     }
-    runtime.repo.updateSourceTest(
-      workspaceId,
-      source.id,
-      false,
-      '真实适配器未配置；本版不猜测企业接口签名。',
-    );
-    return c.json(
-      {
-        ok: false,
-        mode: 'live',
-        code: 'ADAPTER_NOT_CONFIGURED',
-        message: '真实适配器未配置；本版不猜测企业接口签名。',
-      },
-      409,
-    );
+    fail(409, 'ADAPTER_NOT_CONFIGURED', '未知来源模式，拒绝测试。');
   });
 
   routes.get('/documents', (c) => {

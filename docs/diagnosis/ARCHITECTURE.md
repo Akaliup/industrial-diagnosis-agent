@@ -36,7 +36,9 @@ flowchart LR
 | `produce_report` | 生成报告、逐条引用校验 | `evidence_get`、校验器 | 校验通过或明确转人工 |
 
 预算默认值：8 轮总轮次、3 轮/阶段、32 次逻辑工具调用、3 次/调用尝试、16 次模型调用、
-300 秒墙钟、单查询窗口 ≤24 小时、无新证据轮次 ≤3。证据不足或来源失败进入
+300 秒墙钟、单查询窗口 ≤24 小时、无新证据轮次 ≤3。模型调用采用预留/结算式额度：
+每次调用先占用调用数与输出 token，返回后按实际用量结算；重试和四个角色共享同一份累计
+预算。工具超时取“剩余墙钟”与“单次来源超时”的较小值。证据不足或来源失败进入
 `awaiting_human`，不生成确定结论。
 
 ## 3. 角色与工具权限矩阵
@@ -52,7 +54,13 @@ flowchart LR
 | 任意 Bash/Write/控制工具 | — | ✗ | ✗ | ✗ | ✗ |
 
 网关顺序：认证 → Workspace/Run → 角色白名单 → 严格 Schema → 设备作用域 → 风险 →
-预算 → 重复调用守卫 → 执行 → 证据入库。未知工具、控制风险、越界设备、额外字段一律拒绝。
+预算 → 重复调用守卫 → 租约令牌校验 → 派发前 `inflight` 日志 → 执行 → 回执 → 取消检查 →
+证据入库。未知工具、控制风险、越界设备、额外字段一律拒绝。
+
+派发前日志与租约围栏解决两类崩溃/并发问题：
+
+- 请求已发出但回执未落库：恢复时把遗留 `inflight` 标记为 `unknown`，不当作成功或未执行；
+- 取消后迟到回执：只关闭日志为 `cancelled`，不写证据、不进入重复调用缓存。
 
 ## 4. Tool Schema（输入摘要）
 
@@ -77,10 +85,10 @@ coverage / warnings / error / next_cursor`。`status` 为 `success|partial|no_da
 | `equipment_registry` | 设备台账快照（型号、厂商、序列号） |
 | `diagnosis_sources` | 来源配置与状态（mock/replay/live、UNCONFIGURED） |
 | `diagnosis_alarms` | 报警入库与幂等键 |
-| `diagnosis_runs` | Run 状态、阶段、预算、租约、checkpoint、复核状态 |
+| `diagnosis_runs` | Run 状态、阶段、预算、租约、单调 `lease_token`、checkpoint、复核状态 |
 | `diagnosis_hypotheses` | 候选根因、状态、支持/反证证据 |
-| `diagnosis_evidence` | 证据载荷、hash、来源定位、质量标记 |
-| `diagnosis_tool_calls` | 每次逻辑调用与尝试、策略决策、耗时 |
+| `diagnosis_evidence` | 证据载荷、hash、来源定位、质量标记、手册文档/版本快照 |
+| `diagnosis_tool_calls` | 每次逻辑调用与尝试、策略决策、耗时；`inflight → success/partial/no_data/error/unknown/cancelled` |
 | `diagnosis_events` | Run 内单调 `seq` 事件 |
 | `diagnosis_reports` | 报告 JSON 与校验结果 |
 | `diagnosis_reviews` | 人工复核记录 |
@@ -111,9 +119,38 @@ WebSocket：`/ws/diagnosis?run_id=...&after_seq=...`。服务端先订阅再发�
 ## 7. 证据与引用
 
 - 证据 ID 在入库时按 Workspace/Run/来源/记录/payload hash 重新计算，模型不能伪造。
-- 报告校验：引用存在、属于当前 Run/设备、时间窗匹配、机型/手册版本匹配、payload hash 一致、
-  支持/反证关系成立、控制执行字段为 `disabled`、Mock/Fixture 免责声明存在。
+- 报告校验：引用存在、属于当前 Run/设备、时间窗匹配、文档已登记、手册版本与设备登记一致、
+  文档未撤回、生效日期有效、payload hash 一致、支持/反证关系成立、假设状态与证据关系无漂移、
+  控制执行字段为 `disabled`、Mock/Fixture 免责声明存在。
 - 手册引用保留文档 ID、版本、页码与 chunk；撤回文档不参与新检索，但历史报告引用仍可打开。
+- 诊断/安全两类检查与建议分开校验：安全提示可以没有证据引用，诊断结论不能。
+- 证据不足的兜底报告使用 `kind: safety`，不会伪装成有证据支撑的诊断结论。
+
+## 7.1 Trace replay 与 Eval 评分
+
+- Trace replay 只读已保存的 Run/工具调用/证据/报告/事件，重新执行 `evaluateCase` 并比较
+  存储评分与重算评分；不启动 MCP、不调用模型、不读取 gold 作为 Agent 输入。
+- `npm run diagnosis:replay` 默认回放最近一次 Eval 的 traces，也可指定文件或目录；发现引用
+  缺失、作用域错误、事件缺口或评分不一致时退出码为 1。
+- Fixture 重跑是独立的回归测试（`eval-fixture-regression.test.ts`），与 replay 区分命名。
+- Eval 指标区分“已执行”与“被策略阻断”；被拒绝/未派发的调用不进入执行率与工具召回，
+  适用用例的分母随结果输出，避免把空集当成 1.0。
+
+## 7.2 来源健康检查
+
+```text
+POST /sources/:id/test
+  → 读取服务端 DIAGNOSIS_REST_BASE_URL / TOKEN / ENDPOINTS
+  → 只读 resolve 请求
+  → 校验 matches 与当前设备映射
+  → 成功: status=configured；失败: unconfigured + 安全错误消息
+POST /runs (data_mode=live)
+  → liveSourcesReady 检查
+  → 无 configured 来源: 409 ADAPTER_NOT_CONFIGURED
+  → 有来源: 正常编排；适配器不伪造证据，缺证据时转人工
+```
+
+本地假 REST 只用于验证配置链路，不改变企业来源的 `UNCONFIGURED` 状态。
 
 ## 8. Web 页面
 

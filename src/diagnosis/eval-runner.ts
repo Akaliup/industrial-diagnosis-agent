@@ -19,7 +19,7 @@ import { DiagnosisOrchestrator } from './orchestrator.js';
 import { DiagnosisRepository } from './repository.js';
 import { seedDiagnosis } from './seed.js';
 import { DEFAULT_BUDGET, type ModelMode } from './contracts/domain.js';
-import { newId, nowIso, sha256 } from './util.js';
+import { newId, nowIso, stableScopedId } from './util.js';
 
 export interface EvalRunOptions {
   split: 'dev' | 'holdout' | 'all';
@@ -139,13 +139,15 @@ function markdownSummary(input: {
     '| 指标 | 值 |',
     '| --- | --- |',
     `| citation_integrity | ${input.metrics.citation_integrity} |`,
-    `| evidence_coverage | ${input.metrics.evidence_coverage} |`,
-    `| required_tool_recall | ${input.metrics.required_tool_recall} |`,
-    `| top3_hit | ${input.metrics.top3_hit} |`,
-    `| counter_evidence_retained | ${input.metrics.counter_evidence_retained} |`,
+    `| evidence_coverage | ${input.metrics.evidence_coverage} (n=${input.metrics.evidence_coverage_n}) |`,
+    `| required_tool_recall | ${input.metrics.required_tool_recall} (n=${input.metrics.required_tool_recall_n}) |`,
+    `| top3_hit | ${input.metrics.top3_hit ?? 'n/a'} (n=${input.metrics.top3_cases}) |`,
+    `| counter_evidence_retained | ${input.metrics.counter_evidence_retained} (n=${input.metrics.counter_evidence_n}) |`,
     `| solvable_completion | ${input.metrics.solvable_completion} |`,
-    `| multi_fault_coverage | ${input.metrics.multi_fault_coverage ?? 'n/a'} |`,
+    `| multi_fault_coverage | ${input.metrics.multi_fault_coverage ?? 'n/a'} (n=${input.metrics.multi_fault_cases}) |`,
+    `| multi_fault_precision | ${input.metrics.multi_fault_precision ?? 'n/a'} (n=${input.metrics.multi_fault_cases}) |`,
     `| unauthorized_calls | ${input.metrics.unauthorized_calls} |`,
+    `| blocked_attempts | ${input.metrics.blocked_attempts} |`,
     `| missed_handoff | ${input.metrics.missed_handoff} |`,
     `| unnecessary_handoff | ${input.metrics.unnecessary_handoff} |`,
     '',
@@ -247,7 +249,7 @@ export async function runEvalSuite(
       if (!alarm) throw new Error(`场景缺少报警：${caseFile.source_snapshot}`);
       const idempotencyKey = `eval|${caseFile.case_id}|${alarm.raised_at}`;
       const storedAlarm = repo.upsertAlarm({
-        id: `alm_${sha256(idempotencyKey).slice(0, 20)}`,
+        id: stableScopedId('alm', workspaceId, idempotencyKey),
         workspaceId,
         sourceId: alarm.source_id,
         sourceAlarmId: alarm.source_alarm_id,
@@ -284,6 +286,8 @@ export async function runEvalSuite(
         status: String(row.status),
         policy_decision: String(row.policy_decision),
         error_code: (row.error_code as string | null) ?? null,
+        role: String(row.role),
+        args_json: String(row.args_json),
       }));
       const evaluation = evaluateCase({
         gold,

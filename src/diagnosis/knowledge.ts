@@ -278,7 +278,8 @@ export class KnowledgeService {
       for (const part of splitSections(pageText, pageIndex + 1)) {
         index += 1;
         chunks.push({
-          chunkId: `${input.documentId}-P${part.page}-${index}`,
+          // 全局主键必须带 Workspace；document_id 只在 Workspace 内唯一。
+          chunkId: `${input.workspaceId}::${input.documentId}-P${part.page}-${index}`,
           documentId: input.documentId,
           page: part.page,
           printedPage: null,

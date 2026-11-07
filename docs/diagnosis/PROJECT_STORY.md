@@ -31,15 +31,19 @@
    进入/过渡/退出动效，支持 reduced-motion 与三种尺寸。
 7. **Eval 与回归**：构造 50 个独立场景（FA/INS/MEC/MUL/SEN，29 dev + 21 holdout），
    输出引用完整性、证据覆盖、必需工具召回、可解完成率、不必要转人工、Top-3、多故障覆盖等
-   指标；提供 Trace 回放、CI 门禁和 Playwright E2E。
+   指标；提供只读 Trace replay、Fixture 回归、CI 门禁和 Playwright E2E。
+8. **审计补修**：报告手册版本/撤回校验、累计预算预留结算、Eval 执行/阻断与分母、多
+   Workspace 稳定 ID、隔离 E2E、`.env.diagnosis` 统一加载；租约令牌围栏、派发前
+   `inflight` 日志、取消后迟到回执丢弃、live 来源健康检查。
 
 ## 2. 实测结果（只写实际跑过的）
 
 | 项目 | 结果 |
 | --- | --- |
-| 诊断测试 | 12 个文件、55 个测试全部通过 |
+| 诊断测试 | 19 个文件、92 个测试全部通过 |
 | Fixture Eval | 50/50 通过，引用完整性 1.0，未授权调用 0，可解完成率 1.0，不必要转人工 0 |
-| E2E | 2 项通过：桌面/平板/移动主链路 + 人工复核锁定 |
+| Trace replay | 50 条 Trace，`inconsistent=0`，`inference_calls=0`，`tool_calls=0` |
+| E2E | 诊断 6 项 + 移动端 9 项通过，均使用隔离数据目录 |
 | 构建 | 根 `tsc`、Web Vite、MCP `tsc` 全部 exit 0 |
 | 类型检查 | 根、Web、MCP、Electron 全部 exit 0 |
 | 其他 | MCP/pipeline smoke、demo smoke、fresh data 演示、WebSocket 补拉、Webhook 签名/幂等均实测通过 |

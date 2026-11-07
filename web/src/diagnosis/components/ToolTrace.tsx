@@ -44,6 +44,9 @@ const STATUS_LABELS: Record<string, string> = {
   partial: '部分',
   no_data: '无数据',
   error: '错误',
+  inflight: '进行中',
+  unknown: '回执未知',
+  cancelled: '已取消',
 };
 
 function parseArgs(value: unknown): string {
@@ -104,9 +107,11 @@ export function ToolTrace({
           const Icon =
             status === 'success'
               ? CheckCircle2
-              : status === 'partial'
+              : status === 'partial' || status === 'unknown'
                 ? AlertTriangle
-                : status === 'no_data'
+                : status === 'no_data' ||
+                    status === 'cancelled' ||
+                    status === 'inflight'
                   ? CircleSlash
                   : XCircle;
           const repeated = attempts.some(

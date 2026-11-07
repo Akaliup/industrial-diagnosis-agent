@@ -1,91 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
-
-const SHOTS = path.resolve(process.cwd(), '../docs/diagnosis/screenshots');
-const ADMIN = {
-  username: process.env.DIAGNOSIS_E2E_ADMIN_USER ?? 'e2e_admin',
-  password: process.env.DIAGNOSIS_E2E_ADMIN_PASSWORD ?? 'E2ePass123!',
-};
-const DEMO = {
-  username: process.env.DIAGNOSIS_E2E_USER ?? 'demo',
-  password: process.env.DIAGNOSIS_E2E_PASSWORD ?? 'DemoPass123!',
-};
-
-async function visible(page: Page, selector: string): Promise<boolean> {
-  return page
-    .locator(selector)
-    .first()
-    .isVisible()
-    .catch(() => false);
-}
-
-async function login(page: Page, username: string, password: string) {
-  await page.locator('#username').fill(username);
-  await page.locator('#password').fill(password);
-  await page.getByRole('button', { name: '登录', exact: true }).click();
-}
-
-async function ensureSession(page: Page): Promise<void> {
-  await page.goto('/diagnosis#/inbox');
-  await page.waitForLoadState('networkidle');
-
-  if (
-    await page
-      .getByRole('heading', { name: '创建管理员账户' })
-      .isVisible()
-      .catch(() => false)
-  ) {
-    await page.locator('#setup-username').fill(ADMIN.username);
-    await page.locator('#setup-password').fill(ADMIN.password);
-    await page.locator('#setup-confirm').fill(ADMIN.password);
-    await page.getByRole('button', { name: '创建并进入工作台' }).click();
-  } else if (await visible(page, '#username')) {
-    await login(page, DEMO.username, DEMO.password);
-    await page.waitForTimeout(800);
-    if (await visible(page, '#username')) {
-      await login(page, ADMIN.username, ADMIN.password);
-    }
-  }
-
-  await expect(page.getByRole('heading', { name: '报警收件箱' })).toBeVisible({
-    timeout: 30_000,
-  });
-}
-
-async function ensureDemoData(page: Page): Promise<void> {
-  const seed = page.getByRole('button', { name: '载入演示数据' });
-  if (await seed.isVisible().catch(() => false)) {
-    await seed.click();
-    await expect(page.getByRole('button', { name: '载入演示数据' })).toBeHidden(
-      { timeout: 30_000 },
-    );
-  }
-  await expect(
-    page.getByText(/DEMO-BRG-01|DEMO-COMM-03|DEMO-VIB-02/).first(),
-  ).toBeVisible({ timeout: 30_000 });
-}
-
-async function openDiagnosis(page: Page): Promise<void> {
-  // 优先打开 1 号循环泵的传感器漂移场景，报告中会有完整的支持/反证链。
-  const row = page
-    .locator('div.group')
-    .filter({ hasText: '1号循环泵' })
-    .filter({ hasText: 'DEMO-BRG-01' })
-    .first();
-  await expect(row).toBeVisible();
-  const start = row.getByRole('button', { name: '开始诊断' });
-  if ((await start.count()) > 0) {
-    await start.click();
-    await expect(page.getByRole('heading', { name: '发起诊断' })).toBeVisible();
-    await page.getByRole('button', { name: '开始诊断' }).click();
-  } else {
-    await row.getByRole('link', { name: /查看诊断/ }).click();
-  }
-  await expect(page.getByText('诊断结论').first()).toBeVisible({
-    timeout: 45_000,
-  });
-}
+import { expect, test } from '@playwright/test';
+import {
+  ensureDemoData,
+  ensureSession,
+  openDiagnosis,
+  SHOTS,
+} from './helpers.js';
 
 test('core diagnosis flow renders on desktop, tablet and mobile', async ({
   page,
