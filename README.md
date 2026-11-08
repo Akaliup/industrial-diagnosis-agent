@@ -138,6 +138,9 @@ npm run diagnosis:server
 
 打开 **<http://127.0.0.1:3100/diagnosis>**。
 
+> 只跑诊断演示时，可以用 `ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install` 跳过 Electron
+> 二进制下载；诊断页面本身不需要 Electron。需要桌面端时再正常安装。
+
 1. 首次打开按向导创建管理员。
 2. 在报警收件箱点击“载入演示数据”（幂等）。
 3. 打开 `1号循环泵 / DEMO-BRG-01 / 轴承温度高`，点击“开始诊断”。

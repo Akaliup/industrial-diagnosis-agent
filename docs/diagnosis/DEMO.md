@@ -18,6 +18,9 @@ npm run diagnosis:server
 
 打开 `http://127.0.0.1:3100/diagnosis`。
 
+只跑诊断演示时，可以用 `ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install` 跳过 Electron
+二进制下载；诊断服务本身不启动 Electron。
+
 - 空库首次打开：按页面提示创建管理员（工业诊断 Agent 原 setup 流程）。
 - 端口占用时设置 `DIAGNOSIS_PORT=3101`（或其它空闲端口），不要终止占用进程。
 - 默认模式：`fixture` 模型 + `mock` 数据；右上角显示“模拟数据 / 预录演示推理 / 控制执行禁用”。

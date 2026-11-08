@@ -5,13 +5,18 @@
 
 ## 快速开始
 
+安装依赖后，首次运行需先构建 MCP 与 Web（完整安装命令见根 README）：
+
 ```bash
+npm run diagnosis:build:mcp
+npm run build:web
 npm run diagnosis:setup
 npm run diagnosis:server
 ```
 
 访问 `http://127.0.0.1:3100/diagnosis`。默认 `fixture` 模型 + `mock` 数据；空库首次打开
-走 setup 向导。端口冲突时使用 `DIAGNOSIS_PORT`。
+走 setup 向导。端口冲突时使用 `DIAGNOSIS_PORT`。只跑诊断演示时，可用
+`ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install` 跳过 Electron 二进制下载。
 
 ## 文档
 
