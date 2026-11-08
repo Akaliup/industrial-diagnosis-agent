@@ -1561,6 +1561,11 @@ export class DiagnosisOrchestrator {
           );
           delete state.checkpoint.pending_checks;
           if (this.canRunVerifyFollowUp(state)) {
+            // 跟进复核可能崩溃，也可能因无效输出先持久化检查点再重试。
+            // 先落库“仍需最终复核”，只有跟进结果入库后才清除；否则恢复
+            // 时会带着二次复核前的旧假设直接生成报告，且不记录复核被跳过。
+            state.checkpoint.verify_needs_final_call = true;
+            this.persist(state);
             await this.assertRunnable(state, options.owner, options.signal);
             const finalOutput = (await this.callRole(
               state,
@@ -1569,6 +1574,7 @@ export class DiagnosisOrchestrator {
               { signal: options.signal, focusAnomalies: focus },
             )) as HypothesisVerifierOutput;
             this.storeHypotheses(state, finalOutput.hypotheses, control);
+            delete state.checkpoint.verify_needs_final_call;
           } else {
             state.checkpoint.budget_skipped_final_verify = true;
             this.persist(state);

@@ -231,6 +231,85 @@ class LeaveTemperatureUnexplainedRunner implements RoleRunner {
   }
 }
 
+class CrashBeforeSecondLookFollowUpRunner implements RoleRunner {
+  verifyCalls = 0;
+  checkpointAtCrash: Record<string, unknown> | null = null;
+  private crashed = false;
+
+  constructor(
+    private readonly inner: FixtureRoleRunner,
+    private readonly repo: TestContext['repo'],
+  ) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'generate_hypotheses'
+    ) {
+      // 去掉假设阶段的待办查询，让验证阶段从干净的检查点开始，
+      // 从而真正走到二次复核及其跟进复核分支。
+      const result = await this.inner.run(input);
+      const output = result.output as {
+        hypotheses: unknown[];
+        next_checks?: unknown[];
+      };
+      return { ...result, output: { ...output, next_checks: [] } };
+    }
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'verify_evidence'
+    ) {
+      this.verifyCalls += 1;
+      if (this.verifyCalls === 3 && !this.crashed) {
+        // 模拟 worker 在跟进复核请求发出前后崩溃：请求前的检查点已经落库，
+        // 但跟进结果尚未写入。
+        this.crashed = true;
+        this.checkpointAtCrash =
+          this.repo.getRun(input.run.id)?.checkpoint ?? null;
+        throw new Error('模拟 worker 在跟进复核前崩溃');
+      }
+      const result = await this.inner.run(input);
+      if (this.verifyCalls === 2) {
+        // 二次复核返回一个待办查询，触发跟进复核分支。
+        const output = result.output as {
+          hypotheses: unknown[];
+          next_checks?: unknown[];
+        };
+        return {
+          ...result,
+          output: {
+            ...output,
+            next_checks: [
+              {
+                tool: 'equipment_query',
+                args: {
+                  equipment_id: input.equipment.equipment_id,
+                  query_kind: 'status',
+                  window: input.run.window,
+                },
+                target_hypothesis: null,
+                evidence_gap: '二次复核缺少设备状态佐证',
+                expected_discrimination: '确认设备状态是否支持机械故障',
+                rationale: '补充状态证据后再做最终复核',
+              },
+            ],
+          },
+        };
+      }
+      return result;
+    }
+    return this.inner.run(input);
+  }
+}
+
 class BudgetExhaustedVerifyRunner implements RoleRunner {
   constructor(private readonly inner: FixtureRoleRunner) {}
 
@@ -646,6 +725,75 @@ describe('diagnosis orchestrator', () => {
           hypothesis.status === 'supported',
       ),
     ).toBe(true);
+  }, 120_000);
+
+  test('recovery redoes the second-look follow-up after a worker crash', async () => {
+    const runner = new CrashBeforeSecondLookFollowUpRunner(
+      new LeaveTemperatureUnexplainedRunner(new FixtureRoleRunner()),
+      context.repo,
+    );
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner,
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const crashed = await orchestrator.execute(run.id, {
+      owner: 'crash-worker',
+    });
+    expect(crashed.status).toBe('failed');
+    // 崩溃前的检查点必须保留“仍需最终复核”，否则恢复会直接出报告。
+    expect(runner.checkpointAtCrash?.second_look_done).toBe(true);
+    expect(runner.checkpointAtCrash?.verify_needs_final_call).toBe(true);
+    expect(runner.checkpointAtCrash?.pending_checks).toBeUndefined();
+
+    // 硬崩溃不会落终态；模拟重启后的租约接管。
+    context.repo.updateRun(run.id, {
+      status: 'running',
+      error: null,
+      finished_at: null,
+      lease_expires_at: '2000-01-01T00:00:00.000Z',
+    });
+    const leaseToken = context.repo.claimRun(run.id, 'recovery-worker', 60_000);
+    expect(leaseToken).not.toBeNull();
+
+    const recovered = await orchestrator.execute(run.id, {
+      owner: 'recovery-worker',
+    });
+    // 初始复核、二次复核、崩溃的跟进请求、恢复后的跟进复核。
+    expect(runner.verifyCalls).toBe(4);
+    expect(recovered.status).toBe('awaiting_human');
+    expect(recovered.checkpoint?.verify_needs_final_call).toBeUndefined();
+    expect(recovered.stage_rounds.verify_evidence).toBe(3);
+    expect(context.repo.getReport(run.id)?.validation.valid).toBe(true);
   }, 120_000);
 
   test('aborting during the budget-fallback report keeps the run cancelled', async () => {
