@@ -146,6 +146,50 @@ describe('telemetry feature derivation', () => {
     expect(feature.summary).toContain('min 65 / max 65 / avg 65');
   });
 
+  test('does not flag constant or range-limit persistence from one valid reading', () => {
+    const values = Array(10).fill(80);
+    const quality = Array(10).fill('missing') as string[];
+    // 只有 1 个有效读数，其余全是缺失点：缺失不能证明“恒定”或“顶到量程”。
+    quality[4] = 'good';
+    const evidence = series(
+      'ev_one_valid',
+      'bearing_temperature',
+      values,
+      quality,
+    );
+    const summary = summarizeSeries(evidence)!;
+    expect(summary.valid).toBe(1);
+    expect(summary.missing).toBe(9);
+
+    const [feature] = deriveTelemetryFeatures([evidence], 'NP-200');
+    expect(feature.flags).toContain('missing');
+    expect(feature.flags).not.toContain('constant');
+    expect(feature.flags).not.toContain('range_limit');
+    expect(feature.flags).not.toContain('trend');
+  });
+
+  test('does not flag a trend from two valid readings among missing samples', () => {
+    const values = Array(10).fill(40);
+    const quality = Array(10).fill('missing') as string[];
+    // 仅 2 个有效读数且间隔较大，缺失点不能补足趋势所需的最小样本数。
+    values[0] = 40;
+    values[9] = 78;
+    quality[0] = 'good';
+    quality[9] = 'good';
+    const evidence = series(
+      'ev_two_valid',
+      'bearing_temperature',
+      values,
+      quality,
+    );
+    const summary = summarizeSeries(evidence)!;
+    expect(summary.valid).toBe(2);
+
+    const [feature] = deriveTelemetryFeatures([evidence], 'NP-200');
+    expect(feature.flags).toContain('missing');
+    expect(feature.flags).not.toContain('trend');
+  });
+
   test('keeps an entirely missing series visible as a missing anomaly', () => {
     const missing = series(
       'ev_all_missing',

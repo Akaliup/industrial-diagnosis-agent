@@ -255,29 +255,29 @@ export function deriveTelemetryFeatures(
       }
       if (
         summary.unique <= 1 &&
-        summary.points.length >= 5 &&
+        summary.valid >= 5 &&
         (summary.max >= range.max || summary.min <= range.min)
       ) {
         flags.push('range_limit');
       }
       const span = range.max - range.min;
-      if (span > 0 && Math.abs(summary.delta) > span * 0.1) {
+      // 趋势同样需要足够的有效读数；两个相隔很远的有效点加一串缺失点
+      // 不足以证明持续变化。
+      if (
+        summary.valid >= 5 &&
+        span > 0 &&
+        Math.abs(summary.delta) > span * 0.1
+      ) {
         flags.push('trend');
       }
-    } else if (
-      summary.valid > 0 &&
-      summary.points.length >= 5 &&
-      Math.abs(summary.delta) > 0
-    ) {
+    } else if (summary.valid >= 5 && Math.abs(summary.delta) > 0) {
       const scale = Math.max(Math.abs(summary.avg), 1);
       if (Math.abs(summary.delta) > scale * 0.1) flags.push('trend');
     }
     if (summary.valid > 0 && summary.spikeCount > 0) flags.push('spike');
-    if (
-      summary.valid > 0 &&
-      summary.unique <= 1 &&
-      summary.points.length >= 5
-    ) {
+    // “恒定”是持续性结论，只能用有效读数证明；缺失点不能补足最小样本数，
+    // 否则一次采样中断会被误判为传感器卡死。
+    if (summary.valid >= 5 && summary.unique <= 1) {
       flags.push('constant');
     }
     if (summary.missing > 0) flags.push('missing');
