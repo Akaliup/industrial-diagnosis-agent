@@ -77,10 +77,13 @@ export async function ensureDemoData(page: Page): Promise<void> {
 
 export async function openDiagnosis(page: Page): Promise<void> {
   // 优先打开 1 号循环泵的传感器漂移场景，报告中会有完整的支持/反证链。
+  // 必须同时匹配报警文案：webhook 测试会新增同设备、同报警码的临时报警，
+  // 只按设备和报警码过滤会打开那条没有 fixture 数据的任务。
   const row = page
     .locator('div.group')
     .filter({ hasText: '1号循环泵' })
     .filter({ hasText: 'DEMO-BRG-01' })
+    .filter({ hasText: '轴承温度高' })
     .first();
   await expect(row).toBeVisible();
   const start = row.getByRole('button', { name: '开始诊断' });

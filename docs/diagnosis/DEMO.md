@@ -5,6 +5,13 @@
 在目标根目录：
 
 ```bash
+npm install
+npm --prefix web install
+npm --prefix packages/industrial-diagnosis-mcp install
+
+npm run diagnosis:build:mcp
+npm run build:web
+
 npm run diagnosis:setup
 npm run diagnosis:server
 ```
@@ -12,9 +19,9 @@ npm run diagnosis:server
 打开 `http://127.0.0.1:3100/diagnosis`。
 
 - 空库首次打开：按页面提示创建管理员（工业诊断 Agent 原 setup 流程）。
-- 本机演示库已有 `demo` 管理员；密码只在本机演示环境使用，不写入源码或部署模板。
 - 端口占用时设置 `DIAGNOSIS_PORT=3101`（或其它空闲端口），不要终止占用进程。
 - 默认模式：`fixture` 模型 + `mock` 数据；右上角显示“模拟数据 / 预录演示推理 / 控制执行禁用”。
+- 不需要 Docker，也不需要模型 API Key；真实模型配置只从本机 `.env.diagnosis` 读取。
 
 ## 2. 演示路径
 
@@ -26,7 +33,7 @@ npm run diagnosis:server
 
 ### 2.2 1 号循环泵：传感器漂移（约 90 秒）
 
-1. 在 `1号循环泵 / DEMO-BRG-01` 行点击“开始诊断”（已有任务则“查看诊断”）。
+1. 在 `1号循环泵 / DEMO-BRG-01 / 轴承温度高` 行点击“开始诊断”（已有任务则“查看诊断”）。
 2. 工作台展示五阶段：确认状态 → 定位异常 → 生成假设 → 验证证据 → 生成报告。
 3. 观察右侧预算：轮次、工具调用、模型调用均在限制内。
 4. 报告结论：`传感器漂移 sensor_drift`，状态“已支持”，置信度 high；
@@ -49,7 +56,7 @@ npm run diagnosis:server
 
 ### 2.5 来源失败转人工（约 30 秒）
 
-1. 返回收件箱，打开 `2号循环泵` 的来源超时场景。
+1. 返回收件箱，打开来源超时场景（`scenario_id = demo-source-timeout`）。
 2. 报告结论为 `insufficient_evidence`，明确“存在未解决的关键证据缺口”，不编造数值。
 3. 指出这是有意设计：来源超时/缺失时转人工，而不是回退 Mock。
 4. 在“数据与知识”页展示来源状态与“测试连接”：`live` 来源只有探测成功才会变成
@@ -77,6 +84,19 @@ npm run diagnosis:server
    再打开 `targeted/phase3-mul-bearing-drift.json` 展示修复后两个独立根因与报告限制说明。
    不要把这组定向结果说成 10/10 或企业现场精度。
 
+### 2.7 演示数据中的评测记录从哪来
+
+页面内“运行评测”会走服务进程内的 MCP 子进程。在当前 Windows 演示环境里，该路径可能在
+`INS-02` 的 `equipment_query` 上停在 `tool.started`，因此自动演示与截图使用一条等价路径：
+
+```bash
+npx tsx scripts/diagnosis/seed-demo-eval.ts work/diagnosis/e2e-data/db/messages.db
+```
+
+脚本在独立临时库中运行与 `npm run diagnosis:eval:gate` 相同的 50 例 Fixture 数据集和评分，
+完成后只把 `diagnosis_eval_runs` 结果行复制进演示库；Trace 仍由现有只读接口读取。
+这不是 Mock 出来的分数，也不能说明真实模型精度。
+
 ## 3. 报告导出
 
 工作台右上角：
@@ -92,18 +112,38 @@ docs/diagnosis/artifacts/demo-report-reviewed.html
 docs/diagnosis/artifacts/fresh-demo-report.md
 ```
 
-## 4. 演示截图
+## 4. 自动演示与截图复现
+
+E2E 使用独立数据库 `work/diagnosis/e2e-data/`，启动隔离诊断服务（端口 3199），不会写入
+`data/` 中的用户业务库。首次运行会清空该隔离目录并重新种子。
+
+```bash
+npm run diagnosis:build:mcp
+npm run build:web
+npm run diagnosis:e2e
+```
+
+截图由 `web/tests/e2e/diagnosis/00-demo.spec.ts` 在真实浏览器中生成，保存到：
 
 ```text
 docs/diagnosis/screenshots/inbox-1440x900.png
 docs/diagnosis/screenshots/workbench-1440x900.png
 docs/diagnosis/screenshots/evidence-drawer-1440x900.png
 docs/diagnosis/screenshots/reviews-1440x900.png
+docs/diagnosis/screenshots/review-submitted-1440x900.png
 docs/diagnosis/screenshots/eval-1440x900.png
 docs/diagnosis/screenshots/inbox-1024x768.png
 docs/diagnosis/screenshots/mobile-nav-390x844.png
-docs/diagnosis/screenshots/review-submitted-1440x900.png
 ```
+
+`review-submitted-1440x900.png` 由同一套件的复核用例生成。若本机 Playwright 浏览器版本与
+配置不一致，可显式指定可执行文件：
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chrome npm run diagnosis:e2e
+```
+
+演示视频不提交到仓库；如需录制，请放在 `work/diagnosis/` 下。
 
 ## 5. 演示时不要做的事
 
@@ -111,3 +151,4 @@ docs/diagnosis/screenshots/review-submitted-1440x900.png
 - 不要把 Mock/Fixture 指标说成现场准确率。
 - 不要执行真实设备控制；本版没有控制工具。
 - 不要把本机演示账号密码复制到生产环境或文档模板。
+- 不要用静态 HTML、合成截图或伪造 API 数据替代真实浏览器演示。

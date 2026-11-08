@@ -6,7 +6,7 @@
       rel="icon"
       type="image/png"
       sizes="192x192"
-      href="%BASE_URL%icons/icon-192.png"
+      href="%BASE_URL%icons/icon-192.png?v=20261108"
     />
     <meta
       name="viewport"
@@ -21,9 +21,9 @@
     <meta name="apple-mobile-web-app-title" content="工业诊断 Agent" />
     <link
       rel="apple-touch-icon"
-      href="%BASE_URL%icons/apple-touch-icon-180.png"
+      href="%BASE_URL%icons/apple-touch-icon-180.png?v=20261108"
     />
-    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest?v=20261108" />
 
     <!-- iOS PWA 优化：保留自动识别控制（页面缩放已允许） -->
     <meta name="format-detection" content="telephone=no" />
@@ -65,7 +65,8 @@
         if (c === 'neutral') d.classList.add('theme-neutral');
         if (
           (localStorage.getItem('industrial-diagnosis-font-style') ||
-            localStorage.getItem('industrial-diagnosis-font-style')) === 'anthropic'
+            localStorage.getItem('industrial-diagnosis-font-style')) ===
+          'anthropic'
         )
           d.classList.add('font-anthropic');
       })();
