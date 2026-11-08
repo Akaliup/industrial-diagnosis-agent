@@ -31,8 +31,9 @@ describe('PWA cache retirement', () => {
       icons: Array<{ sizes: string; purpose?: string }>;
     };
 
-    expect(html).toContain(
-      '<link rel="manifest" href="%BASE_URL%manifest.webmanifest" />',
+    // The manifest URL may carry a cache-busting version query.
+    expect(html).toMatch(
+      /<link rel="manifest" href="%BASE_URL%manifest\.webmanifest(?:\?v=[^"]+)?" \/>/,
     );
     expect(html).toContain('apple-mobile-web-app-capable');
     expect(main).toContain('cleanupLegacyPwaArtifacts');
@@ -74,7 +75,11 @@ describe('PWA cache retirement', () => {
       installing: null,
     };
     expect(
-      isLegacyIndustrialDiagnosisRegistration(registration, appScope, scriptUrl),
+      isLegacyIndustrialDiagnosisRegistration(
+        registration,
+        appScope,
+        scriptUrl,
+      ),
     ).toBe(true);
     expect(
       isLegacyIndustrialDiagnosisRegistration(

@@ -205,8 +205,8 @@ Pi Agent Runtime（Host / Docker）
 诊断 Harness + MCP 只读工具
 ```
 
-通用工作台的 Agent Profile、Workspace、Session、Memory、Skills/MCP/Plugins、渠道接入、
-Scheduler 与 Electron Shell 不在这里展开，避免掩盖工业诊断主线；需要时从
+通用工作台采用智能体优先工作模型，其 Agent Profile、Workspace、Session、Memory、
+Skills/MCP/Plugins、渠道接入、Scheduler 与 Electron Shell 不在这里展开，避免掩盖工业诊断主线；需要时从
 [`docs/API.md`](docs/API.md) 与 [`docs/ACL-MATRIX.md`](docs/ACL-MATRIX.md) 进入。
 
 **来源与许可证**：本项目基于 MIT 基线工程，保留其 Node/TypeScript、Hono、React、SQLite、
