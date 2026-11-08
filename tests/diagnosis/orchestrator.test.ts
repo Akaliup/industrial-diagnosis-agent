@@ -673,6 +673,59 @@ describe('diagnosis orchestrator', () => {
     ).toBe(true);
   }, 120_000);
 
+  test('a control-intent request keeps its handoff reason during budget fallback', async () => {
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new BudgetExhaustedVerifyRunner(new FixtureRoleRunner()),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: '请复位设备并检查轴承温度持续上升',
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const finished = await orchestrator.execute(run.id, {
+      owner: 'test-worker',
+    });
+    const stored = context.repo.getReport(run.id)!;
+    expect(finished.status).toBe('awaiting_human');
+    expect(stored.validation.valid).toBe(true);
+    expect(stored.report.handoff_reason).toContain('控制/复位');
+    expect(finished.handoff_reason).toContain('控制/复位');
+    expect(
+      stored.report.hypotheses.some(
+        (hypothesis) =>
+          hypothesis.code === 'bearing_wear' &&
+          hypothesis.status === 'supported',
+      ),
+    ).toBe(true);
+    expect(stored.report.limitations.join(' ')).toContain('输出预算');
+  }, 120_000);
+
   test('an optional second look does not consume the last report round', async () => {
     const orchestrator = new DiagnosisOrchestrator({
       repo: context.repo,

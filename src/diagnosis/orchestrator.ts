@@ -18,6 +18,7 @@ import {
   type Stage,
 } from './contracts/domain.js';
 import {
+  CONTROL_INTENT_HANDOFF_REASON,
   deriveAnomalyLedger,
   deriveTelemetryFeatures,
   detectControlIntent,
@@ -1441,6 +1442,9 @@ export class DiagnosisOrchestrator {
       this.hasRoundReserve(state, 2) &&
       (state.stageRounds.verify_evidence ?? 0) <
         state.run.budget.max_rounds_per_stage &&
+      // 跟进复核可能因无效输出再消耗一次修复调用；至少给报告留 1 次
+      // 模型调用，避免可选复核吃掉报告槽位后只剩兜底转人工报告。
+      state.modelCalls < state.run.budget.max_model_calls - 2 &&
       this.reportOutputReserveAvailable(state)
     );
   }
@@ -1606,8 +1610,7 @@ export class DiagnosisOrchestrator {
       handoffReason =
         '存在未解决的关键证据缺口，当前不能形成可核查的确定结论。';
     } else if (control) {
-      handoffReason =
-        '请求包含设备控制/复位意图；本版只提供只读诊断，控制必须由工程师按规程现场执行。';
+      handoffReason = CONTROL_INTENT_HANDOFF_REASON;
     } else if (diagnostic.length === 0) {
       handoffReason = '没有可支持的根因假设，需人工复核并补充证据。';
     }
@@ -1920,6 +1923,14 @@ export class DiagnosisOrchestrator {
         ) {
           return await this.finishCancelled(state, options.owner);
         }
+        // 预算回退会跳过 runVerifyStage 末尾的控制意图判断；必须在进入
+        // 报告阶段前恢复，否则控制/复位请求会因预算耗尽而失去强制转人工。
+        const controlHandoff = detectControlIntent(state.run.symptom)
+          ? CONTROL_INTENT_HANDOFF_REASON
+          : null;
+        if (controlHandoff) {
+          state.checkpoint.handoff_reason = controlHandoff;
+        }
         // 验证阶段的修复调用可能耗尽“报告预留之外”的输出额度。若已有
         // supported 诊断假设，报告阶段本身仍可使用预留额度；此时不应把
         // 一个已有可核查结论的 Run 直接转人工。报告仍进入人工复核，并把
@@ -1966,7 +1977,7 @@ export class DiagnosisOrchestrator {
             );
           }
         }
-        return await this.handoff(state, error.message, {
+        return await this.handoff(state, controlHandoff ?? error.message, {
           owner: options.owner,
           signal: options.signal,
         });

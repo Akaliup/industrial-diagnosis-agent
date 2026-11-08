@@ -254,6 +254,36 @@ describe('run budget accounting', () => {
     expect(canRunSecondLook(state)).toBe(false);
   });
 
+  test('reserves a model call for the report before an optional follow-up', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(makeRun());
+    state.stageRounds.verify_evidence = 2;
+    state.totalRounds = 6;
+    const canRunVerifyFollowUp = (
+      orchestrator as unknown as {
+        canRunVerifyFollowUp: (value: unknown) => boolean;
+      }
+    ).canRunVerifyFollowUp.bind(orchestrator);
+    // 16 次调用上限下只剩 2 次：跟进复核可能用掉 2 次，报告将无调用可用。
+    state.modelCalls = DEFAULT_BUDGET.max_model_calls - 2;
+    expect(canRunVerifyFollowUp(state)).toBe(false);
+    // 留出 3 次时，跟进复核（含 1 次修复）后仍能给报告留 1 次。
+    state.modelCalls = DEFAULT_BUDGET.max_model_calls - 3;
+    expect(canRunVerifyFollowUp(state)).toBe(true);
+  });
+
   test('keeps the final total round for the report stage', async () => {
     let calls = 0;
     const runner: RoleRunner = {

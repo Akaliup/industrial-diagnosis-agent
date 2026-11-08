@@ -111,7 +111,9 @@ export function summarizeSeries(evidence: Evidence): SeriesSummary | null {
   const sorted = [...payload.points].sort(
     (a, b) => Date.parse(a.t) - Date.parse(b.t),
   );
-  const values = sorted.map((p) => p.v);
+  // missing 点可能携带占位值或陈旧值，不能参与数值统计；否则会把
+  // 占位值当成真实读数，产生虚假的越界/尖峰特征。缺失数量仍单独统计。
+  const values = sorted.filter((p) => p.q !== 'missing').map((p) => p.v);
   if (values.length === 0) return null;
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
   const variance =
@@ -613,8 +615,7 @@ export function inferRootCauses(input: {
     return {
       ...base,
       handoff: true,
-      handoffReason:
-        '请求包含设备控制/复位意图；本版只提供只读诊断，控制必须由工程师按规程现场执行。',
+      handoffReason: CONTROL_INTENT_HANDOFF_REASON,
       notes: [...base.notes, '检测到控制意图，已拒绝执行'],
     };
   }
@@ -822,6 +823,9 @@ export function inferRootCauses(input: {
     notes,
   };
 }
+
+export const CONTROL_INTENT_HANDOFF_REASON =
+  '请求包含设备控制/复位意图；本版只提供只读诊断，控制必须由工程师按规程现场执行。';
 
 export function detectControlIntent(
   symptom: string | null | undefined,

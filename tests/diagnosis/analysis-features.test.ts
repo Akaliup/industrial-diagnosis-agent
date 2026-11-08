@@ -118,6 +118,33 @@ describe('telemetry feature derivation', () => {
     expect(feature.summary).toContain('缺失 2');
   });
 
+  test('excludes missing sample values from numeric telemetry features', () => {
+    const values = Array(10).fill(65);
+    const quality = Array(10).fill('good') as string[];
+    // 缺失点携带陈旧/占位数值，不能污染 min/max/avg、趋势和尖峰判断。
+    values[9] = 250;
+    quality[9] = 'missing';
+    const evidence = series(
+      'ev_missing_value',
+      'bearing_temperature',
+      values,
+      quality,
+    );
+    const summary = summarizeSeries(evidence)!;
+    const [feature] = deriveTelemetryFeatures([evidence], 'NP-200');
+    expect(summary.missing).toBe(1);
+    expect(summary.min).toBe(65);
+    expect(summary.max).toBe(65);
+    expect(summary.avg).toBe(65);
+    expect(summary.delta).toBe(0);
+    expect(summary.spikeCount).toBe(0);
+    expect(feature.flags).toContain('missing');
+    expect(feature.flags).not.toContain('out_of_range');
+    expect(feature.flags).not.toContain('spike');
+    expect(feature.flags).not.toContain('near_upper_limit');
+    expect(feature.summary).toContain('min 65 / max 65 / avg 65');
+  });
+
   test('separates support, contradiction and unexplained references', () => {
     const features = deriveTelemetryFeatures(
       [
