@@ -284,6 +284,49 @@ describe('run budget accounting', () => {
     expect(canRunVerifyFollowUp(state)).toBe(true);
   });
 
+  test('reserves input tokens for the report before optional verification', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(makeRun());
+    state.stageRounds.verify_evidence = 1;
+    state.totalRounds = 5;
+    state.modelCalls = 5;
+    const canRunSecondLook = (
+      orchestrator as unknown as {
+        canRunSecondLook: (value: unknown) => boolean;
+      }
+    ).canRunSecondLook.bind(orchestrator);
+    const canRunVerifyFollowUp = (
+      orchestrator as unknown as {
+        canRunVerifyFollowUp: (value: unknown) => boolean;
+      }
+    ).canRunVerifyFollowUp.bind(orchestrator);
+
+    // 128k 上限下只剩 28k，低于报告 16k + 可选复核 16k 的预留。
+    state.inputTokens = 100_000;
+    expect(canRunSecondLook(state)).toBe(false);
+    state.inputTokens = 90_000;
+    expect(canRunSecondLook(state)).toBe(true);
+
+    state.stageRounds.verify_evidence = 2;
+    state.totalRounds = 6;
+    state.inputTokens = 100_000;
+    expect(canRunVerifyFollowUp(state)).toBe(false);
+    state.inputTokens = 90_000;
+    expect(canRunVerifyFollowUp(state)).toBe(true);
+  });
+
   test('does not let evidence stagnation block the final report', async () => {
     let calls = 0;
     const runner: RoleRunner = {

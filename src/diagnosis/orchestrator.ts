@@ -86,6 +86,10 @@ function sameStringSet(a: string[], b: string[]): boolean {
 }
 
 const REPORT_OUTPUT_RESERVE = 4_500;
+// 报告输入通常包含完整证据与假设上下文；可选复核也必须为它留下额度，
+// 否则复核消耗输入 token 后，报告会因 max_input_tokens 超限而失败。
+const REPORT_INPUT_RESERVE = 16_000;
+const OPTIONAL_VERIFY_INPUT_RESERVE = 16_000;
 
 function outputAllowance(stage: Stage, role: Role, remaining: number): number {
   const reserve = stage === 'produce_report' ? 0 : REPORT_OUTPUT_RESERVE;
@@ -1382,6 +1386,13 @@ export class DiagnosisOrchestrator {
     );
   }
 
+  private reportInputReserveAvailable(state: RunState): boolean {
+    return (
+      state.run.budget.max_input_tokens - state.inputTokens >=
+      REPORT_INPUT_RESERVE + OPTIONAL_VERIFY_INPUT_RESERVE
+    );
+  }
+
   private hasSupportedDiagnostic(state: RunState): boolean {
     return this.options.repo
       .listHypotheses(state.run.id)
@@ -1433,9 +1444,10 @@ export class DiagnosisOrchestrator {
       // 而预算回退也使用同一个已耗尽的计数器，无法恢复。
       this.hasRoundReserve(state, 3) &&
       state.modelCalls < state.run.budget.max_model_calls - 2 &&
-      // 二次复核是可选动作，不能吃掉报告阶段的输出预留；否则
+      // 二次复核是可选动作，不能吃掉报告阶段的输出/输入预留；否则
       // BudgetExceededError 会把已有 supported 根因的 Run 直接转人工。
-      this.reportOutputReserveAvailable(state)
+      this.reportOutputReserveAvailable(state) &&
+      this.reportInputReserveAvailable(state)
     );
   }
 
@@ -1448,7 +1460,8 @@ export class DiagnosisOrchestrator {
       // 跟进复核可能因无效输出再消耗一次修复调用；至少给报告留 1 次
       // 模型调用，避免可选复核吃掉报告槽位后只剩兜底转人工报告。
       state.modelCalls < state.run.budget.max_model_calls - 2 &&
-      this.reportOutputReserveAvailable(state)
+      this.reportOutputReserveAvailable(state) &&
+      this.reportInputReserveAvailable(state)
     );
   }
 
