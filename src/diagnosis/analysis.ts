@@ -138,7 +138,9 @@ export function summarizeSeries(evidence: Evidence): SeriesSummary | null {
     min: Math.min(...values),
     max: Math.max(...values),
     avg,
-    missing: sorted.filter((p) => p.q !== 'good').length,
+    // 只统计明确的 missing 质量点；clock_skew / bad 等由独立 flag 表达，
+    // 不能混入采样缺口，否则完整但时钟偏移的序列会被误判为 sampling_gap。
+    missing: sorted.filter((p) => p.q === 'missing').length,
     unique: new Set(values.map((v) => v.toFixed(2))).size,
     std: Math.sqrt(variance),
     spikeCount,

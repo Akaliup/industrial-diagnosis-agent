@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   deriveAnomalyLedger,
   deriveTelemetryFeatures,
+  summarizeSeries,
 } from '../../src/diagnosis/analysis.js';
 import type { Evidence } from '../../src/diagnosis/contracts/domain.js';
 
@@ -41,7 +42,8 @@ function series(
         max: Math.max(...values),
         avg: values.reduce((sum, value) => sum + value, 0) / values.length,
         count: values.length,
-        missing: quality.filter((item) => item !== 'good').length,
+        // 与 MCP store 的 stats.missing 保持一致：只统计 missing 质量点。
+        missing: quality.filter((item) => item === 'missing').length,
       },
     },
   };
@@ -75,6 +77,45 @@ describe('telemetry feature derivation', () => {
     expect(np200.flags).toContain('trend');
     expect(np300.flags).not.toContain('out_of_range');
     expect(np300.flags).toContain('trend');
+  });
+
+  test('counts only missing quality as missing, not clock skew', () => {
+    const quality = Array(10).fill('good') as string[];
+    quality[2] = 'clock_skew';
+    quality[5] = 'clock_skew';
+    const evidence = series(
+      'ev_clock',
+      'bearing_temperature',
+      Array(10).fill(65),
+      quality,
+    );
+    const summary = summarizeSeries(evidence)!;
+    const [feature] = deriveTelemetryFeatures([evidence], 'NP-200');
+    expect(summary.missing).toBe(0);
+    expect(feature.missing).toBe(0);
+    expect(feature.flags).toContain('clock_skew');
+    expect(feature.flags).not.toContain('missing');
+    expect(feature.summary).toContain('缺失 0');
+  });
+
+  test('counts missing quality points separately from other quality flags', () => {
+    const quality = Array(10).fill('good') as string[];
+    quality[1] = 'missing';
+    quality[4] = 'missing';
+    quality[7] = 'clock_skew';
+    const evidence = series(
+      'ev_missing',
+      'bearing_temperature',
+      Array(10).fill(65),
+      quality,
+    );
+    const summary = summarizeSeries(evidence)!;
+    const [feature] = deriveTelemetryFeatures([evidence], 'NP-200');
+    expect(summary.missing).toBe(2);
+    expect(feature.missing).toBe(2);
+    expect(feature.flags).toContain('missing');
+    expect(feature.flags).toContain('clock_skew');
+    expect(feature.summary).toContain('缺失 2');
   });
 
   test('separates support, contradiction and unexplained references', () => {

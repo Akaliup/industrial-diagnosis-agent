@@ -10,7 +10,10 @@ import {
 } from './helpers.js';
 import { DiagnosisEventBus } from '../../src/diagnosis/events.js';
 import { FixtureRoleRunner } from '../../src/diagnosis/fixture-role-runner.js';
-import { DiagnosisOrchestrator } from '../../src/diagnosis/orchestrator.js';
+import {
+  BudgetExceededError,
+  DiagnosisOrchestrator,
+} from '../../src/diagnosis/orchestrator.js';
 import {
   RoleRunnerError,
   type RoleCallInput,
@@ -118,6 +121,111 @@ class ReportStatusDriftRunner implements RoleRunner {
         (hypothesis) => hypothesis.status === 'supported',
       );
       if (target) target.status = 'inconclusive';
+    }
+    return result;
+  }
+}
+
+class CancelDuringBudgetFallbackRunner implements RoleRunner {
+  constructor(
+    private readonly inner: FixtureRoleRunner,
+    private readonly controller: AbortController,
+  ) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'verify_evidence'
+    ) {
+      throw new BudgetExceededError('模拟验证预算耗尽');
+    }
+    if (input.role === 'report_reviewer' && input.stage === 'produce_report') {
+      this.controller.abort();
+      throw new RoleRunnerError('模型调用已取消', 'CANCELLED');
+    }
+    return this.inner.run(input);
+  }
+}
+
+class DatabaseCancelDuringBudgetFallbackRunner implements RoleRunner {
+  constructor(
+    private readonly inner: FixtureRoleRunner,
+    private readonly repo: TestContext['repo'],
+  ) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'verify_evidence'
+    ) {
+      throw new BudgetExceededError('模拟验证预算耗尽');
+    }
+    if (input.role === 'report_reviewer' && input.stage === 'produce_report') {
+      this.repo.updateRun(input.run.id, { status: 'cancelled' });
+      throw new RoleRunnerError('模型调用已取消', 'CANCELLED');
+    }
+    return this.inner.run(input);
+  }
+}
+
+class LeaveTemperatureUnexplainedRunner implements RoleRunner {
+  constructor(private readonly inner: FixtureRoleRunner) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    const result = await this.inner.run(input);
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'verify_evidence'
+    ) {
+      const temperatureIds = new Set(
+        input.evidence
+          .filter(
+            (item) =>
+              item.payload.kind === 'telemetry_series' &&
+              item.payload.metric === 'bearing_temperature',
+          )
+          .map((item) => item.id),
+      );
+      const output = result.output as {
+        hypotheses: Array<{
+          supporting_evidence_ids: string[];
+          contradicting_evidence_ids: string[];
+        }>;
+      };
+      for (const hypothesis of output.hypotheses) {
+        hypothesis.supporting_evidence_ids =
+          hypothesis.supporting_evidence_ids.filter(
+            (id) => !temperatureIds.has(id),
+          );
+        hypothesis.contradicting_evidence_ids =
+          hypothesis.contradicting_evidence_ids.filter(
+            (id) => !temperatureIds.has(id),
+          );
+      }
     }
     return result;
   }
@@ -484,6 +592,161 @@ describe('diagnosis orchestrator', () => {
             event.payload.reason === 'budget_fallback',
         ),
     ).toBe(true);
+  }, 120_000);
+
+  test('an optional second look does not consume the last report round', async () => {
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new LeaveTemperatureUnexplainedRunner(new FixtureRoleRunner()),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: { ...DEFAULT_BUDGET, max_rounds_total: 6 },
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const finished = await orchestrator.execute(run.id, {
+      owner: 'test-worker',
+    });
+    const stored = context.repo.getReport(run.id)!;
+    expect(finished.status).toBe('awaiting_human');
+    expect(finished.handoff_reason).toBeNull();
+    expect(finished.total_rounds).toBe(6);
+    // 6 轮预算下，二次复核被跳过，最后一轮留给报告。
+    expect(finished.stage_rounds.verify_evidence).toBe(1);
+    expect(stored.validation.valid).toBe(true);
+    expect(
+      stored.report.hypotheses.some(
+        (hypothesis) =>
+          hypothesis.code === 'bearing_wear' &&
+          hypothesis.status === 'supported',
+      ),
+    ).toBe(true);
+  }, 120_000);
+
+  test('aborting during the budget-fallback report keeps the run cancelled', async () => {
+    const controller = new AbortController();
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new CancelDuringBudgetFallbackRunner(
+        new FixtureRoleRunner(),
+        controller,
+      ),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const finished = await orchestrator.execute(run.id, {
+      owner: 'test-worker',
+      signal: controller.signal,
+    });
+    expect(finished.status).toBe('cancelled');
+    expect(finished.handoff_reason).toBeNull();
+    expect(context.repo.getReport(run.id)).toBeNull();
+    const events = context.repo.listEvents(run.id).map((event) => event.type);
+    expect(events).toContain('run.cancelled');
+    expect(events).not.toContain('report.ready');
+    expect(events).not.toContain('run.awaiting_human');
+  }, 120_000);
+
+  test('a cancelled database state is not overwritten by the budget-fallback report', async () => {
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner: new DatabaseCancelDuringBudgetFallbackRunner(
+        new FixtureRoleRunner(),
+        context.repo,
+      ),
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const finished = await orchestrator.execute(run.id, {
+      owner: 'test-worker',
+    });
+    expect(finished.status).toBe('cancelled');
+    expect(context.repo.getRun(run.id)?.status).toBe('cancelled');
+    expect(context.repo.getReport(run.id)).toBeNull();
+    expect(
+      context.repo.listEvents(run.id).map((event) => event.type),
+    ).not.toContain('report.ready');
   }, 120_000);
 
   test('report status drift is reconciled back to the verified hypothesis', async () => {

@@ -411,8 +411,18 @@ export class DiagnosisOrchestrator {
     if (nextRound > state.run.budget.max_rounds_per_stage) {
       throw new BudgetExceededError('单阶段编排轮次超限');
     }
-    if (state.totalRounds >= state.run.budget.max_rounds_total) {
-      throw new BudgetExceededError('总编排轮次超限');
+    // 非报告阶段必须给 produce_report 留下至少 1 轮；否则验证阶段的
+    // 最后一次调用会把总轮次耗尽，报告阶段和预算回退都无法再执行。
+    const reportRoundReserve = stage === 'produce_report' ? 0 : 1;
+    if (
+      state.totalRounds >=
+      state.run.budget.max_rounds_total - reportRoundReserve
+    ) {
+      throw new BudgetExceededError(
+        stage === 'produce_report'
+          ? '总编排轮次超限'
+          : '总编排轮次超限：需为报告阶段保留 1 轮',
+      );
     }
     if (state.modelCalls >= state.run.budget.max_model_calls) {
       throw new BudgetExceededError('模型调用次数超限');
@@ -1093,8 +1103,20 @@ export class DiagnosisOrchestrator {
   private async handoff(
     state: RunState,
     reason: string,
-    options: { owner?: string; error?: string | null } = {},
+    options: {
+      owner?: string;
+      error?: string | null;
+      signal?: AbortSignal;
+    } = {},
   ): Promise<Run> {
+    // 取消优先于转人工：不能让 fallback report 把 cancelled 覆盖成
+    // awaiting_human，也不能在取消后继续写报告。
+    if (
+      options.signal?.aborted ||
+      this.options.repo.getRun(state.run.id)?.status === 'cancelled'
+    ) {
+      return await this.finishCancelled(state, options.owner);
+    }
     state.checkpoint.handoff_reason = reason;
     this.persist(state);
     this.ensureInsufficientHypothesis(state, reason);
@@ -1367,15 +1389,58 @@ export class DiagnosisOrchestrator {
       );
   }
 
+  private isCancellationError(error: unknown): boolean {
+    return (
+      error instanceof RunCancelledError ||
+      (error instanceof RoleRunnerError && error.code === 'CANCELLED')
+    );
+  }
+
+  /**
+   * 取消是终态，不能被预算回退或 handoff 覆盖。若数据库已经是 cancelled，
+   * 直接返回当前状态，避免重复事件；若只是 AbortSignal 已触发，则落库为
+   * cancelled 后再返回。
+   */
+  private async finishCancelled(state: RunState, owner?: string): Promise<Run> {
+    const fresh = this.options.repo.getRun(state.run.id);
+    if (fresh?.status === 'cancelled') {
+      state.run = fresh;
+      if (owner) {
+        this.options.repo.releaseLease(state.run.id, owner, state.leaseToken);
+      }
+      return fresh;
+    }
+    return this.cancel(state, owner);
+  }
+
+  /** 是否还有足够的总轮次完成 needed 次调用。 */
+  private hasRoundReserve(state: RunState, needed: number): boolean {
+    return state.totalRounds + needed <= state.run.budget.max_rounds_total;
+  }
+
   private canRunSecondLook(state: RunState): boolean {
     return (
       !state.checkpoint.second_look_done &&
-      (state.stageRounds.verify_evidence ?? 0) <
+      // 二次复核 + 可能的跟进复核各占一个阶段轮次。
+      (state.stageRounds.verify_evidence ?? 0) + 2 <=
         state.run.budget.max_rounds_per_stage &&
-      state.totalRounds < state.run.budget.max_rounds_total &&
+      // 二次复核、可能的跟进复核、报告各占一个总轮次。可选动作
+      // 不能吃掉报告轮次，否则 runReportStage 会因总轮次超限失败，
+      // 而预算回退也使用同一个已耗尽的计数器，无法恢复。
+      this.hasRoundReserve(state, 3) &&
       state.modelCalls < state.run.budget.max_model_calls - 2 &&
       // 二次复核是可选动作，不能吃掉报告阶段的输出预留；否则
       // BudgetExceededError 会把已有 supported 根因的 Run 直接转人工。
+      this.reportOutputReserveAvailable(state)
+    );
+  }
+
+  /** 二次复核返回 next_checks 后，是否还能做跟进复核并保留报告轮次。 */
+  private canRunVerifyFollowUp(state: RunState): boolean {
+    return (
+      this.hasRoundReserve(state, 2) &&
+      (state.stageRounds.verify_evidence ?? 0) <
+        state.run.budget.max_rounds_per_stage &&
       this.reportOutputReserveAvailable(state)
     );
   }
@@ -1434,7 +1499,8 @@ export class DiagnosisOrchestrator {
     let didFinalCall = false;
     if (
       state.checkpoint.verify_needs_final_call &&
-      !this.reportOutputReserveAvailable(state) &&
+      (!this.reportOutputReserveAvailable(state) ||
+        !this.hasRoundReserve(state, 2)) &&
       this.hasSupportedDiagnostic(state)
     ) {
       // 已有可支持结论时，最后一步复核不是必须的；保住报告输出额度，
@@ -1494,7 +1560,7 @@ export class DiagnosisOrchestrator {
             options,
           );
           delete state.checkpoint.pending_checks;
-          if (this.reportOutputReserveAvailable(state)) {
+          if (this.canRunVerifyFollowUp(state)) {
             await this.assertRunnable(state, options.owner, options.signal);
             const finalOutput = (await this.callRole(
               state,
@@ -1508,7 +1574,7 @@ export class DiagnosisOrchestrator {
             this.persist(state);
             this.log(
               state.run.id,
-              'skip optional second-look final verify to preserve report output reserve',
+              'skip optional second-look final verify to preserve report round/output reserve',
             );
           }
         }
@@ -1608,32 +1674,44 @@ export class DiagnosisOrchestrator {
     if (!validation.valid && !state.checkpoint.report_repair_attempted) {
       state.checkpoint.report_repair_attempted = true;
       this.persist(state);
-      const repaired = (await this.callRole(
-        state,
-        'report_reviewer',
-        'produce_report',
-        {
-          signal: options.signal,
-          repairIssues: validationMessages(validation),
-        },
-      )) as ReportReviewerOutput;
-      draft = repaired.report;
-      report = this.buildFullReport(state, draft, handoffReason);
-      validation = validateReport({
-        report,
-        run: this.currentRun(state),
-        equipment: this.equipmentSnapshot(state),
-        alarm: this.alarmContext(state),
-        evidence: this.options.repo.listEvidence(state.run.id),
-        hypotheses: this.options.repo.listHypotheses(state.run.id),
-        documents: this.options.repo.listDocuments(state.run.workspace_id),
-        toolCalls: this.options.repo.listToolCalls(state.run.id).map((row) => ({
-          tool: String(row.tool),
-          status: String(row.status),
-          policy_decision: String(row.policy_decision),
-          error_code: (row.error_code as string | null) ?? null,
-        })),
-      });
+      try {
+        const repaired = (await this.callRole(
+          state,
+          'report_reviewer',
+          'produce_report',
+          {
+            signal: options.signal,
+            repairIssues: validationMessages(validation),
+          },
+        )) as ReportReviewerOutput;
+        draft = repaired.report;
+        report = this.buildFullReport(state, draft, handoffReason);
+        validation = validateReport({
+          report,
+          run: this.currentRun(state),
+          equipment: this.equipmentSnapshot(state),
+          alarm: this.alarmContext(state),
+          evidence: this.options.repo.listEvidence(state.run.id),
+          hypotheses: this.options.repo.listHypotheses(state.run.id),
+          documents: this.options.repo.listDocuments(state.run.workspace_id),
+          toolCalls: this.options.repo
+            .listToolCalls(state.run.id)
+            .map((row) => ({
+              tool: String(row.tool),
+              status: String(row.status),
+              policy_decision: String(row.policy_decision),
+              error_code: (row.error_code as string | null) ?? null,
+            })),
+        });
+      } catch (error) {
+        if (!(error instanceof BudgetExceededError)) throw error;
+        // 报告初稿已生成；没有轮次/输出额度做修复时，保留初稿并按
+        // 校验失败进入人工复核，不能因可选修复把整个 Run 转人工。
+        this.log(
+          state.run.id,
+          `skip report repair after budget exhaustion: ${error.message}`,
+        );
+      }
     }
 
     if (!validation.valid) {
@@ -1797,7 +1875,7 @@ export class DiagnosisOrchestrator {
             state,
             (state.checkpoint.handoff_reason as string | undefined) ??
               '证据不足或预算受限，转人工处理。',
-            { owner: options.owner },
+            { owner: options.owner, signal: options.signal },
           );
         }
         index += 1;
@@ -1814,7 +1892,7 @@ export class DiagnosisOrchestrator {
         return await this.handoff(
           state,
           '诊断流程结束但未生成报告，转人工处理。',
-          { owner: options.owner },
+          { owner: options.owner, signal: options.signal },
         );
       }
       return finalRun;
@@ -1823,13 +1901,19 @@ export class DiagnosisOrchestrator {
         return this.options.repo.getRun(runId) ?? state.run;
       }
       if (error instanceof RunCancelledError) {
-        return await this.cancel(state, options.owner);
+        return await this.finishCancelled(state, options.owner);
       }
       if (error instanceof LeaseLostError) {
         this.log(runId, 'lease lost; another worker owns the run');
         return this.options.repo.getRun(runId) ?? state.run;
       }
       if (error instanceof BudgetExceededError) {
+        if (
+          options.signal?.aborted ||
+          this.options.repo.getRun(runId)?.status === 'cancelled'
+        ) {
+          return await this.finishCancelled(state, options.owner);
+        }
         // 验证阶段的修复调用可能耗尽“报告预留之外”的输出额度。若已有
         // supported 诊断假设，报告阶段本身仍可使用预留额度；此时不应把
         // 一个已有可核查结论的 Run 直接转人工。报告仍进入人工复核，并把
@@ -1839,6 +1923,7 @@ export class DiagnosisOrchestrator {
         if (
           state.stage !== 'produce_report' &&
           remainingOutput > 0 &&
+          state.totalRounds < state.run.budget.max_rounds_total &&
           this.hasSupportedDiagnostic(state)
         ) {
           const from = state.stage;
@@ -1858,6 +1943,17 @@ export class DiagnosisOrchestrator {
             await this.runReportStage(state, options);
             return this.options.repo.getRun(runId) ?? state.run;
           } catch (reportError) {
+            if (
+              this.isCancellationError(reportError) ||
+              options.signal?.aborted ||
+              this.options.repo.getRun(runId)?.status === 'cancelled'
+            ) {
+              this.log(
+                runId,
+                'report fallback was cancelled; preserving cancelled state',
+              );
+              return await this.finishCancelled(state, options.owner);
+            }
             this.log(
               runId,
               `report fallback after budget error failed: ${failureText(reportError)}`,
@@ -1866,15 +1962,17 @@ export class DiagnosisOrchestrator {
         }
         return await this.handoff(state, error.message, {
           owner: options.owner,
+          signal: options.signal,
         });
       }
       if (error instanceof RoleRunnerError && error.code === 'CANCELLED') {
-        return await this.cancel(state, options.owner);
+        return await this.finishCancelled(state, options.owner);
       }
       if (error instanceof RoleRunnerError && error.code === 'UNCONFIGURED') {
         return await this.handoff(state, error.message, {
           owner: options.owner,
           error: error.message,
+          signal: options.signal,
         });
       }
       return await this.fail(state, error, options.owner);
