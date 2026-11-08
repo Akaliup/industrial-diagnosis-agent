@@ -310,6 +310,55 @@ class CrashBeforeSecondLookFollowUpRunner implements RoleRunner {
   }
 }
 
+class CrashDuringSecondLookRunner implements RoleRunner {
+  verifyCalls = 0;
+  checkpointAtCrash: Record<string, unknown> | null = null;
+  private crashed = false;
+
+  constructor(
+    private readonly inner: FixtureRoleRunner,
+    private readonly repo: TestContext['repo'],
+  ) {}
+
+  get mode() {
+    return this.inner.mode;
+  }
+
+  get model() {
+    return this.inner.model;
+  }
+
+  async run(input: RoleCallInput): Promise<RoleCallResult> {
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'generate_hypotheses'
+    ) {
+      const result = await this.inner.run(input);
+      const output = result.output as {
+        hypotheses: unknown[];
+        next_checks?: unknown[];
+      };
+      return { ...result, output: { ...output, next_checks: [] } };
+    }
+    if (
+      input.role === 'hypothesis_verifier' &&
+      input.stage === 'verify_evidence'
+    ) {
+      this.verifyCalls += 1;
+      if (this.verifyCalls === 2 && !this.crashed) {
+        // 模拟 worker 在二次复核调用中途崩溃：调用前的检查点已经落库，
+        // 但二次复核的假设和 next_checks 都还没有写入。
+        this.crashed = true;
+        this.checkpointAtCrash =
+          this.repo.getRun(input.run.id)?.checkpoint ?? null;
+        throw new Error('模拟 worker 在二次复核调用中崩溃');
+      }
+      return this.inner.run(input);
+    }
+    return this.inner.run(input);
+  }
+}
+
 class BudgetExhaustedVerifyRunner implements RoleRunner {
   constructor(private readonly inner: FixtureRoleRunner) {}
 
@@ -824,7 +873,7 @@ describe('diagnosis orchestrator', () => {
     });
     expect(crashed.status).toBe('failed');
     // 崩溃前的检查点必须保留“仍需最终复核”，否则恢复会直接出报告。
-    expect(runner.checkpointAtCrash?.second_look_done).toBe(true);
+    expect(runner.checkpointAtCrash?.second_look_in_progress).toBe(true);
     expect(runner.checkpointAtCrash?.verify_needs_final_call).toBe(true);
     expect(runner.checkpointAtCrash?.pending_checks).toBeUndefined();
 
@@ -845,7 +894,81 @@ describe('diagnosis orchestrator', () => {
     expect(runner.verifyCalls).toBe(4);
     expect(recovered.status).toBe('awaiting_human');
     expect(recovered.checkpoint?.verify_needs_final_call).toBeUndefined();
+    expect(recovered.checkpoint?.second_look_in_progress).toBeUndefined();
     expect(recovered.stage_rounds.verify_evidence).toBe(3);
+    expect(context.repo.getReport(run.id)?.validation.valid).toBe(true);
+  }, 120_000);
+
+  test('recovery redoes the second look after a worker crash', async () => {
+    const runner = new CrashDuringSecondLookRunner(
+      new LeaveTemperatureUnexplainedRunner(new FixtureRoleRunner()),
+      context.repo,
+    );
+    const orchestrator = new DiagnosisOrchestrator({
+      repo: context.repo,
+      knowledge: context.knowledge,
+      bus: new DiagnosisEventBus(),
+      runner,
+      fixturesDir: FIXTURES,
+    });
+    const demo = DEMO_SCENARIOS[1];
+    const alarm = context.repo
+      .listAlarms(context.workspaceId)
+      .find((item) => item.source_alarm_id === `ALM-${demo.id}`);
+    if (!alarm) throw new Error('fixture alarm missing');
+    const run = context.repo.createRun({
+      id: newId('run'),
+      workspaceId: context.workspaceId,
+      userId: 'test-user',
+      alarmId: alarm.id,
+      equipmentId: demo.device,
+      window: { start: demo.start, end: isoPlus(demo.start, 30) },
+      symptom: demo.symptom,
+      dataMode: 'mock',
+      modelMode: 'fixture',
+      budget: DEFAULT_BUDGET,
+      scenarioId: demo.id,
+    });
+    context.repo.appendEvent(run.id, 'run.created', {
+      workspace_id: context.workspaceId,
+      equipment_id: run.equipment_id,
+      alarm_id: run.alarm_id,
+      data_mode: run.data_mode,
+      model_mode: run.model_mode,
+      scenario_id: demo.id,
+    });
+
+    const crashed = await orchestrator.execute(run.id, {
+      owner: 'crash-worker',
+    });
+    expect(crashed.status).toBe('failed');
+    // 二次复核开始前只落库“进行中”，不能提前标记完成；否则恢复会跳过
+    // 被中断的复核并直接报告旧假设。
+    expect(runner.checkpointAtCrash?.second_look_in_progress).toBe(true);
+    expect(runner.checkpointAtCrash?.second_look_done).toBeUndefined();
+    expect(runner.checkpointAtCrash?.verify_needs_final_call).toBeUndefined();
+    expect(
+      (runner.checkpointAtCrash?.pending_checks as unknown[] | undefined) ?? [],
+    ).toEqual([]);
+
+    context.repo.updateRun(run.id, {
+      status: 'running',
+      error: null,
+      finished_at: null,
+      lease_expires_at: '2000-01-01T00:00:00.000Z',
+    });
+    const leaseToken = context.repo.claimRun(run.id, 'recovery-worker', 60_000);
+    expect(leaseToken).not.toBeNull();
+
+    const recovered = await orchestrator.execute(run.id, {
+      owner: 'recovery-worker',
+    });
+    // 初始复核、崩溃的二次复核、恢复后重做的二次复核。
+    expect(runner.verifyCalls).toBe(3);
+    expect(recovered.status).toBe('awaiting_human');
+    expect(recovered.checkpoint?.second_look_done).toBe(true);
+    expect(recovered.checkpoint?.second_look_in_progress).toBeUndefined();
+    expect(recovered.stage_rounds.verify_evidence).toBe(2);
     expect(context.repo.getReport(run.id)?.validation.valid).toBe(true);
   }, 120_000);
 

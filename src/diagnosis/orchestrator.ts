@@ -1516,6 +1516,23 @@ export class DiagnosisOrchestrator {
       }
       if (stored.length === 0) return 'handoff';
     }
+    if (
+      state.checkpoint.second_look_in_progress &&
+      !state.checkpoint.verify_needs_final_call &&
+      asQueries(state.checkpoint.pending_checks).length === 0 &&
+      !this.canRunSecondLook(state)
+    ) {
+      // 上次 worker 在二次复核调用中崩溃，且当前预算不足以重做。
+      // 不能让报告看起来像复核已经完成；记录为被跳过的最终复核。
+      delete state.checkpoint.second_look_in_progress;
+      state.checkpoint.second_look_done = true;
+      state.checkpoint.budget_skipped_final_verify = true;
+      this.persist(state);
+      this.log(
+        state.run.id,
+        'second look interrupted by crash and cannot be retried within budget',
+      );
+    }
     let didFinalCall = false;
     if (
       state.checkpoint.verify_needs_final_call &&
@@ -1549,6 +1566,8 @@ export class DiagnosisOrchestrator {
       const control = detectControlIntent(state.run.symptom);
       this.storeHypotheses(state, output.hypotheses, control);
       delete state.checkpoint.verify_needs_final_call;
+      // 跟进复核完成后，二次复核才算真正结束；崩溃恢复走的就是这个分支。
+      delete state.checkpoint.second_look_in_progress;
       state.checkpoint.second_look_done = true;
       didFinalCall = true;
       this.persist(state);
@@ -1557,7 +1576,10 @@ export class DiagnosisOrchestrator {
     if (!didFinalCall && this.canRunSecondLook(state)) {
       const focus = this.unexplainedAnomalies(state);
       if (focus.length > 0) {
-        state.checkpoint.second_look_done = true;
+        // 二次复核是可选动作，但一旦开始就必须可恢复：先落库进行中标记，
+        // 只有复核结果和 next_checks 都持久化后才标记完成。否则 worker
+        // 在调用中途崩溃时，恢复会误以为复核已完成并直接报告旧假设。
+        state.checkpoint.second_look_in_progress = true;
         this.persist(state);
         await this.assertRunnable(state, options.owner, options.signal);
         const output = (await this.callRole(
@@ -1604,6 +1626,8 @@ export class DiagnosisOrchestrator {
             );
           }
         }
+        delete state.checkpoint.second_look_in_progress;
+        state.checkpoint.second_look_done = true;
         this.persist(state);
       }
     }
