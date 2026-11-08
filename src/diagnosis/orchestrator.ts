@@ -428,9 +428,12 @@ export class DiagnosisOrchestrator {
     if (state.modelCalls >= state.run.budget.max_model_calls) {
       throw new BudgetExceededError('模型调用次数超限');
     }
+    // 报告阶段只汇总已入库证据，不再检索；证据停滞不应阻止最终报告。
+    // 否则可选复核的空结果会把已有 supported 结论逼成兜底转人工报告。
     if (
+      stage !== 'produce_report' &&
       state.noNewEvidenceRounds >=
-      state.run.budget.max_rounds_without_new_evidence
+        state.run.budget.max_rounds_without_new_evidence
     ) {
       throw new BudgetExceededError('连续多轮没有新证据');
     }

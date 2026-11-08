@@ -10,6 +10,8 @@ export interface SeriesSummary {
   metric: string;
   unit: string;
   points: Array<{ t: string; v: number; q: string }>;
+  /** 参与数值统计的有效点数；missing 点不计入。 */
+  valid: number;
   first: number;
   last: number;
   delta: number;
@@ -111,10 +113,35 @@ export function summarizeSeries(evidence: Evidence): SeriesSummary | null {
   const sorted = [...payload.points].sort(
     (a, b) => Date.parse(a.t) - Date.parse(b.t),
   );
+  if (sorted.length === 0) return null;
+  // 只统计明确的 missing 质量点；clock_skew / bad 等由独立 flag 表达，
+  // 不能混入采样缺口，否则完整但时钟偏移的序列会被误判为 sampling_gap。
+  const missing = sorted.filter((p) => p.q === 'missing').length;
   // missing 点可能携带占位值或陈旧值，不能参与数值统计；否则会把
-  // 占位值当成真实读数，产生虚假的越界/尖峰特征。缺失数量仍单独统计。
+  // 占位值当成真实读数，产生虚假的越界/尖峰特征。
   const values = sorted.filter((p) => p.q !== 'missing').map((p) => p.v);
-  if (values.length === 0) return null;
+  const valid = values.length;
+  if (valid === 0) {
+    // 整条序列都缺失时仍保留缺失计数和质量标记，供异常清单与转人工
+    // 判断使用；但不能用占位值计算任何数值特征。
+    return {
+      evidenceId: evidence.id,
+      metric: payload.metric,
+      unit: payload.unit,
+      points: sorted,
+      valid: 0,
+      first: 0,
+      last: 0,
+      delta: 0,
+      min: 0,
+      max: 0,
+      avg: 0,
+      missing,
+      unique: 0,
+      std: 0,
+      spikeCount: 0,
+    };
+  }
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
   const variance =
     values.reduce((sum, v) => sum + (v - avg) ** 2, 0) / values.length;
@@ -134,15 +161,14 @@ export function summarizeSeries(evidence: Evidence): SeriesSummary | null {
     metric: payload.metric,
     unit: payload.unit,
     points: sorted,
+    valid,
     first,
     last,
     delta: last - first,
     min: Math.min(...values),
     max: Math.max(...values),
     avg,
-    // 只统计明确的 missing 质量点；clock_skew / bad 等由独立 flag 表达，
-    // 不能混入采样缺口，否则完整但时钟偏移的序列会被误判为 sampling_gap。
-    missing: sorted.filter((p) => p.q === 'missing').length,
+    missing,
     unique: new Set(values.map((v) => v.toFixed(2))).size,
     std: Math.sqrt(variance),
     spikeCount,
@@ -218,7 +244,9 @@ export function deriveTelemetryFeatures(
   for (const summary of best.values()) {
     const range = ranges[summary.metric] ?? null;
     const flags: string[] = [];
-    if (range) {
+    // 整条序列没有有效数值时，零值只是占位，不能据此产生越界、
+    // 恒定、尖峰或趋势标记；missing/quality 标记仍然保留。
+    if (range && summary.valid > 0) {
       if (summary.max > range.max || summary.min < range.min) {
         flags.push('out_of_range');
       }
@@ -236,12 +264,20 @@ export function deriveTelemetryFeatures(
       if (span > 0 && Math.abs(summary.delta) > span * 0.1) {
         flags.push('trend');
       }
-    } else if (summary.points.length >= 5 && Math.abs(summary.delta) > 0) {
+    } else if (
+      summary.valid > 0 &&
+      summary.points.length >= 5 &&
+      Math.abs(summary.delta) > 0
+    ) {
       const scale = Math.max(Math.abs(summary.avg), 1);
       if (Math.abs(summary.delta) > scale * 0.1) flags.push('trend');
     }
-    if (summary.spikeCount > 0) flags.push('spike');
-    if (summary.unique <= 1 && summary.points.length >= 5) {
+    if (summary.valid > 0 && summary.spikeCount > 0) flags.push('spike');
+    if (
+      summary.valid > 0 &&
+      summary.unique <= 1 &&
+      summary.points.length >= 5
+    ) {
       flags.push('constant');
     }
     if (summary.missing > 0) flags.push('missing');
@@ -258,6 +294,14 @@ export function deriveTelemetryFeatures(
     const rangeText = range
       ? `正常范围 ${range.min}–${range.max}${range.unit}`
       : '无登记正常范围';
+    const numericSummary =
+      summary.valid === 0
+        ? `${summary.metric} 无数值样本（样本 ${summary.points.length}，缺失 ${summary.missing}），不能据此判断趋势或越界`
+        : `${summary.metric} 首 ${round(summary.first)}${summary.unit} → 末 ${round(summary.last)}${summary.unit}` +
+          `（Δ${summary.delta >= 0 ? '+' : ''}${round(summary.delta)}），` +
+          `min ${round(summary.min)} / max ${round(summary.max)} / avg ${round(summary.avg)}${summary.unit}，` +
+          `${rangeText}，样本 ${summary.points.length}，缺失 ${summary.missing}，` +
+          `不同读数 ${summary.unique}，尖峰 ${summary.spikeCount}`;
     features.push({
       metric: summary.metric,
       unit: summary.unit,
@@ -275,11 +319,7 @@ export function deriveTelemetryFeatures(
       normalRange: range,
       flags,
       summary:
-        `${summary.metric} 首 ${round(summary.first)}${summary.unit} → 末 ${round(summary.last)}${summary.unit}` +
-        `（Δ${summary.delta >= 0 ? '+' : ''}${round(summary.delta)}），` +
-        `min ${round(summary.min)} / max ${round(summary.max)} / avg ${round(summary.avg)}${summary.unit}，` +
-        `${rangeText}，样本 ${summary.points.length}，缺失 ${summary.missing}，` +
-        `不同读数 ${summary.unique}，尖峰 ${summary.spikeCount}` +
+        numericSummary +
         (flags.length > 0
           ? `；标记：${flags.map((flag) => FEATURE_LABELS[flag] ?? flag).join('、')}`
           : ''),
@@ -436,6 +476,11 @@ export function collectFindings(input: {
   const ranges = NORMAL_RANGES[input.equipment.model] ?? {};
   let allMetricsNormal = true;
   for (const [metric, summary] of series) {
+    // 整条序列没有有效读数时，通道实际上不可用，不能算作“指标正常”。
+    if (summary.valid === 0) {
+      allMetricsNormal = false;
+      continue;
+    }
     const range = ranges[metric];
     if (!range) continue;
     if (
@@ -560,17 +605,19 @@ export function inferRootCauses(input: {
   const currentRise = currentDelta >= 2.5;
   const spikes = (temp?.spikeCount ?? 0) >= 2;
 
-  if (temp)
+  if (temp && temp.valid > 0) {
     notes.push(`温度 ${temp.first}→${temp.last}（Δ${tempDelta.toFixed(1)}）`);
-  if (vibration) {
+  }
+  if (vibration && vibration.valid > 0) {
     notes.push(
       `振动 ${vibration.first}→${vibration.last}（Δ${vibDelta.toFixed(1)}）`,
     );
   }
-  if (current)
+  if (current && current.valid > 0) {
     notes.push(
       `电流 ${current.first}→${current.last}（Δ${currentDelta.toFixed(1)}）`,
     );
+  }
   if (gap) notes.push(`缺失样本 ${findings.missingSamples}`);
   if (findings.clockSkew) notes.push('存在时钟偏移/乱序');
 

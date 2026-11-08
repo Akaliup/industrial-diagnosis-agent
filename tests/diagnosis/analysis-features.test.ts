@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  collectFindings,
   deriveAnomalyLedger,
   deriveTelemetryFeatures,
   summarizeSeries,
@@ -143,6 +144,53 @@ describe('telemetry feature derivation', () => {
     expect(feature.flags).not.toContain('spike');
     expect(feature.flags).not.toContain('near_upper_limit');
     expect(feature.summary).toContain('min 65 / max 65 / avg 65');
+  });
+
+  test('keeps an entirely missing series visible as a missing anomaly', () => {
+    const missing = series(
+      'ev_all_missing',
+      'bearing_temperature',
+      Array(10).fill(250),
+      Array(10).fill('missing'),
+    );
+    const normal = series(
+      'ev_normal_vibration',
+      'vibration_rms',
+      Array(10).fill(3),
+    );
+    const summary = summarizeSeries(missing)!;
+    expect(summary.valid).toBe(0);
+    expect(summary.missing).toBe(10);
+
+    const features = deriveTelemetryFeatures([missing, normal], 'NP-200');
+    const temperature = features.find(
+      (feature) => feature.metric === 'bearing_temperature',
+    )!;
+    expect(temperature.missing).toBe(10);
+    expect(temperature.flags).toContain('missing');
+    expect(temperature.flags).not.toContain('out_of_range');
+    expect(temperature.flags).not.toContain('spike');
+    expect(temperature.flags).not.toContain('constant');
+    expect(temperature.summary).toContain('无数值样本');
+
+    const findings = collectFindings({
+      evidence: [missing, normal],
+      equipment: {
+        equipment_id: 'EQ-1',
+        name: 'Test',
+        vendor: 'V',
+        model: 'NP-200',
+        serial: 'S',
+        manual_document_id: 'DOC-1',
+        manual_version: 'v1',
+        source_ids: ['src-scada'],
+      },
+      alarm: null,
+      toolHistory: [],
+    });
+    expect(findings.missingSamples).toBe(10);
+    // 另一条正常序列不能让完全不可用的通道被算作“指标正常”。
+    expect(findings.allMetricsNormal).toBe(false);
   });
 
   test('separates support, contradiction and unexplained references', () => {

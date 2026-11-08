@@ -284,6 +284,44 @@ describe('run budget accounting', () => {
     expect(canRunVerifyFollowUp(state)).toBe(true);
   });
 
+  test('does not let evidence stagnation block the final report', async () => {
+    let calls = 0;
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-stagnant',
+      run: async () => {
+        calls += 1;
+        return {
+          output: {},
+          mode: 'fixture',
+          model: 'fake-stagnant',
+          inputTokens: 1,
+          outputTokens: 1,
+          latencyMs: 0,
+        };
+      },
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_rounds_total: 20,
+        max_rounds_per_stage: 20,
+        max_output_tokens: 20_000,
+      }),
+    );
+    state.noNewEvidenceRounds = DEFAULT_BUDGET.max_rounds_without_new_evidence;
+    state.stage = 'verify_evidence';
+    await expect(
+      callRole(orchestrator, state, 'verify_evidence', 'hypothesis_verifier'),
+    ).rejects.toBeInstanceOf(BudgetExceededError);
+    expect(calls).toBe(0);
+    // 可选复核没有带来新证据时，报告阶段仍必须能汇总已有证据。
+    state.stage = 'produce_report';
+    await callRole(orchestrator, state, 'produce_report', 'report_reviewer');
+    expect(calls).toBe(1);
+  });
+
   test('keeps the final total round for the report stage', async () => {
     let calls = 0;
     const runner: RoleRunner = {
