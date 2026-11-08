@@ -18,6 +18,7 @@ on:
       - 'web/tests/e2e/diagnosis/**'
       - 'fixtures/diagnosis/**'
       - 'evals/diagnosis/**'
+      - 'evals/diagnosis-phase3/**'
       - 'tests/diagnosis/**'
       - 'scripts/diagnosis/**'
       - 'config/diagnosis/**'
@@ -43,6 +44,7 @@ on:
       - 'web/tests/e2e/diagnosis/**'
       - 'fixtures/diagnosis/**'
       - 'evals/diagnosis/**'
+      - 'evals/diagnosis-phase3/**'
       - 'tests/diagnosis/**'
       - 'scripts/diagnosis/**'
       - 'config/diagnosis/**'
@@ -62,6 +64,9 @@ jobs:
       DIAGNOSIS_MODEL_MODE: fixture
       DIAGNOSIS_DATA_MODE: mock
       DIAGNOSIS_E2E_PORT: '3199'
+      # The diagnosis job never launches Electron; skip its binary download so
+      # a slow or failing Electron release mirror cannot block CI.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 

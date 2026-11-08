@@ -25,6 +25,8 @@ import { newId, nowIso, stableScopedId } from './util.js';
 export interface EvalRunOptions {
   split: 'dev' | 'holdout' | 'all';
   limit?: number | null;
+  /** 只运行指定 case_id；用于失败用例的定向复验，不影响评测口径。 */
+  caseIds?: string[] | null;
   mode: ModelMode;
   evalRunId?: string;
   fixturesDir?: string;
@@ -87,6 +89,7 @@ function readJson<T>(file: string): T {
 function loadCases(
   evalDir: string,
   split: EvalRunOptions['split'],
+  caseIds?: string[] | null,
 ): Array<{ caseFile: EvalCaseFile; gold: EvalGoldFile }> {
   const caseDir = path.join(evalDir, 'cases');
   const goldDir = path.join(evalDir, 'gold');
@@ -94,10 +97,12 @@ function loadCases(
     .readdirSync(caseDir)
     .filter((file) => file.endsWith('.json'))
     .sort();
+  const wanted = caseIds && caseIds.length > 0 ? new Set(caseIds) : null;
   const result: Array<{ caseFile: EvalCaseFile; gold: EvalGoldFile }> = [];
   for (const file of files) {
     const caseFile = readJson<EvalCaseFile>(path.join(caseDir, file));
     if (split !== 'all' && caseFile.split !== split) continue;
+    if (wanted && !wanted.has(caseFile.case_id)) continue;
     const gold = readJson<EvalGoldFile>(path.join(goldDir, file));
     result.push({ caseFile, gold });
   }
@@ -247,9 +252,12 @@ export async function runEvalSuite(
       bus: new DiagnosisEventBus(),
       runner,
       fixturesDir,
+      // Live 模型上下文远大于 8k；保留 16k 输入上限以容纳异常清单和
+      // 关键证据，同时仍受 Run 的 max_input_tokens 总预算约束。
+      modelWindow: options.mode === 'live' ? 32_000 : null,
     });
 
-    const cases = loadCases(evalDir, options.split);
+    const cases = loadCases(evalDir, options.split, options.caseIds);
     const selected = options.limit ? cases.slice(0, options.limit) : cases;
     if (selected.length === 0) {
       throw new Error('没有可运行的评测用例');

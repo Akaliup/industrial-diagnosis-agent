@@ -137,7 +137,9 @@ export class LiveRoleRunner implements RoleRunner {
     const started = Date.now();
     const repair =
       input.repairIssues && input.repairIssues.length > 0
-        ? `\n\n上一次输出存在以下问题，必须逐项修复：\n- ${input.repairIssues.join('\n- ')}`
+        ? `\n\n上一次输出存在以下问题，必须逐项修复：\n- ${input.repairIssues.join('\n- ')}` +
+          '\n\n修复要求：只输出一个完整、可解析、严格符合角色 Schema 的 JSON 对象；' +
+          '不要添加 Schema 之外的字段；内容过长时先精简描述性字段，不得在 JSON 中途截断。'
         : '';
     const body = {
       model: this.options.model,

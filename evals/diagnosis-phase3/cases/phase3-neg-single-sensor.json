@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-neg-single-sensor",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-11T00:00:00.000Z",
+      "end": "2026-12-11T00:30:00.000Z"
+    },
+    "symptom": "仅轴承温度缓慢上升，振动、电流、流量均正常"
+  },
+  "source_snapshot": "phase3-neg-single-sensor",
+  "clock": "2026-12-11T00:30:00.000Z",
+  "fault_injections": ["sensor_drift"]
+}

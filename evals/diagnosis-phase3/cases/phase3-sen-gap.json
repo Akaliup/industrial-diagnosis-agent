@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-sen-gap",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-07T00:00:00.000Z",
+      "end": "2026-12-07T00:30:00.000Z"
+    },
+    "symptom": "报警前后遥测样本连续缺失，工艺值正常"
+  },
+  "source_snapshot": "phase3-sen-gap",
+  "clock": "2026-12-07T00:30:00.000Z",
+  "fault_injections": ["sampling_gap"]
+}

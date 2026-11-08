@@ -652,6 +652,8 @@ export const HypothesisDraftSchema = z
     contradicting_evidence_ids: z.array(z.string()).max(30),
     missing_evidence: z.array(z.string()).max(10),
     next_check: z.string().max(300).nullable(),
+    /** 模型对状态判断的补充说明；可选，不参与状态/证据一致性校验。 */
+    status_note: z.string().max(300).optional(),
   })
   .strict();
 export type HypothesisDraft = z.infer<typeof HypothesisDraftSchema>;
@@ -901,6 +903,7 @@ export const RunEventTypeSchema = z.enum([
   'tool.finished',
   'evidence.added',
   'hypothesis.updated',
+  'report.reconciled',
   'review.required',
   'report.ready',
   'run.failed',

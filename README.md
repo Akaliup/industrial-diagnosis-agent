@@ -1,329 +1,232 @@
-# 工业诊断 Agent
+# Industrial Diagnosis Agent
 
 <p align="center">
-  <img src="web/public/icons/logo-1024.png" alt="工业诊断 Agent logo" width="96" />
+  <img src="web/public/icons/logo-1024.png" alt="Industrial Diagnosis Agent" width="112" />
 </p>
 
 <p align="center">
-  <strong>面向工业设备报警的自托管诊断 Agent</strong><br />
-  统一设备查询 → 状态确认 → 异常定位 → 假设生成 → 证据验证 → 引用报告 → 人工复核。
+  <strong>工业设备故障诊断智能体</strong><br />
+  从一条设备报警开始，用只读工具收集证据、验证假设，输出每条结论都可追溯的诊断报告，并把最终判断交给人。
 </p>
 
 <p align="center">
-  <a href="https://github.com/Akaliup/industrial-diagnosis-agent">GitHub</a> ·
-  <a href="docs/diagnosis/README.md">诊断文档</a> ·
+  <a href="https://github.com/Akaliup/industrial-diagnosis-agent/actions/workflows/ci.yml"><img src="https://github.com/Akaliup/industrial-diagnosis-agent/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Akaliup/industrial-diagnosis-agent/actions/workflows/diagnosis-ci.yml"><img src="https://github.com/Akaliup/industrial-diagnosis-agent/actions/workflows/diagnosis-ci.yml/badge.svg" alt="Diagnosis CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
+</p>
+
+<p align="center">
+  <a href="docs/diagnosis/DEMO.md">3 分钟演示</a> ·
+  <a href="docs/diagnosis/ARCHITECTURE.md">架构</a> ·
   <a href="docs/diagnosis/ACCEPTANCE.md">验收报告</a> ·
-  <a href="docs/API.md">API</a> ·
-  <a href="docs/ACL-MATRIX.md">权限模型</a>
+  <a href="docs/diagnosis/PROJECT_STORY.md">项目复盘</a> ·
+  <a href="docs/diagnosis/README.md">文档索引</a>
 </p>
 
-> 一句话：从一条设备报警开始，Agent 用只读工具收集证据、验证假设，输出每一条结论都可追溯到证据与手册版本的诊断报告，并把最终判断交给人。
+> **默认零配置可跑**：`fixture` 模型 + `mock` 数据，不需要 API Key。
+> 真实模型、企业来源与设备控制分别有明确的状态边界，不会用 Mock 冒充现场结果。
 
-## 诊断链路
+## 它解决什么问题
 
-- **统一设备查询**：设备解析、遥测/报警/MES/工单/手册/案例六类只读 MCP 工具。
-- **五阶段编排**：状态确认、异常定位、假设生成、证据验证、报告生成，阶段间有预算与检查点。
-- **证据与引用**：确定性证据 ID、手册版本/撤回校验、引用完整性校验、反证保留。
-- **人工复核**：报告进入复核队列；高风险建议需要审批，审批只确认意图，不执行设备控制。
-- **可回归**：50 例 Fixture Eval、Trace replay、CI 门禁；指标含 Top-1/Top-3、证据覆盖、
-  工具选择准确率、反证保留、转人工准确率、延迟与 token；Fixture 分数不代表真实模型精度。
-- **真实模型试点**：已用已授权 DeepSeek 兼容端点跑通 10 例 dev Live Eval（10/10），
-  逐次模型调用与失败原因可审计；结果见 [验收报告](docs/diagnosis/ACCEPTANCE.md) §6.1，
-  不外推为企业现场精度。
-- **可审计**：工具调用轨迹、逐次模型调用审计（模型/角色/token/延迟/工具请求/失败原因）、
-  租约围栏、预算预留/结算、崩溃后回执未知标记。
+工业现场的一条“轴承温度高”报警，可能来自传感器漂移、润滑不足、轴承磨损，也可能只是通讯误报。传统做法依赖工程师在多个系统之间翻遥测、查手册、找工单，结论难以复核。
 
-### 快速开始
+本项目把这段过程做成一条可审计的诊断链路：
 
-```bash
-npm run diagnosis:setup
-npm run diagnosis:server
-# http://127.0.0.1:3100/diagnosis
+- **只读取数**：设备、遥测、报警、MES、工单、手册、案例统一为六个只读 MCP 工具。
+- **五阶段推理**：确认状态 → 定位异常 → 生成假设 → 验证证据 → 生成报告，阶段间有预算与检查点。
+- **证据链**：每个结论绑定确定性证据 ID、来源定位与 payload hash；支持证据与反证同时保留。
+- **人工兜底**：证据不足或来源超时会明确转人工，不编造结论；控制执行始终禁用。
+- **可回归**：50 例 Fixture Eval、Trace Replay 与 CI 门禁，把 Agent 行为当作工程产物验证。
+
+## 产品界面
+
+### 诊断工作台
+
+五阶段状态、候选根因、支持/反证证据、预算与工具轨迹在同一个页面完成。
+
+<p align="center">
+  <img src="docs/diagnosis/screenshots/workbench-1440x900.png" alt="诊断工作台：传感器漂移结论、五阶段进度与证据链" width="100%" />
+</p>
+
+### 报警收件箱与证据抽屉
+
+<p align="center">
+  <img src="docs/diagnosis/screenshots/inbox-1440x900.png" alt="报警收件箱" width="49%" />
+  <img src="docs/diagnosis/screenshots/evidence-drawer-1440x900.png" alt="证据抽屉：来源、定位、payload hash" width="49%" />
+</p>
+
+### 人工复核与评测回放
+
+<p align="center">
+  <img src="docs/diagnosis/screenshots/reviews-1440x900.png" alt="复核与审批队列" width="49%" />
+  <img src="docs/diagnosis/screenshots/eval-1440x900.png" alt="50 例 Fixture 评测与逐例 Trace" width="49%" />
+</p>
+
+<p align="center">
+  <img src="docs/diagnosis/screenshots/review-submitted-1440x900.png" alt="复核提交后表单锁定" width="72%" />
+</p>
+
+<details>
+<summary>响应式界面（平板 / 手机）</summary>
+<p align="center">
+  <img src="docs/diagnosis/screenshots/inbox-1024x768.png" alt="1024×768 报警收件箱" width="60%" />
+  <img src="docs/diagnosis/screenshots/mobile-nav-390x844.png" alt="390×844 移动端导航" width="24%" />
+</p>
+</details>
+
+> 以上截图由 Playwright 在真实运行的 Backend + MCP + Web 上生成，未使用静态 HTML 或合成图。
+> 页面中的“模拟数据 / 预录演示推理 / 控制执行禁用”标识是产品状态的一部分。
+
+## 核心能力
+
+| 能力                    | 实现                                                                                                                                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **五阶段 Harness**      | `confirm_status → locate_anomaly → generate_hypotheses → verify_evidence → produce_report`，阶段事件可回放；每阶段有轮次与 token 预算                                                                    |
+| **MCP 设备查询**        | 六个只读工具：`equipment_resolve`、`equipment_query`（状态/遥测/报警/MES/工单）、`maintenance_search_manual`、`maintenance_get_manual_section`、`maintenance_search_cases`、`evidence_get`；Zod 严格校验 |
+| **动态假设与复核**      | 模型可提出多个竞争假设；验证阶段支持二次复核与补充检查，反证不会被静默丢弃                                                                                                                               |
+| **Context / 手册检索**  | 每轮记录上下文来源与预算清单；手册引用绑定文档版本，撤回版本会使引用失效                                                                                                                                 |
+| **Evidence / Citation** | 证据 ID 在入库时按 Workspace、Run、来源、记录、payload hash 确定性重算；报告引用逐条校验设备、时间窗、机型与手册版本                                                                                     |
+| **PolicyGateway**       | 工具白名单、角色/设备范围、参数校验、重复调用守卫、租约 token；越权与未知工具直接拒绝                                                                                                                    |
+| **人工复核**            | 报告进入复核队列；接受/驳回/补充信息都会回写报告状态；高风险建议不能由申请人自己批准                                                                                                                     |
+| **Checkpoint / 容错**   | 预算耗尽、worker 崩溃、取消、迟到回执都有明确状态；恢复时不会把未知回执当成成功                                                                                                                          |
+| **Agent Eval / Replay** | 50 例离线评测、逐例 Trace、只读 Trace Replay、回归门禁；指标覆盖 Top-1/Top-3、证据覆盖、工具选择、反证保留、转人工准确率                                                                                 |
+| **报告导出**            | 工作台直接导出 Markdown 或打开 HTML 报告页；报告包含引用、限制、复核状态与免责声明                                                                                                                       |
+
+## 架构
+
+```mermaid
+flowchart LR
+  A["设备报警<br/>Mock / 企业来源"] --> B["只读适配器<br/>REST · MES · 工单 · 手册"]
+  B --> C["MCP 工具网关<br/>PolicyGateway 白名单"]
+  C --> D["诊断 Harness<br/>五阶段 · 预算 · Checkpoint"]
+  D --> E["Context & Knowledge<br/>遥测 · 手册版本 · 案例"]
+  E --> D
+  D --> F["假设验证<br/>支持 / 反证 / 二次复核"]
+  F --> G["报告校验<br/>证据 ID · 引用完整性"]
+  G --> H["人工复核<br/>接受 / 驳回 / 补充信息"]
+  H --> I["Markdown / HTML 报告<br/>control_execution = disabled"]
+  D -.-> J["Trace / Eval<br/>Fixture · Live · Replay"]
 ```
 
-空库首次打开会进入 setup 向导创建管理员。默认使用 `fixture` 模型 + `mock` 数据；
-真实模型未配置时显示 `NOT_RUN`，企业来源未配置时显示 `UNCONFIGURED`，控制执行始终为 `DISABLED`。
+**数据与模型状态是分开的**：
 
-详见 [诊断文档索引](docs/diagnosis/README.md)、[架构](docs/diagnosis/ARCHITECTURE.md)、
-[演示步骤](docs/diagnosis/DEMO.md) 与 [验收报告](docs/diagnosis/ACCEPTANCE.md)。
+| 维度     | 当前状态         | 说明                                                                                  |
+| -------- | ---------------- | ------------------------------------------------------------------------------------- |
+| 演示数据 | `mock` / Fixture | 仓库内为虚构设备、时序、报警、手册与案例                                              |
+| 真实模型 | 已验证，当前暂停 | 已用授权 DeepSeek 兼容端点跑过 dev 试点与全量 50 例；最终复验因 HTTP 402 为 `NOT_RUN` |
+| 企业来源 | `UNCONFIGURED`   | 适配器与字段映射已就绪，未接入真实 SCADA / MES / RootCloud                            |
+| 设备控制 | `disabled`       | 本版本没有控制工具；审批只登记意图，不下发指令                                        |
 
-## 底层工作台
+## 3 分钟本地演示
 
-诊断链路运行在同一个自托管 Agent 工作台上，采用智能体优先工作模型，复用其登录、
-Workspace、Session、Memory、Skills/MCP/Plugins、渠道与定时任务能力；诊断页面是独立入口，
-不恢复通用 Agent 的工具权限。
-
-## 界面与体验
-
-工作台围绕 `Agent → Workspace → Runtime Session` 组织信息。左侧导航提供工作台、智能体、能力库、任务、用量、账单和设置入口；进入工作台后，可以在同一个界面中切换 Agent、Workspace 和对话上下文。
-
-下面是当前桌面端工作台的实际界面：
-
-<p align="center">
-  <img src="docs/screenshots/workbench.png" alt="工业诊断 Agent 智能体工作台" width="900" />
-</p>
-
-<p align="center">
-  <em>工作台：在同一个窗口中管理 Agent、Workspace、Session 与对话。</em>
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/capabilities.png" alt="工业诊断 Agent 能力库" width="49%" />
-  <img src="docs/screenshots/settings-models.png" alt="工业诊断 Agent 模型配置" width="49%" />
-</p>
-
-<p align="center">
-  <em>能力库与模型配置：把 Skills、MCP、Plugins 和 Provider 配置放在清晰的管理边界内。</em>
-</p>
-
-工业诊断 Agent 图标同时用于 Web/PWA、Electron 窗口和安装包资源：
-
-<p align="center">
-  <img src="web/public/icons/logo-1024.png" alt="工业诊断 Agent application icon" width="160" />
-</p>
-
-## 核心功能
-
-### Agent 与 Workspace
-
-- 用 Agent Profile 保存身份、模型、思考级别、Skills、MCP 与执行策略。
-- 每个 Workspace 拥有独立的文件、Session、Memory、渠道绑定和执行边界。
-- Home Workspace 与自定义 Agent 分层管理，支持创建、重命名、重建、清空和删除。
-- 支持 Host 与 Docker 两种执行方式；需要隔离的任务可以在 Agent Runner 容器中运行。
-
-### Pi Agent Runtime
-
-- 基于 Pi Agent Runtime 提供 prompt、流式输出、工具调用、Session 持久化与恢复。
-- 支持 abort、follow-up、原生 compaction 和持久化 JSONL Session。
-- 复用现有 MCP capability handler，并映射为稳定的 `mcp__industrial_diagnosis__*` 工具。
-- Subagents 通过 Pi extension 与显式的 spawn/stop 生命周期桥接。
-- Runtime 不会静默假装拥有缺失能力；尚未接入 Pi 的 Web Search/Web Fetch 能力会保持明确不可用。
-
-### Memory 与上下文
-
-- Memory 按 Workspace 隔离，不在不同工作区之间隐式共享。
-- 支持事实、偏好、决策和经验等知识类型，以及搜索、编辑、忘记和版本历史。
-- 写入使用 revision 与 compare-and-set，避免并发编辑覆盖彼此的修改。
-- 每条 Memory 可记录来源 Session、来源类型、观察时间和变更历史，便于回溯 provenance。
-- Runtime 只注入当前 Workspace 允许使用的记忆，不把平台身份约束当作普通用户记忆。
-
-### Skills、MCP 与 Plugins
-
-- 内置、宿主机、项目、用户、Workspace 和 Plugin 层级的 Skills 统一解析。
-- 能力库集中展示 Skills、MCP 与 Plugins 的可用状态、依赖和能力预览。
-- Plugin Catalog 支持扫描、导入、版本快照和用户启用配置。
-- Agent 运行前会计算有效能力 Manifest，并把 Skills、MCP、Memory、Workspace 与渠道上下文按策略注入。
-- 路径穿越、符号链接逃逸、越权 Workspace 与未授权 capability 会在边界层拒绝。
-
-### 渠道与自动化
-
-- 支持将消息渠道绑定到指定 Workspace 或 Session，并按用户、群聊、话题和 owner 规则进行 ACL 判断。
-- 支持飞书、Telegram、QQ、钉钉、微信、Discord、WhatsApp 等消息入口。
-- Scheduler 支持 Cron、固定间隔和一次性任务，提供立即运行、暂停、取消、运行历史和结果投递。
-- 后台任务、Subagent 和渠道回复都沿用同一套 Workspace、Session、owner 与权限上下文。
-
-### Electron Desktop
-
-- Electron 只是 Desktop Shell，复用现有 Web Client，不在 Renderer 中承载数据库、文件系统、凭证、Docker 或 shell/process 权限。
-- Main Process 负责窗口生命周期、外部链接、菜单和受限 IPC；Preload 只暴露白名单 API。
-- 默认提供 macOS arm64 打包配置，并保留 Windows、Linux 目标配置。
-- 同一套 Renderer 可以连接本地 Backend，也可以通过 `INDUSTRIAL_DIAGNOSIS_SERVER_URL` 连接远程工业诊断 Agent 服务。
-
-## 工作原理
-
-```text
-Web Client / Electron Desktop / Message Channels
-                         │ HTTP + WebSocket / Channel Adapters
-                         ▼
-                工业诊断 Agent Backend
-        Auth · API · Queue · Scheduler · ACL
-                         │
-        ┌────────────────┼─────────────────┐
-        ▼                ▼                 ▼
-   Workspace         Capability         Channel
-   Session           Registry            Binding
-   Memory            Skills/MCP          Delivery
-                         │
-                         ▼
-                 Pi Agent Runner
-                   Host / Docker
-                         │
-                         ▼
-                Pi Agent Runtime
-          Tools · Extensions · Subagents
-```
-
-核心边界保持清晰：Backend 负责认证、持久化、队列、调度、渠道和授权；Pi Runner 负责 Agent 执行；Workspace 决定文件与运行边界；Electron Renderer 只负责界面和受限的桌面桥接。
-
-## 快速开始
-
-### 环境要求
-
-- Node.js 20 或更高版本
-- npm
-- GNU Make
-- 如果使用容器执行模式，需要 Docker
-
-### 启动 Backend 与 Web Client
+环境要求：Node.js 20+、npm。默认路径不需要 Docker、不需要模型 API Key。
 
 ```bash
 git clone https://github.com/Akaliup/industrial-diagnosis-agent.git
-cd industrial-diagnosis
+cd industrial-diagnosis-agent
 
 npm install
 npm --prefix web install
-npm --prefix container/agent-runner install
+npm --prefix packages/industrial-diagnosis-mcp install
 
-# 首次安装或依赖更新后构建 Backend、Web 与 Agent Runner
-npm run build:all
+npm run diagnosis:build:mcp
+npm run build:web
 
-# 启动生产式本地服务
-npm start
+npm run diagnosis:setup
+npm run diagnosis:server
 ```
 
-默认地址：<http://127.0.0.1:3000>
+打开 **<http://127.0.0.1:3100/diagnosis>**。
 
-开发模式可以直接启动 Backend 和 Vite Web Client：
+> 只跑诊断演示时，可以用 `ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install` 跳过 Electron
+> 二进制下载；诊断页面本身不需要 Electron。需要桌面端时再正常安装。
 
-```bash
-npm run dev:all
+1. 首次打开按向导创建管理员。
+2. 在报警收件箱点击“载入演示数据”（幂等）。
+3. 打开 `1号循环泵 / DEMO-BRG-01 / 轴承温度高`，点击“开始诊断”。
+4. 等待五阶段完成，查看“传感器漂移”结论、支持/反证证据与预算。
+5. 点击任意 `ev_...` 打开证据抽屉；滚动到“人工复核”提交意见。
+6. 在“评测与回放”查看 50 例 Fixture 结果并打开逐例 Trace。
+7. 右上角导出 Markdown 或打开 HTML 报告页。
+
+端口占用时设置 `DIAGNOSIS_PORT=3101`。完整步骤、截图复现命令与演示时不要做的事见
+[`docs/diagnosis/DEMO.md`](docs/diagnosis/DEMO.md)。
+
+## 评测结果
+
+Fixture 与真实模型必须分开看。**Fixture 50/50 只代表工程回归，不代表真实模型精度。**
+
+| 验证                       | 结果                                                        | 说明                                                                         |
+| -------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Fixture 回归门禁（50 例）  | **50/50 PASS**                                              | 引用完整性、证据覆盖、工具选择、反证保留、转人工判断均为 1.0；`越权调用 = 0` |
+| DeepSeek dev 试点（10 例） | **10/10**                                                   | 历史结果，已授权兼容端点；65 次模型调用、0 失败                              |
+| DeepSeek 全量 50 例        | **23/50**                                                   | 历史结果（dev 14/29、holdout 9/21）；使用修复前预算，是下界                  |
+| Phase 3 定向真实模型       | **机械 2/2、`mul-align-lube` 1/1、`mul-bearing-drift` 1/1** | 只覆盖定向用例，不外推为全量或现场精度                                       |
+| Phase 3 最终 10 例复验     | **NOT_RUN**                                                 | 第一次模型调用 HTTP 402 余额不足；未自动重试、未充值                         |
+| 诊断测试                   | **140 个**（23 文件）                                       | 覆盖编排、预算、取消、崩溃恢复、证据校验、Webhook、Eval 与 Trace Replay      |
+
+失败类别、逐例 Trace 与“为什么不把 3 个截断用例事后改判为通过”的说明见
+[`docs/diagnosis/ACCEPTANCE.md`](docs/diagnosis/ACCEPTANCE.md) §6。
+
+## 技术栈
+
+- **运行时**：Node.js 20+、TypeScript、tsx
+- **服务端**：Hono、better-sqlite3（SQLite + FTS5）、Zod、WebSocket
+- **Agent / 工具**：MCP stdio JSON-RPC、Pi Agent Runtime（底层工作台复用）
+- **前端**：React 19、Vite、Tailwind CSS 4、Radix UI、React Router、Zustand
+- **桌面**：Electron（Main / Preload / Renderer 分层，Renderer 不接触数据库与凭证）
+- **测试**：Vitest、Playwright
+- **CI**：GitHub Actions（`CI`、`Diagnosis CI`）
+
+## 安全与当前边界
+
+- **只读**：诊断工具固定为六个只读工具；未知工具、控制工具、越界设备与额外参数会被网关拒绝。
+- **不控制设备**：`control_execution` 始终为 `disabled`；审批只记录建议意图，不触发任何设备动作。
+- **不伪造证据**：证据 ID 入库重算；报告引用必须匹配 Run 作用域、时间窗、机型与 payload hash。
+- **不静默回退**：来源超时或证据不足转人工；`live` 模式不会回退 Mock；未配置真实模型时 Live Eval 为 `NOT_RUN`。
+- **权限边界**：Workspace ACL、owner、角色与系统权限在服务端共同判定；高风险建议不能由申请人自己批准。
+- **凭证**：API Key 只存在本机 `.env.diagnosis`，不写入 Trace、报告、截图或仓库。
+- **未接入真实企业系统**：没有真实 SCADA / MES / RootCloud 数据；本机假 REST 只用于验证配置链路。
+
+安全问题请参考 [`SECURITY.md`](SECURITY.md)，完整权限矩阵见 [`docs/ACL-MATRIX.md`](docs/ACL-MATRIX.md)。
+
+## 底层架构与开源复用
+
+诊断链路运行在同一个自托管 Agent 工作台上，复用其登录、Workspace、Session、Memory、
+Skills/MCP/Plugins、渠道与定时任务能力。诊断页面是独立入口，不恢复通用 Agent 的工具权限。
+
+```text
+Web / Electron / IM Channels
+        │
+        ▼
+Backend：Auth · API · Queue · Scheduler · ACL · SQLite
+        │
+        ▼
+Pi Agent Runtime（Host / Docker）
+        │
+        ▼
+诊断 Harness + MCP 只读工具
 ```
 
-首次进入时完成管理员初始化和 Provider 配置即可。Provider/渠道接入步骤现在可以选择“稍后设置”，跳过后仍可进入工作台，之后在设置中补齐模型和渠道配置。
+通用工作台采用智能体优先工作模型，其 Agent Profile、Workspace、Session、Memory、
+Skills/MCP/Plugins、渠道接入、Scheduler 与 Electron Shell 不在这里展开，避免掩盖工业诊断主线；需要时从
+[`docs/API.md`](docs/API.md) 与 [`docs/ACL-MATRIX.md`](docs/ACL-MATRIX.md) 进入。
 
-Agent 容器镜像默认使用 `industrial-diagnosis-agent:latest`，可以通过 `INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE` 或 `CONTAINER_IMAGE` 覆盖。
-
-### 启动 Electron Desktop
-
-先启动 Backend 与 Vite：
-
-```bash
-npm run dev:all
-```
-
-再在另一个终端启动桌面端：
-
-```bash
-INDUSTRIAL_DIAGNOSIS_RENDERER_URL=http://127.0.0.1:5173 npm run desktop:dev
-```
-
-如果直接使用 Backend 提供的构建后页面，可以省略 `INDUSTRIAL_DIAGNOSIS_RENDERER_URL`：
-
-```bash
-npm run desktop:dev
-```
-
-连接远程 Backend 时：
-
-```bash
-INDUSTRIAL_DIAGNOSIS_SERVER_URL=https://your-industrial-diagnosis.example.com npm run desktop:dev
-```
-
-打包命令：
-
-```bash
-# 生成未安装目录，适合本地冒烟验证
-npm run desktop:package:dir
-
-# 生成当前平台的安装包
-npm run desktop:package
-```
-
-打包配置位于 [`electron/electron-builder.yml`](electron/electron-builder.yml)，图标资源位于 [`electron/assets`](electron/assets)。正式发布前请为目标平台配置签名与公证。
-
-## 常用命令
-
-| 命令                          | 说明                                                 |
-| ----------------------------- | ---------------------------------------------------- |
-| `npm run dev:all`             | 启动 Backend 与 Vite Web Client                      |
-| `npm run build:all`           | 构建 Backend、Web Client 与 Agent Runner             |
-| `npm run typecheck`           | 检查 Backend TypeScript                              |
-| `make typecheck`              | 执行 Backend、Web、Agent Runner 的完整类型与文档检查 |
-| `npm test -- --run`           | 运行 Vitest 测试                                     |
-| `npm run desktop:typecheck`   | 检查 Electron Main/Preload 类型                      |
-| `npm run desktop:build`       | 构建 Electron Main/Preload bundle                    |
-| `npm run desktop:package:dir` | 构建并生成目录形式的桌面应用                         |
-| `npm run desktop:package`     | 构建并打包桌面应用                                   |
-| `make backup`                 | 创建运行时数据备份                                   |
-| `make restore FILE=...`       | 恢复指定备份                                         |
-| `make status`                 | 查看 Backend、日志和 Docker 状态                     |
-| `make stop`                   | 停止当前端口上的工业诊断 Agent 服务                  |
-
-## 配置入口
-
-| 环境变量                               | 用途                                                | 默认值                              |
-| -------------------------------------- | --------------------------------------------------- | ----------------------------------- |
-| `INDUSTRIAL_DIAGNOSIS_SERVER_URL`      | Electron 要连接的 Backend 地址                      | `http://127.0.0.1:3000`             |
-| `INDUSTRIAL_DIAGNOSIS_RENDERER_URL`    | Electron 要加载的 Renderer 地址，适合本地 Vite 开发 | 与 Server URL 相同                  |
-| `INDUSTRIAL_DIAGNOSIS_CONTAINER_IMAGE` | Agent Runner 使用的容器镜像                         | `industrial-diagnosis-agent:latest` |
-| `CONTAINER_IMAGE`                      | 容器镜像的兼容覆盖项                                | 同上                                |
-| `WEB_PORT`                             | Makefile 启动 Backend 使用的端口                    | `3000`                              |
-
-不要把 API Key、Session Cookie 或其他凭证写入命令行历史、截图或提交到仓库。远程部署时使用 HTTPS/WSS，并为反向代理、Cookie 和访问控制配置独立的安全边界。
-
-## 执行与安全边界
-
-- Backend 由 Node.js 运行，负责认证、API、WebSocket、队列、调度、渠道连接、Provider、用量和 SQLite 持久化。
-- Docker 只隔离 Agent 执行环境，不承载 Desktop UI，也不替代 Backend 的授权层。
-- Electron BrowserWindow 使用 `contextIsolation`、关闭 `nodeIntegration` 和 sandbox。
-- Renderer 不直接读取文件、数据库或凭据；需要本机能力时只通过受限 Preload IPC 调用。
-- 外部链接由 Main Process 校验协议后打开；Renderer 导航限制在允许的 Backend/Renderer origin 内。
-- Workspace ACL、owner、用户角色、系统权限和 Host 执行策略在服务端共同判定，不能因为拥有某一层权限就自动越过其他边界。
-- Memory、Skills、MCP、Plugins 和 Scheduler 任务都继承用户、Agent、Workspace 与 Session 上下文。
-
-更多权限约束见 [`docs/ACL-MATRIX.md`](docs/ACL-MATRIX.md)，安全问题请参考 [`SECURITY.md`](SECURITY.md)。
-
-## 项目状态
-
-工业诊断 Agent 当前处于持续开发阶段。仓库已经包含：
-
-- Pi Agent Runtime 生产执行路径与 runtime-neutral contract。
-- Web Client 与 Electron Desktop Shell。
-- Agent Profile、Workspace、Session、Memory、Skills、MCP、Plugins 和 Subagents。
-- 多用户认证、ACL、owner 生命周期、调度任务、用量和渠道接入。
-- Host/Docker 双执行边界，以及 macOS arm64 的 Electron 打包配置。
-
-真实模型调用、Docker 执行、渠道连接和远程部署仍然依赖本地凭证、服务配置与运行环境；没有外部 Provider 时，可以先启动 UI、完成本地初始化，并在设置中稍后补齐配置。
-
-## 路线图
-
-### 近期
-
-- 补充 Pi Runtime 的 Web Search/Web Fetch 等能力适配。
-- 完善渠道 onboarding、运行监控和失败恢复提示。
-- 增加更多 Electron 打包、签名和发布验证路径。
-- 持续收敛 Workspace、Memory、Skills 与 Scheduler 的产品文档。
-
-### 长期
-
-- 更完整的跨平台桌面构建。
-- 更丰富的 Agent/Plugin/Provider 扩展模型。
-- 可视化的运行轨迹、证据链与成本分析。
-- 面向贡献者的能力注册、Skill 开发和渠道适配指南。
+**来源与许可证**：本项目基于 MIT 基线工程，保留其 Node/TypeScript、Hono、React、SQLite、
+鉴权、Web 构建与 CI 结构；交互模式参考 Craft Agents 0.11.4（Apache-2.0），未复制其运行时
+实现。详细复用边界见 [`docs/diagnosis/SOURCE_PROVENANCE.md`](docs/diagnosis/SOURCE_PROVENANCE.md)。
 
 ## 文档
 
-- [`docs/API.md`](docs/API.md) — HTTP API、认证和主要资源接口
+- [`docs/diagnosis/DEMO.md`](docs/diagnosis/DEMO.md) — 3–5 分钟演示、截图复现与报告导出
+- [`docs/diagnosis/ARCHITECTURE.md`](docs/diagnosis/ARCHITECTURE.md) — 组件、五阶段、Tool Schema、数据模型、事件协议
+- [`docs/diagnosis/ACCEPTANCE.md`](docs/diagnosis/ACCEPTANCE.md) — 实测命令、退出码、50 例指标、E2E 与剩余条件
+- [`docs/diagnosis/PROJECT_STORY.md`](docs/diagnosis/PROJECT_STORY.md) — 本人新增工作、难点、Codex Review 修复记录
+- [`docs/diagnosis/SOURCE_PROVENANCE.md`](docs/diagnosis/SOURCE_PROVENANCE.md) — 来源、许可证与复用边界
+- [`docs/API.md`](docs/API.md) — HTTP API、认证与主要资源接口
 - [`docs/ACL-MATRIX.md`](docs/ACL-MATRIX.md) — 用户、Workspace、Channel、Host 与任务权限矩阵
-- [`docs/workspace-memory-v2.md`](docs/workspace-memory-v2.md) — Workspace Memory 的数据模型、版本与交互边界
-- [`docs/runtime-migration.md`](docs/runtime-migration.md) — 从旧运行时到 Pi Agent Runtime 的迁移记录
-- [`docs/PROMPT-SKILL-RUNTIME-TEST-PLAN.md`](docs/PROMPT-SKILL-RUNTIME-TEST-PLAN.md) — Prompt、Skill、Runtime 与 Agent Builder 验证计划
 - [`SECURITY.md`](SECURITY.md) — 安全问题报告与处理策略
-
-## 参与贡献
-
-欢迎提交 Issue 与 Pull Request。提交前建议运行：
-
-```bash
-make typecheck
-npm test -- --run
-npm run build:all
-npm run desktop:typecheck
-npm run desktop:build
-```
-
-如果改动了 UI、桌面窗口或交互流程，请附上截图或简短的视觉 QA 说明。新增桌面能力优先放在 Main/Preload，并保持 Renderer 不接触 SQLite、filesystem、credentials、Docker 和 shell/process。
 
 ## License
 
-工业诊断 Agent 使用 MIT License，详见 [`LICENSE`](LICENSE)。
+MIT License，详见 [`LICENSE`](LICENSE)。

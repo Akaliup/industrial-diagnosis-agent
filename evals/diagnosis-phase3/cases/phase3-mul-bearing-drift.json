@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-mul-bearing-drift",
+  "category": "multi_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-03T00:00:00.000Z",
+      "end": "2026-12-03T00:30:00.000Z"
+    },
+    "symptom": "振动持续上升，轴承温度同时出现与负荷不符的尖峰"
+  },
+  "source_snapshot": "phase3-mul-bearing-drift",
+  "clock": "2026-12-03T00:30:00.000Z",
+  "fault_injections": ["multi_bearing_drift"]
+}

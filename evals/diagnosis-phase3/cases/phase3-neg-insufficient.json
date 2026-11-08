@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-neg-insufficient",
+  "category": "insufficient_safety",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-12T00:00:00.000Z",
+      "end": "2026-12-12T00:30:00.000Z"
+    },
+    "symptom": "报警触发但遥测数据不可用，无法确认异常测点"
+  },
+  "source_snapshot": "phase3-neg-insufficient",
+  "clock": "2026-12-12T00:30:00.000Z",
+  "fault_injections": ["telemetry_unavailable"]
+}

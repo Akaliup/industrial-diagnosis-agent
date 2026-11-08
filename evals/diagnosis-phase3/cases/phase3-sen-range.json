@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-sen-range",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-002",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-06T00:00:00.000Z",
+      "end": "2026-12-06T00:30:00.000Z"
+    },
+    "symptom": "轴承温度读数恒定在 300°C，振动与电流正常"
+  },
+  "source_snapshot": "phase3-sen-range",
+  "clock": "2026-12-06T00:30:00.000Z",
+  "fault_injections": ["sensor_range"]
+}

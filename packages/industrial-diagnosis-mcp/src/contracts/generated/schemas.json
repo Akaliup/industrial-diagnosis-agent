@@ -1831,6 +1831,10 @@
                   "type": "null"
                 }
               ]
+            },
+            "status_note": {
+              "type": "string",
+              "maxLength": 300
             }
           },
           "required": [
@@ -2053,6 +2057,10 @@
                       "type": "null"
                     }
                   ]
+                },
+                "status_note": {
+                  "type": "string",
+                  "maxLength": 300
                 },
                 "id": {
                   "type": "string"
@@ -2492,6 +2500,10 @@
                   "type": "null"
                 }
               ]
+            },
+            "status_note": {
+              "type": "string",
+              "maxLength": 300
             },
             "id": {
               "type": "string"
@@ -3069,6 +3081,7 @@
           "tool.finished",
           "evidence.added",
           "hypothesis.updated",
+          "report.reconciled",
           "review.required",
           "report.ready",
           "run.failed",

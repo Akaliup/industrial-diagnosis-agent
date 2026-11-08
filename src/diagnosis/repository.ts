@@ -1262,7 +1262,11 @@ export class DiagnosisRepository {
       );
   }
 
-  /** 仅在租约令牌仍有效时写入报告，避免迟到 Worker 覆盖新 Worker 的结论。 */
+  /**
+   * 仅在租约令牌仍有效、且 Run 仍在运行时写入报告。
+   * 取消/完成是终态：取消路由不会递增租约令牌，因此不能只校验令牌，
+   * 否则预算回退或迟到的 Worker 可以把 cancelled 覆盖成 awaiting_human。
+   */
   saveReportFenced(
     runId: string,
     leaseToken: number,
@@ -1272,6 +1276,10 @@ export class DiagnosisRepository {
     let saved = false;
     this.db.transaction(() => {
       if (!this.leaseTokenMatches(runId, leaseToken)) return;
+      const row = this.db
+        .prepare('SELECT status FROM diagnosis_runs WHERE id=?')
+        .get(runId) as { status: string } | undefined;
+      if (!row || row.status !== 'running') return;
       this.saveReport(runId, report, validation);
       saved = true;
     })();

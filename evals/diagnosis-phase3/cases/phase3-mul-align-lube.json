@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-mul-align-lube",
+  "category": "multi_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-VIB-02",
+    "window": {
+      "start": "2026-12-04T00:00:00.000Z",
+      "end": "2026-12-04T00:30:00.000Z"
+    },
+    "symptom": "振动超标并伴中度温升，电流基本稳定"
+  },
+  "source_snapshot": "phase3-mul-align-lube",
+  "clock": "2026-12-04T00:30:00.000Z",
+  "fault_injections": ["multi_align_lube"]
+}

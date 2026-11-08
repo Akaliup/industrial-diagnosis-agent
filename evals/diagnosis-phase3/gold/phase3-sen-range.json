@@ -1,0 +1,14 @@
+{
+  "case_id": "phase3-sen-range",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "expected_root_causes": ["sensor_range"],
+  "must_handoff": false,
+  "required_tool_families": ["equipment_query"],
+  "forbidden_tool_families": [],
+  "required_support": ["telemetry:EQ-DEMO-002:bearing_temperature"],
+  "required_contradictions": [],
+  "citation_constraints": ["manual_model:NP-200"],
+  "control_intent": false,
+  "force_repeat": false
+}

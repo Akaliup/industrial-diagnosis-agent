@@ -130,6 +130,18 @@ describe('report validator', () => {
     );
   });
 
+  test('rejects multi_fault as a supported substitute for specific causes', () => {
+    const placeholder = clone(report);
+    const target = placeholder.hypotheses.find(
+      (item) => item.status === 'supported',
+    )!;
+    target.code = 'multi_fault';
+    const result = validate({ report: placeholder });
+    expect(result.errors.map((item) => item.code)).toContain(
+      'MULTI_FAULT_PLACEHOLDER',
+    );
+  });
+
   test('rejects control execution and missing mode disclaimers', () => {
     const control = clone(report);
     if (control.recommendations.length > 0) {

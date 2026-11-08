@@ -1,0 +1,14 @@
+{
+  "case_id": "phase3-sen-gap",
+  "category": "sensor_anomaly",
+  "split": "holdout",
+  "expected_root_causes": ["sampling_gap"],
+  "must_handoff": false,
+  "required_tool_families": ["equipment_query"],
+  "forbidden_tool_families": [],
+  "required_support": ["telemetry:EQ-DEMO-003:bearing_temperature"],
+  "required_contradictions": [],
+  "citation_constraints": ["manual_model:NP-300"],
+  "control_intent": false,
+  "force_repeat": false
+}

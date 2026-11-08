@@ -10,6 +10,8 @@ export interface SeriesSummary {
   metric: string;
   unit: string;
   points: Array<{ t: string; v: number; q: string }>;
+  /** 参与数值统计的有效点数；missing 点不计入。 */
+  valid: number;
   first: number;
   last: number;
   delta: number;
@@ -111,8 +113,35 @@ export function summarizeSeries(evidence: Evidence): SeriesSummary | null {
   const sorted = [...payload.points].sort(
     (a, b) => Date.parse(a.t) - Date.parse(b.t),
   );
-  const values = sorted.map((p) => p.v);
-  if (values.length === 0) return null;
+  if (sorted.length === 0) return null;
+  // 只统计明确的 missing 质量点；clock_skew / bad 等由独立 flag 表达，
+  // 不能混入采样缺口，否则完整但时钟偏移的序列会被误判为 sampling_gap。
+  const missing = sorted.filter((p) => p.q === 'missing').length;
+  // missing 点可能携带占位值或陈旧值，不能参与数值统计；否则会把
+  // 占位值当成真实读数，产生虚假的越界/尖峰特征。
+  const values = sorted.filter((p) => p.q !== 'missing').map((p) => p.v);
+  const valid = values.length;
+  if (valid === 0) {
+    // 整条序列都缺失时仍保留缺失计数和质量标记，供异常清单与转人工
+    // 判断使用；但不能用占位值计算任何数值特征。
+    return {
+      evidenceId: evidence.id,
+      metric: payload.metric,
+      unit: payload.unit,
+      points: sorted,
+      valid: 0,
+      first: 0,
+      last: 0,
+      delta: 0,
+      min: 0,
+      max: 0,
+      avg: 0,
+      missing,
+      unique: 0,
+      std: 0,
+      spikeCount: 0,
+    };
+  }
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
   const variance =
     values.reduce((sum, v) => sum + (v - avg) ** 2, 0) / values.length;
@@ -132,17 +161,207 @@ export function summarizeSeries(evidence: Evidence): SeriesSummary | null {
     metric: payload.metric,
     unit: payload.unit,
     points: sorted,
+    valid,
     first,
     last,
     delta: last - first,
     min: Math.min(...values),
     max: Math.max(...values),
     avg,
-    missing: sorted.filter((p) => p.q !== 'good').length,
+    missing,
     unique: new Set(values.map((v) => v.toFixed(2))).size,
     std: Math.sqrt(variance),
     spikeCount,
   };
+}
+
+/**
+ * 由遥测序列本身导出的可复核特征。只描述数据形态，不推断根因，
+ * 供模型在“机械 / 传感器 / 数据路径”之间做显式比较。
+ */
+export interface TelemetryFeature {
+  metric: string;
+  unit: string;
+  evidenceId: string;
+  points: number;
+  first: number;
+  last: number;
+  delta: number;
+  min: number;
+  max: number;
+  avg: number;
+  missing: number;
+  unique: number;
+  spikeCount: number;
+  normalRange: { min: number; max: number; unit: string } | null;
+  /** out_of_range / trend / spike / constant / range_limit / near_upper_limit / missing / clock_skew / quality */
+  flags: string[];
+  summary: string;
+}
+
+export interface AnomalyLedgerItem extends TelemetryFeature {
+  referencedAsSupport: string[];
+  referencedAsContradiction: string[];
+  /** 没有任何 supported 诊断假设把它作为支持证据。 */
+  unexplained: boolean;
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  out_of_range: '越出正常范围',
+  trend: '显著趋势',
+  spike: '孤立尖峰',
+  constant: '读数恒定',
+  range_limit: '恒定在量程/物理边界',
+  near_upper_limit: '接近上限',
+  missing: '采样缺失',
+  clock_skew: '时钟偏移',
+  quality: '质量标记异常',
+};
+
+function round(value: number): number {
+  return Number(value.toFixed(2));
+}
+
+/**
+ * 每个指标取样本最长的一条序列（同一指标可能因分页被多次入库）。
+ * 该函数不读取评测 gold，也不依赖 case id。
+ */
+export function deriveTelemetryFeatures(
+  evidence: Evidence[],
+  equipmentModel: string,
+): TelemetryFeature[] {
+  const ranges = NORMAL_RANGES[equipmentModel] ?? {};
+  const best = new Map<string, SeriesSummary>();
+  for (const item of evidence) {
+    const summary = summarizeSeries(item);
+    if (!summary) continue;
+    const existing = best.get(summary.metric);
+    if (!existing || summary.points.length > existing.points.length) {
+      best.set(summary.metric, summary);
+    }
+  }
+  const features: TelemetryFeature[] = [];
+  for (const summary of best.values()) {
+    const range = ranges[summary.metric] ?? null;
+    const flags: string[] = [];
+    // 整条序列没有有效数值时，零值只是占位，不能据此产生越界、
+    // 恒定、尖峰或趋势标记；missing/quality 标记仍然保留。
+    if (range && summary.valid > 0) {
+      if (summary.max > range.max || summary.min < range.min) {
+        flags.push('out_of_range');
+      }
+      if (summary.max >= range.max * 0.95 && summary.max <= range.max) {
+        flags.push('near_upper_limit');
+      }
+      if (
+        summary.unique <= 1 &&
+        summary.valid >= 5 &&
+        (summary.max >= range.max || summary.min <= range.min)
+      ) {
+        flags.push('range_limit');
+      }
+      const span = range.max - range.min;
+      // 趋势同样需要足够的有效读数；两个相隔很远的有效点加一串缺失点
+      // 不足以证明持续变化。
+      if (
+        summary.valid >= 5 &&
+        span > 0 &&
+        Math.abs(summary.delta) > span * 0.1
+      ) {
+        flags.push('trend');
+      }
+    } else if (summary.valid >= 5 && Math.abs(summary.delta) > 0) {
+      const scale = Math.max(Math.abs(summary.avg), 1);
+      if (Math.abs(summary.delta) > scale * 0.1) flags.push('trend');
+    }
+    if (summary.valid > 0 && summary.spikeCount > 0) flags.push('spike');
+    // “恒定”是持续性结论，只能用有效读数证明；缺失点不能补足最小样本数，
+    // 否则一次采样中断会被误判为传感器卡死。
+    if (summary.valid >= 5 && summary.unique <= 1) {
+      flags.push('constant');
+    }
+    if (summary.missing > 0) flags.push('missing');
+    if (summary.points.some((point) => point.q === 'clock_skew')) {
+      flags.push('clock_skew');
+    }
+    if (
+      summary.points.some(
+        (point) => point.q !== 'good' && point.q !== 'clock_skew',
+      )
+    ) {
+      flags.push('quality');
+    }
+    const rangeText = range
+      ? `正常范围 ${range.min}–${range.max}${range.unit}`
+      : '无登记正常范围';
+    const numericSummary =
+      summary.valid === 0
+        ? `${summary.metric} 无数值样本（样本 ${summary.points.length}，缺失 ${summary.missing}），不能据此判断趋势或越界`
+        : `${summary.metric} 首 ${round(summary.first)}${summary.unit} → 末 ${round(summary.last)}${summary.unit}` +
+          `（Δ${summary.delta >= 0 ? '+' : ''}${round(summary.delta)}），` +
+          `min ${round(summary.min)} / max ${round(summary.max)} / avg ${round(summary.avg)}${summary.unit}，` +
+          `${rangeText}，样本 ${summary.points.length}，缺失 ${summary.missing}，` +
+          `不同读数 ${summary.unique}，尖峰 ${summary.spikeCount}`;
+    features.push({
+      metric: summary.metric,
+      unit: summary.unit,
+      evidenceId: summary.evidenceId,
+      points: summary.points.length,
+      first: round(summary.first),
+      last: round(summary.last),
+      delta: round(summary.delta),
+      min: round(summary.min),
+      max: round(summary.max),
+      avg: round(summary.avg),
+      missing: summary.missing,
+      unique: summary.unique,
+      spikeCount: summary.spikeCount,
+      normalRange: range,
+      flags,
+      summary:
+        numericSummary +
+        (flags.length > 0
+          ? `；标记：${flags.map((flag) => FEATURE_LABELS[flag] ?? flag).join('、')}`
+          : ''),
+    });
+  }
+  return features.sort((a, b) => a.metric.localeCompare(b.metric));
+}
+
+export function deriveAnomalyLedger(
+  features: TelemetryFeature[],
+  hypotheses: Array<{
+    code: string;
+    status: string;
+    supporting_evidence_ids: string[];
+    contradicting_evidence_ids: string[];
+  }>,
+): AnomalyLedgerItem[] {
+  const ledger: AnomalyLedgerItem[] = [];
+  for (const feature of features) {
+    if (feature.flags.length === 0) continue;
+    const referencedAsSupport = hypotheses
+      .filter(
+        (hypothesis) =>
+          hypothesis.status === 'supported' &&
+          hypothesis.code !== 'insufficient_evidence' &&
+          hypothesis.code !== 'unknown' &&
+          hypothesis.supporting_evidence_ids.includes(feature.evidenceId),
+      )
+      .map((hypothesis) => hypothesis.code);
+    const referencedAsContradiction = hypotheses
+      .filter((hypothesis) =>
+        hypothesis.contradicting_evidence_ids.includes(feature.evidenceId),
+      )
+      .map((hypothesis) => hypothesis.code);
+    ledger.push({
+      ...feature,
+      referencedAsSupport: [...new Set(referencedAsSupport)],
+      referencedAsContradiction: [...new Set(referencedAsContradiction)],
+      unexplained: referencedAsSupport.length === 0,
+    });
+  }
+  return ledger;
 }
 
 export function collectFindings(input: {
@@ -257,6 +476,11 @@ export function collectFindings(input: {
   const ranges = NORMAL_RANGES[input.equipment.model] ?? {};
   let allMetricsNormal = true;
   for (const [metric, summary] of series) {
+    // 整条序列没有有效读数时，通道实际上不可用，不能算作“指标正常”。
+    if (summary.valid === 0) {
+      allMetricsNormal = false;
+      continue;
+    }
     const range = ranges[metric];
     if (!range) continue;
     if (
@@ -381,17 +605,19 @@ export function inferRootCauses(input: {
   const currentRise = currentDelta >= 2.5;
   const spikes = (temp?.spikeCount ?? 0) >= 2;
 
-  if (temp)
+  if (temp && temp.valid > 0) {
     notes.push(`温度 ${temp.first}→${temp.last}（Δ${tempDelta.toFixed(1)}）`);
-  if (vibration) {
+  }
+  if (vibration && vibration.valid > 0) {
     notes.push(
       `振动 ${vibration.first}→${vibration.last}（Δ${vibDelta.toFixed(1)}）`,
     );
   }
-  if (current)
+  if (current && current.valid > 0) {
     notes.push(
       `电流 ${current.first}→${current.last}（Δ${currentDelta.toFixed(1)}）`,
     );
+  }
   if (gap) notes.push(`缺失样本 ${findings.missingSamples}`);
   if (findings.clockSkew) notes.push('存在时钟偏移/乱序');
 
@@ -436,8 +662,7 @@ export function inferRootCauses(input: {
     return {
       ...base,
       handoff: true,
-      handoffReason:
-        '请求包含设备控制/复位意图；本版只提供只读诊断，控制必须由工程师按规程现场执行。',
+      handoffReason: CONTROL_INTENT_HANDOFF_REASON,
       notes: [...base.notes, '检测到控制意图，已拒绝执行'],
     };
   }
@@ -645,6 +870,9 @@ export function inferRootCauses(input: {
     notes,
   };
 }
+
+export const CONTROL_INTENT_HANDOFF_REASON =
+  '请求包含设备控制/复位意图；本版只提供只读诊断，控制必须由工程师按规程现场执行。';
 
 export function detectControlIntent(
   symptom: string | null | undefined,

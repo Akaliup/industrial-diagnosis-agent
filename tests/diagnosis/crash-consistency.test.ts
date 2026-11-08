@@ -8,6 +8,7 @@ import {
 import {
   DEFAULT_BUDGET,
   type Evidence,
+  type Report,
   type Run,
   type ToolResponseEnvelope,
 } from '../../src/diagnosis/contracts/domain.js';
@@ -110,6 +111,24 @@ const query = {
     window: WINDOW,
   },
 };
+
+describe('run terminal-state fencing', () => {
+  test('does not save a report after the run is cancelled', () => {
+    const run = createRun('取消后不得写报告');
+    const leaseToken = context.repo.claimRun(run.id, 'test-worker', 60_000);
+    expect(leaseToken).not.toBeNull();
+    context.repo.updateRun(run.id, { status: 'cancelled' });
+
+    const saved = context.repo.saveReportFenced(
+      run.id,
+      leaseToken!,
+      {} as Report,
+      { valid: true },
+    );
+    expect(saved).toBe(false);
+    expect(context.repo.getReport(run.id)).toBeNull();
+  });
+});
 
 describe('tool crash consistency', () => {
   test('marks a pre-dispatch journal row unknown on recovery and re-queries safely', async () => {

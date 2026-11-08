@@ -1,0 +1,320 @@
+{
+  "case": {
+    "case_id": "phase3-sen-gap",
+    "category": "sensor_anomaly",
+    "split": "holdout",
+    "input": {
+      "equipment_id": "EQ-DEMO-003",
+      "alarm_code": "DEMO-BRG-01",
+      "window": {
+        "start": "2026-12-07T00:00:00.000Z",
+        "end": "2026-12-07T00:30:00.000Z"
+      },
+      "symptom": "报警前后遥测样本连续缺失，工艺值正常"
+    },
+    "source_snapshot": "phase3-sen-gap",
+    "clock": "2026-12-07T00:30:00.000Z",
+    "fault_injections": ["sampling_gap"]
+  },
+  "gold": {
+    "case_id": "phase3-sen-gap",
+    "category": "sensor_anomaly",
+    "split": "holdout",
+    "expected_root_causes": ["sampling_gap"],
+    "must_handoff": false,
+    "required_tool_families": ["equipment_query"],
+    "forbidden_tool_families": [],
+    "required_support": ["telemetry:EQ-DEMO-003:bearing_temperature"],
+    "required_contradictions": [],
+    "citation_constraints": ["manual_model:NP-300"],
+    "control_intent": false,
+    "force_repeat": false
+  },
+  "run": {
+    "id": "run_1ea335377fe546e4a2da",
+    "workspace_id": "ws-eval-eval_mw703dyz_all",
+    "user_id": "eval",
+    "status": "failed",
+    "stage": "confirm_status",
+    "alarm_id": "alm_0b484cc01f05c05a3971",
+    "equipment_id": "EQ-DEMO-003",
+    "window": {
+      "start": "2026-12-07T00:00:00.000Z",
+      "end": "2026-12-07T00:30:00.000Z"
+    },
+    "symptom": "报警前后遥测样本连续缺失，工艺值正常",
+    "data_mode": "mock",
+    "model_mode": "live",
+    "budget": {
+      "max_rounds_total": 8,
+      "max_rounds_per_stage": 3,
+      "max_logical_tool_calls": 32,
+      "max_attempts_per_call": 3,
+      "max_concurrent_tools": 4,
+      "source_timeout_ms": 10000,
+      "run_wall_clock_ms": 300000,
+      "max_model_calls": 16,
+      "max_input_tokens": 128000,
+      "max_output_tokens": 12000,
+      "max_rounds_without_new_evidence": 3
+    },
+    "stage_rounds": {
+      "confirm_status": 1,
+      "locate_anomaly": 0,
+      "generate_hypotheses": 0,
+      "verify_evidence": 0,
+      "produce_report": 0
+    },
+    "total_rounds": 1,
+    "logical_calls": 0,
+    "model_calls": 1,
+    "input_tokens": 1506,
+    "output_tokens": 774,
+    "no_new_evidence_rounds": 0,
+    "checkpoint": {
+      "last_role": "data_investigator",
+      "last_model": "deepseek-flash",
+      "pending_queries": [
+        {
+          "tool": "equipment_resolve",
+          "args": {
+            "query": "EQ-DEMO-003",
+            "vendor": "Northwind Pumps",
+            "model": "NP-300"
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少权威设备记录（equipment_id 与序列号映射）",
+          "expected_discrimination": "确认 EQ-DEMO-003 是否为权威设备记录并取得 equipment_id，供后续查询使用",
+          "rationale": "后续 equipment_query 必须使用权威 equipment_id，先解析设备。"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-003",
+            "query_kind": "status",
+            "window": {
+              "start": "2026-12-07T00:00:00.000Z",
+              "end": "2026-12-07T00:30:00.000Z"
+            }
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少设备当前运行状态记录",
+          "expected_discrimination": "区分设备处于运行、停机或降级状态，判断报警期间是否在线",
+          "rationale": "确认设备状态是 confirm_status 阶段的首要目标。"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-003",
+            "query_kind": "telemetry",
+            "window": {
+              "start": "2026-12-07T00:00:00.000Z",
+              "end": "2026-12-07T00:30:00.000Z"
+            },
+            "metrics": [
+              "bearing_temperature",
+              "vibration",
+              "flow",
+              "pressure",
+              "current"
+            ],
+            "limit": 500
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少报警前后遥测样本，无法确认缺失区间与轴承温度实际值",
+          "expected_discrimination": "定位遥测缺失的具体时间区间，并判断轴承温度是否在 00:18 前后越限",
+          "rationale": "现象称遥测连续缺失，需用遥测数据确认缺失区间与工艺值。"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-003",
+            "query_kind": "alarms",
+            "alarm_code": "DEMO-BRG-01",
+            "window": {
+              "start": "2026-12-07T00:00:00.000Z",
+              "end": "2026-12-07T00:30:00.000Z"
+            },
+            "limit": 200
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少报警记录明细（触发值、持续时长、是否恢复）",
+          "expected_discrimination": "确认报警触发时刻、阈值与恢复状态，界定异常时间区间",
+          "rationale": "报警是唯一已知异常信号，需入库为证据。"
+        },
+        {
+          "tool": "equipment_query",
+          "args": {
+            "equipment_id": "EQ-DEMO-003",
+            "query_kind": "mes_events",
+            "window": {
+              "start": "2026-12-07T00:00:00.000Z",
+              "end": "2026-12-07T00:30:00.000Z"
+            },
+            "limit": 200
+          },
+          "target_hypothesis": null,
+          "evidence_gap": "缺少 MES 侧事件（启停、切换、工艺变更）记录",
+          "expected_discrimination": "判断报警窗口内是否存在运行方式变化，解释遥测缺失与工艺值正常并存",
+          "rationale": "MES 事件可佐证设备状态与时间区间。"
+        }
+      ]
+    },
+    "error": "MCP error -32000: Connection closed",
+    "handoff_reason": null,
+    "review_status": "pending",
+    "conclusion_status": "hypothesis",
+    "created_at": "2026-11-07T23:01:22.582Z",
+    "started_at": "2026-11-07T23:01:22.583Z",
+    "finished_at": "2026-11-07T23:01:27.085Z",
+    "lease_owner": null,
+    "lease_expires_at": null,
+    "lease_token": 1
+  },
+  "events": [
+    {
+      "event_id": "evt_a5441dccaebd439682d9",
+      "run_id": "run_1ea335377fe546e4a2da",
+      "seq": 1,
+      "timestamp": "2026-11-07T23:01:22.583Z",
+      "type": "run.started",
+      "payload": {},
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_77a5021247fc43c996ad",
+      "run_id": "run_1ea335377fe546e4a2da",
+      "seq": 2,
+      "timestamp": "2026-11-07T23:01:27.069Z",
+      "type": "tool.started",
+      "payload": {
+        "tool": "equipment_resolve",
+        "role": "data_investigator",
+        "target_hypothesis": null,
+        "evidence_gap": "缺少权威设备记录（equipment_id 与序列号映射）"
+      },
+      "schema_version": "1"
+    },
+    {
+      "event_id": "evt_cf26a09bff034c59bd65",
+      "run_id": "run_1ea335377fe546e4a2da",
+      "seq": 3,
+      "timestamp": "2026-11-07T23:01:27.085Z",
+      "type": "run.failed",
+      "payload": {
+        "error": "MCP error -32000: Connection closed"
+      },
+      "schema_version": "1"
+    }
+  ],
+  "tool_calls": [
+    {
+      "id": "call_5a620a4c389d495689b5",
+      "run_id": "run_1ea335377fe546e4a2da",
+      "logical_call_id": "lc_66dbd4acb8da4b0e9d32",
+      "attempt": 1,
+      "tool": "equipment_resolve",
+      "role": "data_investigator",
+      "args_json": "{\"query\":\"EQ-DEMO-003\",\"vendor\":\"Northwind Pumps\",\"model\":\"NP-300\"}",
+      "args_hash": "4baeae3c6e28a066825e43df6a52680eb919eb76e109cb01028841c07b721e25",
+      "status": "unknown",
+      "error_code": "RECEIPT_UNKNOWN",
+      "duration_ms": 0,
+      "evidence_count": 0,
+      "policy_decision": "allowed",
+      "started_at": "2026-11-07T23:01:27.069Z",
+      "finished_at": "2026-11-07T23:01:27.085Z"
+    }
+  ],
+  "model_calls": [
+    {
+      "id": "mc_a6710a3ce6914fe1b813",
+      "run_id": "run_1ea335377fe546e4a2da",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "round": 1,
+      "attempt": 1,
+      "model": "deepseek-flash",
+      "mode": "live",
+      "status": "success",
+      "error_code": null,
+      "failure_reason": null,
+      "input_tokens": 1506,
+      "output_tokens": 774,
+      "latency_ms": 4482,
+      "tool_requests_json": "[{\"tool\":\"equipment_resolve\",\"args\":{\"query\":\"EQ-DEMO-003\",\"vendor\":\"Northwind Pumps\",\"model\":\"NP-300\"},\"target_hypothesis\":null,\"evidence_gap\":\"缺少权威设备记录（equipment_id 与序列号映射）\",\"expected_discrimination\":\"确认 EQ-DEMO-003 是否为权威设备记录并取得 equipment_id，供后续查询使用\",\"rationale\":\"后续 equipment_query 必须使用权威 equipment_id，先解析设备。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少设备当前运行状态记录\",\"expected_discrimination\":\"区分设备处于运行、停机或降级状态，判断报警期间是否在线\",\"rationale\":\"确认设备状态是 confirm_status 阶段的首要目标。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"telemetry\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"},\"metrics\":[\"bearing_temperature\",\"vibration\",\"flow\",\"pressure\",\"current\"],\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警前后遥测样本，无法确认缺失区间与轴承温度实际值\",\"expected_discrimination\":\"定位遥测缺失的具体时间区间，并判断轴承温度是否在 00:18 前后越限\",\"rationale\":\"现象称遥测连续缺失，需用遥测数据确认缺失区间与工艺值。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-BRG-01\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警记录明细（触发值、持续时长、是否恢复）\",\"expected_discrimination\":\"确认报警触发时刻、阈值与恢复状态，界定异常时间区间\",\"rationale\":\"报警是唯一已知异常信号，需入库为证据。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 MES 侧事件（启停、切换、工艺变更）记录\",\"expected_discrimination\":\"判断报警窗口内是否存在运行方式变化，解释遥测缺失与工艺值正常并存\",\"rationale\":\"MES 事件可佐证设备状态与时间区间。\"}]",
+      "raw_output": "{\"summary\":\"确认阶段：设备 EQ-DEMO-003（3号给水泵，NP-300）在 2026-12-07T00:18:00Z 报 DEMO-BRG-01 轴承温度高，但报警前后遥测样本连续缺失，当前无已入库证据。需先解析权威设备记录，再拉取状态、遥测、报警与 MES 事件以确认设备状态与异常时间区间。\",\"queries\":[{\"tool\":\"equipment_resolve\",\"args\":{\"query\":\"EQ-DEMO-003\",\"vendor\":\"Northwind Pumps\",\"model\":\"NP-300\"},\"target_hypothesis\":null,\"evidence_gap\":\"缺少权威设备记录（equipment_id 与序列号映射）\",\"expected_discrimination\":\"确认 EQ-DEMO-003 是否为权威设备记录并取得 equipment_id，供后续查询使用\",\"rationale\":\"后续 equipment_query 必须使用权威 equipment_id，先解析设备。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"status\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"}},\"target_hypothesis\":null,\"evidence_gap\":\"缺少设备当前运行状态记录\",\"expected_discrimination\":\"区分设备处于运行、停机或降级状态，判断报警期间是否在线\",\"rationale\":\"确认设备状态是 confirm_status 阶段的首要目标。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"telemetry\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"},\"metrics\":[\"bearing_temperature\",\"vibration\",\"flow\",\"pressure\",\"current\"],\"limit\":500},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警前后遥测样本，无法确认缺失区间与轴承温度实际值\",\"expected_discrimination\":\"定位遥测缺失的具体时间区间，并判断轴承温度是否在 00:18 前后越限\",\"rationale\":\"现象称遥测连续缺失，需用遥测数据确认缺失区间与工艺值。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"alarms\",\"alarm_code\":\"DEMO-BRG-01\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"缺少报警记录明细（触发值、持续时长、是否恢复）\",\"expected_discrimination\":\"确认报警触发时刻、阈值与恢复状态，界定异常时间区间\",\"rationale\":\"报警是唯一已知异常信号，需入库为证据。\"},{\"tool\":\"equipment_query\",\"args\":{\"equipment_id\":\"EQ-DEMO-003\",\"query_kind\":\"mes_events\",\"window\":{\"start\":\"2026-12-07T00:00:00.000Z\",\"end\":\"2026-12-07T00:30:00.000Z\"},\"limit\":200},\"target_hypothesis\":null,\"evidence_gap\":\"缺少 MES 侧事件（启停、切换、工艺变更）记录\",\"expected_discrimination\":\"判断报警窗口内是否存在运行方式变化，解释遥测缺失与工艺值正常并存\",\"rationale\":\"MES 事件可佐证设备状态与时间区间。\"}]}",
+      "created_at": "2026-11-07T23:01:27.067Z"
+    }
+  ],
+  "evidence": [],
+  "hypotheses": [],
+  "context_manifests": [
+    {
+      "run_id": "run_1ea335377fe546e4a2da",
+      "role": "data_investigator",
+      "stage": "confirm_status",
+      "included_evidence_ids": [],
+      "dropped": [],
+      "estimated_tokens": 1543,
+      "budget": {
+        "input_limit": 16000,
+        "output_reserve": 12000
+      },
+      "estimated": true
+    }
+  ],
+  "report": null,
+  "execution_error": "MCP error -32000: Connection closed",
+  "evaluation": {
+    "case_id": "phase3-sen-gap",
+    "category": "sensor_anomaly",
+    "split": "holdout",
+    "run_id": "run_1ea335377fe546e4a2da",
+    "status": "failed",
+    "passed": false,
+    "failure_reasons": [
+      "NO_REPORT",
+      "ROOT_CAUSE_MISMATCH expected=sampling_gap actual=",
+      "MISSING_SUPPORT telemetry:EQ-DEMO-003:bearing_temperature",
+      "MISSING_TOOLS equipment_query",
+      "EXECUTION_ERROR MCP error -32000: Connection closed"
+    ],
+    "predicted_root_causes": [],
+    "required_tools_missing": ["equipment_query"],
+    "citation_issues": [],
+    "handoff": false,
+    "metrics": {
+      "citation_integrity": 0,
+      "evidence_coverage": 0,
+      "evidence_coverage_n": 1,
+      "required_tool_recall": 0,
+      "required_tool_recall_n": 1,
+      "tool_selection_accuracy": 0,
+      "tool_selection_n": 1,
+      "counter_evidence_retained": 1,
+      "counter_evidence_n": 0,
+      "solvable_completion": 0,
+      "top1_hit": 0,
+      "top1_applicable": 1,
+      "top3_hit": 0,
+      "top3_applicable": 1,
+      "multi_fault_coverage": 1,
+      "multi_fault_precision": 1,
+      "multi_fault_applicable": 0,
+      "handoff": 0,
+      "must_handoff": 0,
+      "handoff_correct": 1,
+      "unauthorized_calls": 0,
+      "blocked_attempts": 0,
+      "repeat_guard_exercised": 0,
+      "validation_errors": 1,
+      "latency_ms": 4502,
+      "model_calls": 1,
+      "input_tokens": 1506,
+      "output_tokens": 774,
+      "total_tokens": 2280,
+      "model_call_failures": 0
+    }
+  }
+}

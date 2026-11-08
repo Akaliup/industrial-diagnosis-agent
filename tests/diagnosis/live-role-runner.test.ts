@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiveRoleRunner } from '../../src/diagnosis/live-role-runner.js';
 import {
+  parseRoleOutputText,
   RoleRunnerError,
   type RoleCallInput,
 } from '../../src/diagnosis/role-runner.js';
@@ -42,6 +43,66 @@ function makeRunner(): LiveRoleRunner {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe('role output normalization', () => {
+  it('drops status_note placeholder fields instead of rejecting the report', () => {
+    const content = JSON.stringify({
+      summary: 'ok',
+      report: {
+        limitations: [],
+        observations: [],
+        hypotheses: [
+          {
+            id: 'hyp_note_1',
+            code: 'bearing_wear',
+            title: '轴承磨损',
+            description: '振动与温度上升',
+            confidence: 'low',
+            status: 'inconclusive',
+            rationale: '证据不足',
+            supporting_evidence_ids: [],
+            contradicting_evidence_ids: [],
+            missing_evidence: [],
+            next_check: null,
+            status_note_placeholder: null,
+          },
+          {
+            id: 'hyp_note_2',
+            code: 'misalignment',
+            title: '不对中',
+            description: '振动上升',
+            confidence: 'low',
+            status: 'inconclusive',
+            rationale: '缺少对中记录',
+            supporting_evidence_ids: [],
+            contradicting_evidence_ids: [],
+            missing_evidence: [],
+            next_check: null,
+            status_note_placeholder: '保持 inconclusive',
+          },
+        ],
+        checks: [],
+        recommendations: [],
+        unresolved_questions: [],
+        handoff_reason: null,
+      },
+      review_notes: [],
+    });
+    const parsed = parseRoleOutputText('report_reviewer', content) as {
+      report: {
+        hypotheses: Array<{ status_note?: string; [key: string]: unknown }>;
+      };
+    };
+    expect(parsed.report.hypotheses[0].status_note).toBeUndefined();
+    expect(parsed.report.hypotheses[0]).not.toHaveProperty(
+      'status_note_placeholder',
+    );
+    expect(parsed.report.hypotheses[1].status_note).toBe('保持 inconclusive');
+    expect(parsed.report.hypotheses[1]).not.toHaveProperty(
+      'status_note_placeholder',
+    );
+  });
 });
 
 describe('LiveRoleRunner error handling', () => {

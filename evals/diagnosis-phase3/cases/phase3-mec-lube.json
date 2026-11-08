@@ -1,0 +1,17 @@
+{
+  "case_id": "phase3-mec-lube",
+  "category": "mechanical_fault",
+  "split": "holdout",
+  "input": {
+    "equipment_id": "EQ-DEMO-003",
+    "alarm_code": "DEMO-BRG-01",
+    "window": {
+      "start": "2026-12-09T00:00:00.000Z",
+      "end": "2026-12-09T00:30:00.000Z"
+    },
+    "symptom": "轴承温度与振动上升，电流基本稳定"
+  },
+  "source_snapshot": "phase3-mec-lube",
+  "clock": "2026-12-09T00:30:00.000Z",
+  "fault_injections": ["lubrication"]
+}

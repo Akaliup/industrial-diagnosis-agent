@@ -17,7 +17,9 @@ import {
 } from '../../src/diagnosis/role-runner.js';
 import {
   DEFAULT_BUDGET,
+  type Role,
   type Run,
+  type Stage,
 } from '../../src/diagnosis/contracts/domain.js';
 import { newId } from '../../src/diagnosis/util.js';
 
@@ -78,12 +80,8 @@ function orchestratorWith(runner: RoleRunner): DiagnosisOrchestrator {
 function callRole(
   orchestrator: DiagnosisOrchestrator,
   state: ReturnType<typeof makeState>,
-  stage:
-    | 'confirm_status'
-    | 'locate_anomaly'
-    | 'generate_hypotheses'
-    | 'produce_report' = 'confirm_status',
-  role: 'data_investigator' | 'report_reviewer' = 'data_investigator',
+  stage: Stage = 'confirm_status',
+  role: Role = 'data_investigator',
 ): Promise<unknown> {
   return (
     orchestrator as unknown as {
@@ -149,6 +147,261 @@ describe('run budget accounting', () => {
     ).rejects.toBeInstanceOf(BudgetExceededError);
     // 预算耗尽后的请求在发出前就被拦截。
     expect(seen).toHaveLength(9);
+  });
+
+  test('does not start an optional second look without report output reserve', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_output_tokens: 12_000,
+      }),
+    );
+    state.stageRounds.verify_evidence = 1;
+    state.totalRounds = 1;
+    state.modelCalls = 5;
+    const canRunSecondLook = (
+      orchestrator as unknown as {
+        canRunSecondLook: (value: unknown) => boolean;
+      }
+    ).canRunSecondLook.bind(orchestrator);
+    state.outputTokens = 8_000; // 剩余 4,000，低于 4,500 + 400 预留
+    expect(canRunSecondLook(state)).toBe(false);
+    state.outputTokens = 0;
+    expect(canRunSecondLook(state)).toBe(true);
+  });
+
+  test('reserves the report round before starting an optional second look', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_rounds_total: 6,
+        max_rounds_per_stage: 3,
+      }),
+    );
+    state.stageRounds.verify_evidence = 1;
+    state.totalRounds = 5;
+    state.modelCalls = 5;
+    const canRunSecondLook = (
+      orchestrator as unknown as {
+        canRunSecondLook: (value: unknown) => boolean;
+      }
+    ).canRunSecondLook.bind(orchestrator);
+    // 只剩 1 轮，必须留给 produce_report；二次复核不得启动。
+    expect(canRunSecondLook(state)).toBe(false);
+    state.run.budget.max_rounds_total = 8;
+    // 8 轮预算下仍有 3 轮：二次复核 + 可能的跟进复核 + 报告。
+    expect(canRunSecondLook(state)).toBe(true);
+  });
+
+  test('reserves stage rounds for a second look and its follow-up', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_rounds_total: 8,
+        max_rounds_per_stage: 3,
+      }),
+    );
+    state.stageRounds.verify_evidence = 1;
+    state.totalRounds = 5;
+    state.modelCalls = 5;
+    const canRunSecondLook = (
+      orchestrator as unknown as {
+        canRunSecondLook: (value: unknown) => boolean;
+      }
+    ).canRunSecondLook.bind(orchestrator);
+    expect(canRunSecondLook(state)).toBe(true);
+    // 只剩 1 个阶段轮次时，二次复核会吃掉跟进复核的空间。
+    state.stageRounds.verify_evidence = 2;
+    expect(canRunSecondLook(state)).toBe(false);
+  });
+
+  test('reserves a model call for the report before an optional follow-up', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(makeRun());
+    state.stageRounds.verify_evidence = 2;
+    state.totalRounds = 6;
+    const canRunVerifyFollowUp = (
+      orchestrator as unknown as {
+        canRunVerifyFollowUp: (value: unknown) => boolean;
+      }
+    ).canRunVerifyFollowUp.bind(orchestrator);
+    // 16 次调用上限下只剩 2 次：跟进复核可能用掉 2 次，报告将无调用可用。
+    state.modelCalls = DEFAULT_BUDGET.max_model_calls - 2;
+    expect(canRunVerifyFollowUp(state)).toBe(false);
+    // 留出 3 次时，跟进复核（含 1 次修复）后仍能给报告留 1 次。
+    state.modelCalls = DEFAULT_BUDGET.max_model_calls - 3;
+    expect(canRunVerifyFollowUp(state)).toBe(true);
+  });
+
+  test('reserves input tokens for the report before optional verification', () => {
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-unused',
+      run: async () => ({
+        output: {},
+        mode: 'fixture',
+        model: 'fake-unused',
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 0,
+      }),
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(makeRun());
+    state.stageRounds.verify_evidence = 1;
+    state.totalRounds = 5;
+    state.modelCalls = 5;
+    const canRunSecondLook = (
+      orchestrator as unknown as {
+        canRunSecondLook: (value: unknown) => boolean;
+      }
+    ).canRunSecondLook.bind(orchestrator);
+    const canRunVerifyFollowUp = (
+      orchestrator as unknown as {
+        canRunVerifyFollowUp: (value: unknown) => boolean;
+      }
+    ).canRunVerifyFollowUp.bind(orchestrator);
+
+    // 128k 上限下只剩 28k，低于报告 16k + 可选复核 16k 的预留。
+    state.inputTokens = 100_000;
+    expect(canRunSecondLook(state)).toBe(false);
+    state.inputTokens = 90_000;
+    expect(canRunSecondLook(state)).toBe(true);
+
+    state.stageRounds.verify_evidence = 2;
+    state.totalRounds = 6;
+    state.inputTokens = 100_000;
+    expect(canRunVerifyFollowUp(state)).toBe(false);
+    state.inputTokens = 90_000;
+    expect(canRunVerifyFollowUp(state)).toBe(true);
+  });
+
+  test('does not let evidence stagnation block the final report', async () => {
+    let calls = 0;
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-stagnant',
+      run: async () => {
+        calls += 1;
+        return {
+          output: {},
+          mode: 'fixture',
+          model: 'fake-stagnant',
+          inputTokens: 1,
+          outputTokens: 1,
+          latencyMs: 0,
+        };
+      },
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_rounds_total: 20,
+        max_rounds_per_stage: 20,
+        max_output_tokens: 20_000,
+      }),
+    );
+    state.noNewEvidenceRounds = DEFAULT_BUDGET.max_rounds_without_new_evidence;
+    state.stage = 'verify_evidence';
+    await expect(
+      callRole(orchestrator, state, 'verify_evidence', 'hypothesis_verifier'),
+    ).rejects.toBeInstanceOf(BudgetExceededError);
+    expect(calls).toBe(0);
+    // 可选复核没有带来新证据时，报告阶段仍必须能汇总已有证据。
+    state.stage = 'produce_report';
+    await callRole(orchestrator, state, 'produce_report', 'report_reviewer');
+    expect(calls).toBe(1);
+  });
+
+  test('keeps the final total round for the report stage', async () => {
+    let calls = 0;
+    const runner: RoleRunner = {
+      mode: 'fixture',
+      model: 'fake-rounds',
+      run: async () => {
+        calls += 1;
+        return {
+          output: {},
+          mode: 'fixture',
+          model: 'fake-rounds',
+          inputTokens: 1,
+          outputTokens: 1,
+          latencyMs: 0,
+        };
+      },
+    };
+    const orchestrator = orchestratorWith(runner);
+    const state = makeState(
+      makeRun({
+        ...DEFAULT_BUDGET,
+        max_rounds_total: 6,
+        max_rounds_per_stage: 6,
+        max_output_tokens: 20_000,
+      }),
+    );
+    state.totalRounds = 5;
+    state.stage = 'verify_evidence';
+    await expect(
+      callRole(orchestrator, state, 'verify_evidence', 'hypothesis_verifier'),
+    ).rejects.toBeInstanceOf(BudgetExceededError);
+    expect(calls).toBe(0);
+    // 同一预算下，报告阶段仍可使用最后一轮。
+    state.stage = 'produce_report';
+    await callRole(orchestrator, state, 'produce_report', 'report_reviewer');
+    expect(calls).toBe(1);
+    expect(state.totalRounds).toBe(6);
   });
 
   test('records actual usage and rejects a model that ignores max_tokens', async () => {
